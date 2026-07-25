@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Check, ArrowRight } from 'lucide-react';
+import { ArrowRight, Check } from 'lucide-react';
 import SpotlightNavbar from '@/components/SpotlightNavbar';
 import Footer from '@/components/Footer';
-import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 
 const servicesData = [
@@ -76,6 +75,31 @@ const servicesData = [
   }
 ];
 
+// Fallback client image rendering boundary
+function SafeImage({ src, alt, className }: { src: string; alt: string; className?: string }) {
+  const [imgSrc, setImgSrc] = useState(src);
+
+  useEffect(() => {
+    setImgSrc(src);
+  }, [src]);
+
+  const handleError = () => {
+    if (imgSrc.includes('assets.parthproduction.in')) {
+      setImgSrc(imgSrc.replace('assets.parthproduction.in', 'pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev'));
+    }
+  };
+
+  return (
+    <img
+      src={imgSrc}
+      alt={alt}
+      onError={handleError}
+      className={className}
+      loading="lazy"
+    />
+  );
+}
+
 export default function ServicesPage() {
   const { siteSettings } = useAuth();
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
@@ -118,74 +142,95 @@ export default function ServicesPage() {
         {/* HERO BANNER */}
         <section className="relative min-h-[30vh] border-b border-gray-800/40 px-6 md:px-12 py-12 flex flex-col justify-center">
           <div className="max-w-7xl mx-auto w-full space-y-4">
-            <span className="text-[10px] uppercase tracking-widest text-accent font-bold block mb-2">// Operations & blue prints</span>
+            <span className="text-[10px] uppercase tracking-widest text-accent font-bold block mb-2">// Operations & blueprints</span>
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white leading-none">
               PRODUCTION & <br />
-              <span className="text-accent drop-shadow-[0_0_15px_rgba(255,215,0,0.15)]">SERVICES</span>
+              <span className="text-accent drop-shadow-[0_0_15px_rgba(255,95,31,0.15)]">SERVICES</span>
             </h1>
             <p className="text-gray-400 text-sm leading-relaxed max-w-lg">
-              Check out our complete setup blue prints for sound riggings, stage truss setups, and generator power routing.
+              Check out our complete setup blueprints for sound riggings, stage truss setups, and generator power routing.
             </p>
           </div>
         </section>
 
-        {/* SERVICES GRID */}
+        {/* SERVICES FLEX/GRID SHOWCASE (Aligned at the top) */}
         <section className="max-w-7xl mx-auto px-6 md:px-12 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-            {servicesData.map((service, idx) => (
-              <motion.div
-                key={service.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.08 }}
-                className="border border-gray-800 p-6 bg-secondary/10 rounded-2xl flex flex-col justify-between hover:border-gray-700 hover:bg-secondary/20 transition-all duration-300 group"
-              >
-                <div>
-                  <div className="relative w-full aspect-[16/10] rounded-xl overflow-hidden border border-gray-850 bg-secondary mb-6">
-                    <Image 
-                      src={images[service.id] || service.image} 
-                      alt={service.title}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 400px"
-                      className="object-cover grayscale group-hover:grayscale-0 transition-all duration-700 brightness-[0.7]"
-                    />
+          <div className="flex flex-wrap gap-8 items-start">
+            {servicesData.map((service, idx) => {
+              // Service 1, 2, 4 are Portrait (aspect-[3/4])
+              // Service 3, 5 are Landscape (aspect-[16/9])
+              const isPortrait = service.id === 1 || service.id === 2 || service.id === 4;
+              
+              return (
+                <motion.div
+                  key={service.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.08 }}
+                  className={`flex flex-col justify-between p-6 bg-secondary/10 border border-neutral-850 hover:border-neutral-750 rounded-[2rem] transition-all duration-300 group ${
+                    isPortrait 
+                      ? 'w-full sm:w-[calc(50%-16px)] lg:w-[calc(33.333%-22px)]' 
+                      : 'w-full lg:w-[calc(66.666%-12px)]'
+                  }`}
+                >
+                  {/* 1. Heading & 2. Subheading */}
+                  <div className="mb-6 space-y-2">
+                    <h3 className="text-2xl font-bold text-white uppercase tracking-tight leading-tight">
+                      {service.title}
+                    </h3>
+                    <p className="text-[10px] uppercase tracking-widest text-accent font-semibold">
+                      {service.subtitle}
+                    </p>
                   </div>
 
-                  <span className="text-[9px] uppercase tracking-widest text-accent font-semibold block mb-1">
-                    {service.subtitle}
-                  </span>
-                  <h3 className="text-2xl font-bold text-white uppercase tracking-tight mb-4">
-                    {service.title}
-                  </h3>
-                  
-                  <p className="text-gray-400 text-xs leading-relaxed mb-6 font-light">
-                    {service.description}
-                  </p>
-
-                  <ul className="space-y-2 text-xs text-gray-300 font-sans border-t border-gray-850 pt-4">
-                    {service.features.map((feature, fIdx) => (
-                      <li key={fIdx} className="flex items-center gap-3">
-                        <Check className="w-4 h-4 text-accent flex-shrink-0" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="pt-8">
-                  <a 
-                    href={whatsappUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full py-3.5 bg-white text-black hover:bg-white/90 rounded-full text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-2 cursor-pointer transition-all duration-300 text-center shadow-md active:scale-98"
+                  {/* 3. Images Box with heavy rounded corners & overlay */}
+                  <div 
+                    className={`relative w-full rounded-[24px] overflow-hidden border border-white/10 group shadow-xl bg-black/60 transition-transform duration-300 hover:scale-[1.02] ${
+                      isPortrait ? 'aspect-[3/4]' : 'aspect-[16/9]'
+                    }`}
                   >
-                    Book Now
-                    <ArrowRight className="w-4 h-4" />
-                  </a>
-                </div>
-              </motion.div>
-            ))}
+                    <SafeImage
+                      src={images[service.id] || service.image}
+                      alt={service.title}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    
+                    {/* Dark gradient overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10" />
+
+                    {/* Features checklist inside the card layout overlay */}
+                    <div className="absolute bottom-6 left-6 right-6 z-20 space-y-3">
+                      <p className="text-gray-300 text-xs font-light leading-relaxed line-clamp-2 md:line-clamp-none">
+                        {service.description}
+                      </p>
+                      
+                      <ul className="hidden sm:block space-y-1 text-[11px] text-gray-400 font-sans">
+                        {service.features.slice(0, 3).map((feature, fIdx) => (
+                          <li key={fIdx} className="flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* 4. Book Now Button under the images */}
+                  <div className="pt-6">
+                    <a 
+                      href={whatsappUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-3.5 bg-accent text-black hover:bg-accent/90 rounded-full text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-2 cursor-pointer transition-all duration-300 text-center shadow-lg active:scale-98"
+                    >
+                      Book Now
+                      <ArrowRight className="w-4 h-4 text-black" />
+                    </a>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </section>
 
