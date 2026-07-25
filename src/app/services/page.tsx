@@ -81,11 +81,11 @@ export default function ServicesPage() {
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
 
   const [images, setImages] = useState<Record<number, string>>({
-    1: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-15_bdfxt9.png',
-    2: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-20_sm7myc.png',
-    3: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-32_atcfrs.png',
-    4: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-17_ubz6ho.png',
-    5: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-13.png'
+    1: 'https://assets.parthproduction.in/Image%206%20Weddings.png',
+    2: 'https://assets.parthproduction.in/Image%201%20Concert%20.png',
+    3: 'https://assets.parthproduction.in/Image%203%20Festivals.png',
+    4: 'https://assets.parthproduction.in/Image%202%20Corporate%20events.png',
+    5: 'https://assets.parthproduction.in/Image%204%20Road%20show.png'
   });
 
   useEffect(() => {
@@ -97,7 +97,7 @@ export default function ServicesPage() {
         if (data.services && data.services.length > 0) {
           const mapped: Record<number, string> = {};
           data.services.forEach((item: any) => {
-            mapped[item.id] = item.image_url.startsWith('/') ? `https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev${item.image_url}` : item.image_url;
+            mapped[item.id] = item.image_url.startsWith('/') ? `https://assets.parthproduction.in${item.image_url}` : item.image_url;
           });
           setImages(prev => ({ ...prev, ...mapped }));
         }

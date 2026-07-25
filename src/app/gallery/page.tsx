@@ -8,15 +8,15 @@ import Footer from '@/components/Footer';
 import Image from 'next/image';
 
 const defaultGalleryImages = [
-  { id: 1, category: 'Weddings', title: 'Premium Varmala Stage', event: 'Wedding Ceremony', src: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-13.png' },
-  { id: 2, category: 'Festivals', title: 'Cultural Garba Arena', event: 'Navratri Dandiya', src: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-18_tdjp2b.png' },
-  { id: 3, category: 'Concerts', title: 'Live Rock concert audio', event: 'Sunburn Arena', src: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-21_atubxz.png' },
-  { id: 4, category: 'Corporate', title: 'Interactive Truss rig', event: 'Launch Production', src: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-20_sm7myc.png' },
-  { id: 5, category: 'Road Shows', title: 'Mobile LED Truss', event: 'Gujarat Promotion', src: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-17_ubz6ho.png' },
-  { id: 6, category: 'Weddings', title: 'Royal Reception Stage', event: 'Elite reception setup', src: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-15_bdfxt9.png' },
-  { id: 7, category: 'Festivals', title: 'Neon Laser EDM show', event: 'Music Festival live', src: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-14_ogyqmd.png' },
-  { id: 8, category: 'Concerts', title: 'Mainstage LED wall', event: 'Ahmedabad Concert Live', src: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-32_atcfrs.png' },
-  { id: 9, category: 'Corporate', title: 'High-end lighting design', event: 'VIP Corporate Meet', src: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-25_f2t475.png' }
+  { id: 1, category: 'Weddings', title: 'Premium Varmala Stage', event: 'Wedding Ceremony', src: 'https://assets.parthproduction.in/Image%206%20Weddings.png' },
+  { id: 2, category: 'Festivals', title: 'Cultural Garba Arena', event: 'Navratri Dandiya', src: 'https://assets.parthproduction.in/Image%203%20Festivals.png' },
+  { id: 3, category: 'Concerts', title: 'Live Rock concert audio', event: 'Sunburn Arena', src: 'https://assets.parthproduction.in/Image%201%20Concert%20.png' },
+  { id: 4, category: 'Corporate', title: 'Interactive Truss rig', event: 'Launch Production', src: 'https://assets.parthproduction.in/Image%202%20Corporate%20events.png' },
+  { id: 5, category: 'Road Shows', title: 'Mobile LED Truss', event: 'Gujarat Promotion', src: 'https://assets.parthproduction.in/Image%204%20Road%20show.png' },
+  { id: 6, category: 'Weddings', title: 'Royal Reception Stage', event: 'Elite reception setup', src: 'https://assets.parthproduction.in/Image%207%20Weddings.png' },
+  { id: 7, category: 'Festivals', title: 'Neon Laser EDM show', event: 'Music Festival live', src: 'https://assets.parthproduction.in/image%2010%20.png' },
+  { id: 8, category: 'Concerts', title: 'Mainstage LED wall', event: 'Ahmedabad Concert Live', src: 'https://assets.parthproduction.in/Image%208%20Concert.png' },
+  { id: 9, category: 'Corporate', title: 'High-end lighting design', event: 'VIP Corporate Meet', src: 'https://assets.parthproduction.in/Image%202%20Corporate%20events.png' }
 ];
 
 const categories = ['All Events', 'Weddings', 'Festivals', 'Concerts', 'Corporate', 'Road Shows'];
@@ -39,7 +39,7 @@ export default function GalleryPage() {
             category: item.category,
             title: item.category === 'Weddings' ? 'Premium Varmala Stage' : item.category === 'Festivals' ? 'Cultural Garba Arena' : item.category === 'Concerts' ? 'Live Rock concert audio' : item.category === 'Corporate' ? 'Interactive Truss rig' : 'Mobile LED Truss',
             event: item.category === 'Weddings' ? 'Wedding Ceremony' : item.category === 'Festivals' ? 'Navratri Dandiya' : item.category === 'Concerts' ? 'Sunburn Arena' : item.category === 'Corporate' ? 'Launch Production' : 'Gujarat Promotion',
-            src: item.image_url.startsWith('/') ? `https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev${item.image_url}` : item.image_url
+            src: item.image_url.startsWith('/') ? `https://assets.parthproduction.in${item.image_url}` : item.image_url
           }));
           setGalleryImages(mapped);
         }

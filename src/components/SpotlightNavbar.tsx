@@ -58,7 +58,7 @@ export default function SpotlightNavbar() {
           {/* Bigger Logo in Top Right Corner */}
           <Link href="/" className="cursor-pointer">
             <img 
-              src="https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Parth%20logo%20bg%20.png" 
+              src="https://assets.parthproduction.in/Parth%20logo%20bg%20.png" 
               alt="Parth Logo" 
               className="h-16 w-auto object-contain"
               onError={(e) => {
