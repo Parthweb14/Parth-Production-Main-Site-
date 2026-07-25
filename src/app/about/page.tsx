@@ -111,7 +111,7 @@ export default function AboutPage() {
             <div className="border border-gray-800 p-6 bg-secondary/15 rounded-2xl flex flex-col sm:flex-row gap-6 items-center">
               <div className="relative w-36 h-36 rounded-2xl overflow-hidden border border-gray-800 flex-shrink-0 bg-black">
                 <img 
-                  src="/images/WhatsApp-Image-2026-01-10-at-8.52.25-PM-3_vohntj.png" 
+                  src="https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/WhatsApp-Image-2026-01-10-at-8.52.25-PM-3_vohntj.png" 
                   alt="Rohan" 
                   className="w-full h-full object-cover grayscale brightness-[0.8]"
                 />
@@ -128,7 +128,7 @@ export default function AboutPage() {
             <div className="border border-gray-800 p-6 bg-secondary/15 rounded-2xl flex flex-col sm:flex-row gap-6 items-center">
               <div className="relative w-36 h-36 rounded-2xl overflow-hidden border border-gray-800 flex-shrink-0 bg-black">
                 <img 
-                  src="/images/WhatsApp-Image-2026-01-10-at-8.52.25-PM-2_ug0sl5.png" 
+                  src="https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/WhatsApp-Image-2026-01-10-at-8.52.25-PM-2_ug0sl5.png" 
                   alt="Dishant" 
                   className="w-full h-full object-cover grayscale brightness-[0.8]"
                 />

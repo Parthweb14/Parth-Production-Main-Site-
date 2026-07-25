@@ -29,57 +29,52 @@ export default function SpotlightNavbar() {
     <>
       <header className="fixed top-0 left-0 right-0 h-20 bg-black/60 backdrop-blur-md border-b border-neutral-900 z-50 flex items-center justify-between px-6 md:px-12 select-none">
         
-        {/* Top Left: Logo */}
-        <Link href="/" className="flex items-center gap-3 cursor-pointer">
-          <img 
-            src="https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Parth%20logo%20bg%20.png" 
-            alt="Parth Logo" 
-            className="h-10 object-contain"
-            onError={(e) => {
-              // fallback if R2 file doesn't load
-              e.currentTarget.src = "/logo.png";
-            }}
-          />
-          <span className="text-xl font-bold tracking-tight text-white font-sans uppercase">
-            leam
-          </span>
-        </Link>
+        {/* Left Side: Navigation Links */}
+        <div className="flex items-center gap-8">
+          <Link href="/" className="text-sm font-bold tracking-widest text-white font-sans uppercase hover:text-accent transition-colors mr-4">
+            HOME
+          </Link>
+          
+          <nav className="hidden md:flex items-center gap-8">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link 
+                  key={item.label}
+                  href={item.href}
+                  className={`text-sm tracking-wider uppercase transition-colors duration-200 cursor-pointer ${
+                    isActive ? 'text-white font-semibold' : 'text-neutral-400 hover:text-white'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
 
-        {/* Center: Links */}
-        <nav className="hidden md:flex items-center gap-8">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link 
-                key={item.label}
-                href={item.href}
-                className={`text-sm tracking-wider uppercase transition-colors duration-200 cursor-pointer ${
-                  isActive ? 'text-white font-semibold' : 'text-neutral-400 hover:text-white'
-                }`}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+        {/* Right Side: Larger Logo & Mobile Menu Trigger */}
+        <div className="flex items-center gap-6">
+          {/* Bigger Logo in Top Right Corner */}
+          <Link href="/" className="cursor-pointer">
+            <img 
+              src="https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Parth%20logo%20bg%20.png" 
+              alt="Parth Logo" 
+              className="h-16 w-auto object-contain"
+              onError={(e) => {
+                e.currentTarget.src = "/logo.png";
+              }}
+            />
+          </Link>
 
-        {/* Top Right: Action Button */}
-        <a 
-          href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hidden md:block bg-white text-black font-semibold rounded-full px-6 py-2.5 text-xs tracking-wider uppercase transition-all duration-300 hover:bg-white/90 active:scale-95 cursor-pointer"
-        >
-          Get the App
-        </a>
-
-        {/* Mobile Hamburger menu */}
-        <button 
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="md:hidden flex items-center justify-center p-2 text-white cursor-pointer"
-        >
-          {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+          {/* Mobile Hamburger menu */}
+          <button 
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="md:hidden flex items-center justify-center p-2 text-white cursor-pointer"
+          >
+            {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </header>
 
       {/* Mobile Drawer */}

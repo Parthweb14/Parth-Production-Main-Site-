@@ -34,7 +34,7 @@ export default function Footer() {
             rel="noopener noreferrer" 
             className="text-xs font-semibold tracking-wider text-neutral-400 hover:text-white transition-colors uppercase"
           >
-            Leam Collective
+            Parth Collective
           </a>
           <p className="text-[11px] text-neutral-500 font-normal">
             © {currentYear} Parth Production. <br /> All Rights Reserved.

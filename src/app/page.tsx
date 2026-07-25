@@ -88,29 +88,50 @@ export default function HomePage() {
       tags: ['Weddings', 'Acoustic SPL'],
       title: 'Royal Weddings',
       subtitle: 'Premium Varmala Audio Rigs',
-      video: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Trim-1.mp4',
+      video: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/video1.mp4',
       description: 'Point-source speaker arrays tuned for outdoor laws. Features automatic feedback control algorithms.'
     },
     {
       tags: ['Concerts', 'Truss Rigs'],
       title: 'Stadium Concerts',
       subtitle: 'Heavy-Duty Aluminum Trussing',
-      video: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Trim-6.mp4',
+      video: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/video2.mp4',
       description: 'Wind-load certified structures holding up to 4 tons of sound cabinets and automated visual beams.'
     },
     {
       tags: ['Festivals', 'Power Sync'],
       title: 'Dandiya Arenas',
       subtitle: 'Wide Coverage Sound Fields',
-      video: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Trim-3-1.mp4',
+      video: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/video3.mp4',
       description: 'Parallel generator grids supplying 500kVA active backup nodes with zero phase delays.'
     },
     {
       tags: ['Corporate', 'LED Walls'],
       title: 'VIP Keynotes',
       subtitle: 'Ultra-Bright Daylight LED Walls',
-      video: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/download_2_sispkn.mp4',
+      video: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/video4.mp4',
       description: 'P2.5 modular screens running redundant fiber loop controllers to prevent data signal drops.'
+    },
+    {
+      tags: ['Road Shows', 'LED Screens'],
+      title: 'Mobile Portals',
+      subtitle: 'Truck-Mounted Visual Rigs',
+      video: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/video5.mp4',
+      description: 'Custom engineered truck setups carrying daylight LED displays and independent sound setups.'
+    },
+    {
+      tags: ['Special FX', 'Lasers'],
+      title: 'Pyrotechnics Arena',
+      subtitle: 'High-Intensity Strobe Gates',
+      video: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/video6.mp4',
+      description: 'DMX-programmed laser setups synchronized to sub-bass layers for EDM shows.'
+    },
+    {
+      tags: ['Elite Club', 'Acoustic Rigs'],
+      title: 'VIP Lounge Nights',
+      subtitle: 'Intimate Indoor Stage Audio',
+      video: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/video7.mp4',
+      description: 'Compact acoustic arrangements engineered for optimal reverberation control within closed structures.'
     }
   ];
 
