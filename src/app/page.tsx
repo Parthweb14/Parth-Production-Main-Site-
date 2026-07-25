@@ -40,6 +40,42 @@ export default function HomePage() {
   const [minTimeElapsed, setMinTimeElapsed] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Autoscroll effect for showcase
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    let animationFrameId: number;
+    let scrollSpeed = 0.5; // pixel movement per frame
+    let isHovered = false;
+
+    const handleMouseEnter = () => { isHovered = true; };
+    const handleMouseLeave = () => { isHovered = false; };
+
+    el.addEventListener('mouseenter', handleMouseEnter);
+    el.addEventListener('mouseleave', handleMouseLeave);
+
+    const scroll = () => {
+      if (!isHovered) {
+        el.scrollLeft += scrollSpeed;
+        if (el.scrollLeft >= el.scrollWidth - el.clientWidth - 2) {
+          el.scrollLeft = 0;
+        }
+      }
+      animationFrameId = requestAnimationFrame(scroll);
+    };
+
+    animationFrameId = requestAnimationFrame(scroll);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      el.removeEventListener('mouseenter', handleMouseEnter);
+      el.removeEventListener('mouseleave', handleMouseLeave);
+    };
+  }, []);
+
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ['start start', 'end end']
@@ -262,19 +298,17 @@ export default function HomePage() {
             <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white uppercase">SYSTEM DECKS</h2>
           </div>
 
-          <div className="flex gap-6 overflow-x-auto pb-8 scrollbar-none snap-x snap-mandatory max-w-7xl mx-auto w-full px-2">
+          <div 
+            ref={scrollRef} 
+            className="flex gap-6 overflow-x-auto pb-8 scrollbar-none snap-x snap-mandatory max-w-7xl mx-auto w-full px-2"
+          >
             {mockups.map((mock, idx) => {
-              const isActiveCard = idx === 0;
               return (
                 <motion.div
                   key={idx}
-                  whileHover={{ scale: 1.02 }}
+                  whileHover={{ scale: 1.01 }}
                   transition={{ duration: 0.3, ease: 'easeOut' }}
-                  className={`w-[300px] sm:w-[360px] flex-shrink-0 snap-start rounded-[2rem] border p-6 flex flex-col justify-between shadow-2xl relative group overflow-hidden transition-colors duration-300 ${
-                    isActiveCard 
-                      ? 'bg-accent text-black border-accent' 
-                      : 'bg-secondary/40 text-white border-gray-850'
-                  }`}
+                  className="w-[calc(50%-12px)] md:w-[calc(33.333%-16px)] flex-shrink-0 snap-start rounded-[2rem] border p-6 flex flex-col justify-between shadow-2xl relative group overflow-hidden transition-colors duration-300 bg-secondary/30 text-white border-neutral-850 hover:border-neutral-750"
                 >
                   {/* Top: Tags, Title, Subtitle */}
                   <div className="space-y-4 mb-6">
@@ -282,28 +316,22 @@ export default function HomePage() {
                       {mock.tags.map((tag, tIdx) => (
                         <span 
                           key={tIdx} 
-                          className={`px-3 py-1 rounded-full border text-[9px] font-bold uppercase tracking-widest ${
-                            isActiveCard 
-                              ? 'border-black/30 text-neutral-800' 
-                              : 'border-gray-800 text-gray-400'
-                          }`}
+                          className="px-3 py-1 rounded-full border border-neutral-800 text-[9px] font-bold uppercase tracking-widest text-neutral-450 bg-neutral-900/40"
                         >
                           {tag}
                         </span>
                       ))}
                     </div>
-                    <h3 className="text-2xl font-bold tracking-tight uppercase">
+                    <h3 className="text-xl sm:text-2xl font-bold tracking-tight uppercase">
                       {mock.title}
                     </h3>
-                    <p className={`text-xs font-semibold leading-relaxed ${
-                      isActiveCard ? 'text-neutral-800' : 'text-gray-400'
-                    }`}>
+                    <p className="text-xs font-semibold leading-relaxed text-neutral-400">
                       {mock.subtitle}
                     </p>
                   </div>
 
-                  {/* Middle: Video Cover */}
-                  <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-black border border-black/10">
+                  {/* Middle: Video Cover in vertical 9:16 format */}
+                  <div className="relative w-full aspect-[9/16] rounded-2xl overflow-hidden bg-black border border-black/10">
                     <video 
                       src={mock.video} 
                       autoPlay 
@@ -311,22 +339,16 @@ export default function HomePage() {
                       loop 
                       playsInline 
                       preload="auto"
-                      className="w-full h-full object-cover filter brightness-[0.85] group-hover:scale-102 transition-transform duration-500" 
+                      className="w-full h-full object-cover filter brightness-[0.9] group-hover:scale-101 transition-transform duration-500" 
                     />
                   </div>
 
                   {/* Bottom: Description underneath the video */}
-                  <div className={`mt-6 space-y-3 pt-4 border-t ${
-                    isActiveCard ? 'border-black/15' : 'border-gray-850'
-                  }`}>
-                    <p className={`text-xs leading-relaxed font-medium ${
-                      isActiveCard ? 'text-neutral-900' : 'text-gray-400'
-                    }`}>
+                  <div className="mt-6 space-y-3 pt-4 border-t border-neutral-850">
+                    <p className="text-xs leading-relaxed font-light text-neutral-400">
                       {mock.description}
                     </p>
-                    <div className={`flex justify-between items-center text-[10px] uppercase font-bold tracking-wider cursor-pointer group-hover:translate-x-1 transition-transform ${
-                      isActiveCard ? 'text-black' : 'text-accent'
-                    }`}>
+                    <div className="flex justify-between items-center text-[10px] uppercase font-bold tracking-wider cursor-pointer group-hover:translate-x-1 transition-transform text-accent">
                       <span>Explore Configuration</span>
                       <span>→</span>
                     </div>
