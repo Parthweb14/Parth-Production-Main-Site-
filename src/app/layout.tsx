@@ -34,6 +34,7 @@ export const metadata: Metadata = {
 };
 
 import { AuthProvider } from '@/context/AuthContext';
+import VisualFeedbackWidget from '@/components/VisualFeedbackWidget';
 
 export default function RootLayout({
   children,
@@ -49,6 +50,7 @@ export default function RootLayout({
       <body className="min-h-full bg-black text-white flex flex-col font-sans select-none overflow-x-hidden">
         <AuthProvider>
           {children}
+          <VisualFeedbackWidget />
         </AuthProvider>
         <Script 
           src="https://unpkg.com/@lottiefiles/lottie-player@2.0.4/dist/lottie-player.js" 
