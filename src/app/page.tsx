@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { Shield, Video, Users, Clock, Star, Landmark } from 'lucide-react';
+import { Shield, Video, Users, Clock, Star, Landmark, Play, ArrowRight } from 'lucide-react';
 import PageLoader from '@/components/PageLoader';
 import SpotlightNavbar from '@/components/SpotlightNavbar';
 import Footer from '@/components/Footer';
@@ -167,27 +167,59 @@ export default function HomePage() {
             <div className="absolute inset-0 bg-black/30 bg-gradient-to-t from-black via-transparent to-black" />
           </motion.div>
 
-          {/* Staggered text content */}
+          {/* Staggered text content in Vetra style */}
           <motion.div 
             initial="hidden"
             animate="visible"
             variants={containerVariants}
-            className="relative z-10 text-center max-w-4xl px-6 flex flex-col items-center"
+            className="relative z-10 text-center max-w-4xl px-6 flex flex-col items-center select-none"
           >
+            {/* Top Pill Notification */}
+            <motion.div
+              variants={itemVariants}
+              className="inline-flex items-center gap-2 bg-[#1c1c1e] border border-neutral-800 rounded-full px-4 py-1.5 text-xs text-neutral-300 font-medium mb-8 hover:border-neutral-700 transition duration-300 cursor-pointer"
+            >
+              <span>✨ Engineering Sound & Light Matrices</span>
+              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-accent text-black font-bold">
+                <ArrowRight className="w-3 h-3" />
+              </span>
+            </motion.div>
+
+            {/* Main Heading */}
             <motion.h1 
               variants={itemVariants}
-              className="text-5xl md:text-8xl font-bold tracking-tight text-white leading-none mt-20"
+              className="text-4xl sm:text-7xl font-bold tracking-tight text-white leading-[1.1] max-w-3xl"
             >
-              Create your <br />
-              <span className="text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]">Universe✨</span>
+              Accelerate Your <br className="hidden sm:inline" />
+              <span className="text-white">Production With Us</span>
             </motion.h1>
             
+            {/* Subtitle */}
             <motion.p 
               variants={itemVariants}
-              className="text-gray-300 max-w-xl mt-8 text-md sm:text-lg leading-relaxed font-light"
+              className="text-neutral-400 max-w-xl mt-6 text-sm sm:text-base leading-relaxed font-light"
             >
-              A Universe is a series of live rooms and a community chat safeguarded with anything you&apos;d like: tickets, subscriptions, NFTs, merch or literally anything else ∞
+              High-intensity sound systems, heavy-duty staging truss rigs, and daylight LED screens engineered across India to amplify your impact.
             </motion.p>
+
+            {/* Action Buttons */}
+            <motion.div
+              variants={itemVariants}
+              className="flex flex-col sm:flex-row items-center gap-4 mt-10 w-full sm:w-auto"
+            >
+              <a
+                href="#showcase"
+                className="w-full sm:w-auto px-6 py-3 rounded-full border border-neutral-800 bg-[#0e0e10]/60 hover:bg-[#161618] hover:border-neutral-700 text-white transition flex items-center justify-center gap-2.5 text-xs font-bold uppercase tracking-wider"
+              >
+                <Play className="w-3.5 h-3.5 text-accent fill-accent" /> Watch Showreel
+              </a>
+              <a
+                href="/contact"
+                className="w-full sm:w-auto px-6 py-3 rounded-full bg-accent text-black font-bold text-xs uppercase tracking-wider hover:bg-accent/90 transition shadow-lg shadow-accent/15 flex items-center justify-center"
+              >
+                Get Started For Free
+              </a>
+            </motion.div>
           </motion.div>
         </section>
 
@@ -224,7 +256,7 @@ export default function HomePage() {
         </section>
 
         {/* 3. SHOWCASE EXHIBIT */}
-        <section className="relative px-8 py-20 border-t border-gray-800/40 w-full overflow-hidden">
+        <section id="showcase" className="relative px-8 py-20 border-t border-gray-800/40 w-full overflow-hidden">
           <div className="max-w-7xl mx-auto mb-16 text-center">
             <span className="text-[10px] uppercase tracking-widest text-accent font-bold block mb-3">// Production Portfolios</span>
             <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white uppercase">SYSTEM DECKS</h2>

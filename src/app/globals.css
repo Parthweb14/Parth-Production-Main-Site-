@@ -4,7 +4,7 @@
   --font-sans: 'Inter', system-ui, sans-serif;
   --color-primary: #000000;
   --color-secondary: #111111;
-  --color-accent: #FFD700;
+  --color-accent: #FF5F1F;
   --color-gray-100: #FFFFFF;
   --color-gray-300: #A1A1A1;
   --color-gray-400: #737373;
@@ -75,7 +75,7 @@ body {
 
 /* Selection */
 ::selection {
-  background: rgba(255, 215, 0, 0.2);
+  background: rgba(255, 95, 31, 0.2);
   color: #FFFFFF;
 }
 
