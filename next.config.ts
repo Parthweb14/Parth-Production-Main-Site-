@@ -1,6 +1,13 @@
 import type { NextConfig } from "next";
 
-const r2PublicUrl = process.env.R2_PUBLIC_URL || 'https://assets.kadamproduction.in';
+const r2PublicUrl = process.env.R2_PUBLIC_URL || 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev';
+
+let r2Hostname = 'pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev';
+try {
+  r2Hostname = new URL(r2PublicUrl).hostname;
+} catch {
+  // fallback
+}
 
 const nextConfig: NextConfig = {
   images: {
@@ -9,6 +16,14 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'assets.kadamproduction.in',
       },
+      {
+        protocol: 'https',
+        hostname: 'pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev',
+      },
+      {
+        protocol: 'https',
+        hostname: r2Hostname,
+      }
     ],
     minimumCacheTTL: 31536000,
     formats: ['image/webp', 'image/avif'],
