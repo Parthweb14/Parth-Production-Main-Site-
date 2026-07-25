@@ -161,10 +161,10 @@ export default function HomePage() {
               playsInline
               preload="auto"
               onLoadedData={() => setVideoLoaded(true)}
-              className="w-full h-full object-cover brightness-[0.4]"
+              className="w-full h-full object-cover brightness-[0.7]"
             />
             {/* Dark overlay */}
-            <div className="absolute inset-0 bg-black/60 bg-gradient-to-t from-black via-transparent to-black" />
+            <div className="absolute inset-0 bg-black/30 bg-gradient-to-t from-black via-transparent to-black" />
           </motion.div>
 
           {/* Staggered text content */}

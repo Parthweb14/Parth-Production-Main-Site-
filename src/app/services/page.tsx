@@ -20,7 +20,7 @@ const servicesData = [
       'High-Definition sound systems',
       'SFX Sparklers & Dry-Ice Low Fog'
     ],
-    image: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-15_bdfxt9.png',
+    image: 'https://assets.parthproduction.in/Image%206%20Weddings.png',
   },
   {
     id: 2,
@@ -33,7 +33,7 @@ const servicesData = [
       'Digital Audio Mixers',
       'Heavy Duty Truss frames'
     ],
-    image: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-20_sm7myc.png',
+    image: 'https://assets.parthproduction.in/Image%201%20Concert%20.png',
   },
   {
     id: 3,
@@ -46,7 +46,7 @@ const servicesData = [
       'Strobe & Laser sky projection',
       'High voltage generator backups'
     ],
-    image: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-32_atcfrs.png',
+    image: 'https://assets.parthproduction.in/Image%203%20Festivals.png',
   },
   {
     id: 4,
@@ -59,7 +59,7 @@ const servicesData = [
       'Silent Generators setup',
       'Corporate Podium & Stage layout'
     ],
-    image: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-17_ubz6ho.png',
+    image: 'https://assets.parthproduction.in/Image%202%20Corporate%20events.png',
   },
   {
     id: 5,
@@ -72,7 +72,7 @@ const servicesData = [
       'Ultra bright daylight LED walls',
       'Mobile power generators fleet'
     ],
-    image: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-13.png',
+    image: 'https://assets.parthproduction.in/Image%204%20Road%20show.png',
   }
 ];
 
