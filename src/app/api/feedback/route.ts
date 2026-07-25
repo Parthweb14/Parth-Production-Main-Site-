@@ -1,45 +1,28 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { requireAdmin, safeErrorMessage } from '@/utils/auth';
 
+// Feedback is admin-only; filesystem writes are unreliable on serverless.
 export async function POST(request: Request) {
+  const auth = await requireAdmin(request);
+  if (!auth.ok) return auth.response;
+
   try {
     const body = await request.json();
-    const feedbackPath = path.join(process.cwd(), 'agent_feedback.json');
-    
-    let existing = [];
-    if (fs.existsSync(feedbackPath)) {
-      try {
-        existing = JSON.parse(fs.readFileSync(feedbackPath, 'utf8'));
-      } catch {
-        existing = [];
-      }
-    }
-    
-    existing.push({
-      timestamp: new Date().toISOString(),
-      page: body.page || '/',
-      notes: body.notes || '',
-      rating: body.rating || 5
+    console.info('Admin feedback received', {
+      page: typeof body?.page === 'string' ? body.page.slice(0, 200) : '/',
+      notes: typeof body?.notes === 'string' ? body.notes.slice(0, 2000) : '',
+      rating: typeof body?.rating === 'number' ? body.rating : null,
     });
-    
-    fs.writeFileSync(feedbackPath, JSON.stringify(existing, null, 2), 'utf8');
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: safeErrorMessage(err) }, { status: 500 });
   }
 }
 
-export async function GET() {
-  try {
-    const feedbackPath = path.join(process.cwd(), 'agent_feedback.json');
-    if (!fs.existsSync(feedbackPath)) {
-      return NextResponse.json({ feedback: [] });
-    }
-    const data = JSON.parse(fs.readFileSync(feedbackPath, 'utf8'));
-    return NextResponse.json({ feedback: data });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
-  }
+export async function GET(request: Request) {
+  const auth = await requireAdmin(request);
+  if (!auth.ok) return auth.response;
+  return NextResponse.json({ feedback: [] });
 }
+
 export const dynamic = 'force-dynamic';

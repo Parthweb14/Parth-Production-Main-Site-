@@ -1,35 +1,52 @@
 import { NextResponse } from 'next/server';
 import { vercelDb } from '@/utils/vercelDb';
+import {
+  ADMIN_COOKIE,
+  createSessionToken,
+  hashPassword,
+  isHashedPassword,
+  safeErrorMessage,
+  sessionCookieOptions,
+  verifyPassword,
+} from '@/utils/auth';
 
 export async function POST(request: Request) {
   try {
     const { email, password } = await request.json();
-    const credentials = await vercelDb.getCredentials();
-
-    // Match username OR default email, and password
-    const isUserMatch = email === credentials.username || email === 'parthproductionweb@gmail.com' || email === 'admin';
-    const isPassMatch = password === credentials.passwordHash;
-
-    if (isUserMatch && isPassMatch) {
-      // Create a 24-hour expiration token
-      const payload = {
-        username: credentials.username,
-        exp: Date.now() + 24 * 60 * 60 * 1000
-      };
-      const token = Buffer.from(JSON.stringify(payload)).toString('base64');
-      
-      return NextResponse.json({ 
-        success: true, 
-        token, 
-        user: { 
-          id: 'admin-id-1', 
-          email: 'parthproductionweb@gmail.com' 
-        } 
-      });
+    if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
+      return NextResponse.json({ error: 'Invalid login credentials.' }, { status: 401 });
     }
 
-    return NextResponse.json({ error: 'Invalid login credentials.' }, { status: 401 });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    const credentials = await vercelDb.getCredentials();
+    const isUserMatch =
+      email === credentials.username ||
+      email === 'parthproductionweb@gmail.com' ||
+      email === 'admin';
+
+    if (!isUserMatch || !verifyPassword(password, credentials.passwordHash)) {
+      return NextResponse.json({ error: 'Invalid login credentials.' }, { status: 401 });
+    }
+
+    // Migrate legacy plaintext passwords to scrypt on successful login
+    if (!isHashedPassword(credentials.passwordHash)) {
+      credentials.passwordHash = hashPassword(password);
+      await vercelDb.setCredentials(credentials);
+    }
+
+    const token = await createSessionToken(credentials.username);
+    const response = NextResponse.json({
+      success: true,
+      user: {
+        id: 'admin-id-1',
+        email: 'parthproductionweb@gmail.com',
+      },
+    });
+    response.cookies.set(ADMIN_COOKIE, token, sessionCookieOptions());
+    return response;
+  } catch (err: unknown) {
+    console.error('Login error:', err);
+    return NextResponse.json({ error: safeErrorMessage(err, 'Login failed.') }, { status: 500 });
   }
 }
+
+export const dynamic = 'force-dynamic';

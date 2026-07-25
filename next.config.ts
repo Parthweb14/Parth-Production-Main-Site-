@@ -14,6 +14,10 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
+        hostname: 'assets.parthproduction.in',
+      },
+      {
+        protocol: 'https',
         hostname: 'assets.kadamproduction.in',
       },
       {
@@ -23,10 +27,23 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: r2Hostname,
-      }
+      },
     ],
     minimumCacheTTL: 31536000,
     formats: ['image/webp', 'image/avif'],
+  },
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+        ],
+      },
+    ];
   },
   async rewrites() {
     return [

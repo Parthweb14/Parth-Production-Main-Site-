@@ -1,9 +1,24 @@
 const { createClient } = require('@libsql/client');
+const { createHash, randomBytes, scryptSync } = require('crypto');
 
-const url = 'libsql://parth-production-parthproduction.aws-ap-south-1.turso.io';
-const authToken = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3ODQ5OTcxMDMsImlkIjoiMDE5ZjlhMWMtYTIwMS03ODZjLTlhZDQtMmE1MzI4MTdiOGZmIiwia2lkIjoiZ3o4N0gzWFRka1J3dlk5QjhTTWZtQ0xXWHpPWG1rc0NHNXIxcnBjVVBESSIsInJpZCI6ImI4NzFjOWIzLWQxY2EtNDE3Mi05MmFmLTAzYjUzODI4OTU0YyJ9.2h8uYyEm885ndqngVZ1VHRJbI8axh-1YJO5lhr9O2VspeJk15n0Kya0pq40ct8unJBp_RdhX-nL2AJfY_zTrAA';
+const url = process.env.TURSO_DATABASE_URL;
+const authToken = process.env.TURSO_AUTH_TOKEN;
+if (!url || !authToken) {
+  console.error('Set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN');
+  process.exit(1);
+}
 
 const client = createClient({ url, authToken });
+
+function hashPassword(password) {
+  const salt = randomBytes(16).toString('hex');
+  const hash = scryptSync(password, salt, 64).toString('hex');
+  return `scrypt$${salt}$${hash}`;
+}
+
+function hashRecoveryKey(key) {
+  return createHash('sha256').update(key.trim().toLowerCase()).digest('hex');
+}
 
 const DEFAULT_SETTINGS = {
   email: 'parthproductionweb@gmail.com',
@@ -12,13 +27,19 @@ const DEFAULT_SETTINGS = {
   address: 'Gaurav Path Road, Palanpur, Surat, Gujarat'
 };
 
+const bootstrapPassword = process.env.ADMIN_BOOTSTRAP_PASSWORD;
+const recovery = process.env.ADMIN_RECOVERY_KEY;
+if (!bootstrapPassword) {
+  console.error('Set ADMIN_BOOTSTRAP_PASSWORD to seed admin credentials');
+  process.exit(1);
+}
+
 const DEFAULT_CREDENTIALS = {
-  username: 'admin',
-  passwordHash: 'meet@_999',
+  username: process.env.ADMIN_BOOTSTRAP_USERNAME || 'admin',
+  passwordHash: hashPassword(bootstrapPassword),
   resetCount: 0,
-  recoveryKey: 'PARTH-777-RESET',
-  resetPeriodStart: null,
-  recoveryKeys: ['PARTH-777-RESET', 'PARTH-PRODUCTION-RECOVER-99', 'PARTH-SECURE-ADMIN-77']
+  recoveryKeyHash: recovery ? hashRecoveryKey(recovery) : undefined,
+  resetPeriodStart: null
 };
 
 const DEFAULT_IMAGES = [
@@ -65,7 +86,7 @@ const DEFAULT_VIBRANTS = [
 async function main() {
   console.log('Connecting to Turso...');
   await client.execute('CREATE TABLE IF NOT EXISTS site_kv (key TEXT PRIMARY KEY, value TEXT)');
-  
+
   const data = [
     { key: 'settings', value: DEFAULT_SETTINGS },
     { key: 'credentials', value: DEFAULT_CREDENTIALS },

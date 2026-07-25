@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Check } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import SpotlightNavbar from '@/components/SpotlightNavbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/context/AuthContext';
@@ -139,16 +139,14 @@ export default function ServicesPage() {
 
       <div className="relative min-h-screen bg-black text-white select-none overflow-x-hidden pb-20 pt-20">
         
-        {/* HERO BANNER */}
-        <section className="relative min-h-[30vh] border-b border-gray-800/40 px-6 md:px-12 py-12 flex flex-col justify-center">
+        <section className="relative border-b border-white/10 px-6 md:px-12 py-14 md:py-20">
           <div className="max-w-7xl mx-auto w-full space-y-4">
-            <span className="text-[10px] uppercase tracking-widest text-accent font-bold block mb-2">// Operations & blueprints</span>
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white leading-none">
-              PRODUCTION & <br />
-              <span className="text-accent drop-shadow-[0_0_15px_rgba(255,95,31,0.15)]">SERVICES</span>
+            <p className="text-xs uppercase tracking-[0.2em] text-accent">Services</p>
+            <h1 className="font-display text-4xl md:text-6xl tracking-tight text-white leading-[0.95] max-w-3xl">
+              Production systems for every stage
             </h1>
-            <p className="text-gray-400 text-sm leading-relaxed max-w-lg">
-              Check out our complete setup blueprints for sound riggings, stage truss setups, and generator power routing.
+            <p className="text-white/55 text-sm md:text-base leading-relaxed max-w-lg">
+              Sound, lighting, staging, and power packages for weddings, festivals, concerts, and road shows.
             </p>
           </div>
         </section>
@@ -168,25 +166,23 @@ export default function ServicesPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: idx * 0.08 }}
-                  className={`flex flex-col justify-between p-6 bg-secondary/10 border border-neutral-850 hover:border-neutral-750 rounded-[2rem] transition-all duration-300 group ${
+                  className={`flex flex-col justify-between group ${
                     isPortrait 
                       ? 'w-full sm:w-[calc(50%-16px)] lg:w-[calc(33.333%-22px)]' 
                       : 'w-full lg:w-[calc(66.666%-12px)]'
                   }`}
                 >
-                  {/* 1. Heading & 2. Subheading */}
-                  <div className="mb-6 space-y-2">
-                    <h3 className="text-2xl font-bold text-white uppercase tracking-tight leading-tight">
+                  <div className="mb-4 space-y-1">
+                    <h3 className="font-display text-2xl text-white tracking-tight leading-tight">
                       {service.title}
                     </h3>
-                    <p className="text-[10px] uppercase tracking-widest text-accent font-semibold">
+                    <p className="text-xs uppercase tracking-[0.16em] text-accent">
                       {service.subtitle}
                     </p>
                   </div>
 
-                  {/* 3. Images Box with heavy rounded corners & overlay */}
                   <div 
-                    className={`relative w-full rounded-[24px] overflow-hidden border border-white/10 group shadow-xl bg-black/60 transition-transform duration-300 hover:scale-[1.02] ${
+                    className={`relative w-full overflow-hidden border border-white/10 bg-black/60 ${
                       isPortrait ? 'aspect-[3/4]' : 'aspect-[16/9]'
                     }`}
                   >
@@ -222,7 +218,7 @@ export default function ServicesPage() {
                       href={whatsappUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full py-3.5 bg-accent text-black hover:bg-accent/90 rounded-full text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-2 cursor-pointer transition-all duration-300 text-center shadow-lg active:scale-98"
+                      className="w-full py-3.5 bg-accent text-black hover:bg-accent/90 text-xs font-semibold tracking-wider uppercase flex items-center justify-center gap-2 transition-colors"
                     >
                       Book Now
                       <ArrowRight className="w-4 h-4 text-black" />

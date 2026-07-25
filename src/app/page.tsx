@@ -2,174 +2,71 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { Shield, Video, Users, Clock, Star, Landmark, Play, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 import PageLoader from '@/components/PageLoader';
 import SpotlightNavbar from '@/components/SpotlightNavbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/context/AuthContext';
-import Image from 'next/image';
 
-// Framer Motion specifications
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2
-    }
-  }
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.6,
-      ease: [0.22, 1, 0.36, 1] as const
-    }
-  }
-};
+const reel = [
+  { title: 'Weddings', video: 'https://assets.parthproduction.in/Video%201%20.mp4' },
+  { title: 'Concerts', video: 'https://assets.parthproduction.in/Video%202%20.mp4' },
+  { title: 'Festivals', video: 'https://assets.parthproduction.in/Video%203.mp4' },
+  { title: 'Corporate', video: 'https://assets.parthproduction.in/Video%204.mp4' },
+  { title: 'Road Shows', video: 'https://assets.parthproduction.in/Video%205.mp4' },
+  { title: 'SFX', video: 'https://assets.parthproduction.in/Video%206.mp4' },
+  { title: 'VIP Nights', video: 'https://assets.parthproduction.in/Video%207.mp4' },
+];
 
 export default function HomePage() {
   const { siteSettings } = useAuth();
   const [loadingComplete, setLoadingComplete] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [minTimeElapsed, setMinTimeElapsed] = useState(false);
-
-  const containerRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  // Autoscroll effect for showcase
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    let animationFrameId: number;
-    let scrollSpeed = 0.5; // pixel movement per frame
-    let isHovered = false;
-
-    const handleMouseEnter = () => { isHovered = true; };
-    const handleMouseLeave = () => { isHovered = false; };
-
-    el.addEventListener('mouseenter', handleMouseEnter);
-    el.addEventListener('mouseleave', handleMouseLeave);
-
-    const scroll = () => {
-      if (!isHovered) {
-        el.scrollLeft += scrollSpeed;
-        if (el.scrollLeft >= el.scrollWidth - el.clientWidth - 2) {
-          el.scrollLeft = 0;
-        }
-      }
-      animationFrameId = requestAnimationFrame(scroll);
-    };
-
-    animationFrameId = requestAnimationFrame(scroll);
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      el.removeEventListener('mouseenter', handleMouseEnter);
-      el.removeEventListener('mouseleave', handleMouseLeave);
-    };
-  }, []);
+  const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
 
   const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ['start start', 'end end']
+    target: heroRef,
+    offset: ['start start', 'end start'],
   });
-
-  const backgroundY = useTransform(scrollYProgress, [0, 1], ['0%', '20%']);
-
-  const isReady = videoLoaded && minTimeElapsed;
+  const backgroundY = useTransform(scrollYProgress, [0, 1], ['0%', '12%']);
 
   useEffect(() => {
-    const minTimer = setTimeout(() => setMinTimeElapsed(true), 3000);
-    const fallbackTimer = setTimeout(() => setVideoLoaded(true), 6000);
+    const minTimer = setTimeout(() => setMinTimeElapsed(true), 1800);
+    const fallbackTimer = setTimeout(() => setVideoLoaded(true), 5000);
     return () => {
       clearTimeout(minTimer);
       clearTimeout(fallbackTimer);
     };
   }, []);
 
-  // Features dataset
-  const features = [
-    {
-      icon: Shield,
-      title: 'Set your rules',
-      description: 'Free for all, tickets, NFTs, subscriptions, custom rules'
-    },
-    {
-      icon: Video,
-      title: 'Host rooms',
-      description: 'Right now, every week, or at random'
-    },
-    {
-      icon: Users,
-      title: 'Share the stage',
-      description: 'Invite guests in advance or right on the spot'
-    },
-    {
-      icon: Clock,
-      title: 'Keep it going',
-      description: 'Hang out in the chat during, before, and after live streams'
-    }
-  ];
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    let frame = 0;
+    let paused = false;
+    const onEnter = () => { paused = true; };
+    const onLeave = () => { paused = false; };
+    el.addEventListener('mouseenter', onEnter);
+    el.addEventListener('mouseleave', onLeave);
+    const tick = () => {
+      if (!paused) {
+        el.scrollLeft += 0.45;
+        if (el.scrollLeft >= el.scrollWidth - el.clientWidth - 2) el.scrollLeft = 0;
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(frame);
+      el.removeEventListener('mouseenter', onEnter);
+      el.removeEventListener('mouseleave', onLeave);
+    };
+  }, []);
 
-  // Mobile Showcase mockups dataset
-  const mockups = [
-    {
-      tags: ['Weddings', 'Acoustic SPL'],
-      title: 'Royal Weddings',
-      subtitle: 'Premium Varmala Audio Rigs',
-      video: 'https://assets.parthproduction.in/Video%201%20.mp4',
-      description: 'Point-source speaker arrays tuned for outdoor laws. Features automatic feedback control algorithms.'
-    },
-    {
-      tags: ['Concerts', 'Truss Rigs'],
-      title: 'Stadium Concerts',
-      subtitle: 'Heavy-Duty Aluminum Trussing',
-      video: 'https://assets.parthproduction.in/Video%202%20.mp4',
-      description: 'Wind-load certified structures holding up to 4 tons of sound cabinets and automated visual beams.'
-    },
-    {
-      tags: ['Festivals', 'Power Sync'],
-      title: 'Dandiya Arenas',
-      subtitle: 'Wide Coverage Sound Fields',
-      video: 'https://assets.parthproduction.in/Video%203.mp4',
-      description: 'Parallel generator grids supplying 500kVA active backup nodes with zero phase delays.'
-    },
-    {
-      tags: ['Corporate', 'LED Walls'],
-      title: 'VIP Keynotes',
-      subtitle: 'Ultra-Bright Daylight LED Walls',
-      video: 'https://assets.parthproduction.in/Video%204.mp4',
-      description: 'P2.5 modular screens running redundant fiber loop controllers to prevent data signal drops.'
-    },
-    {
-      tags: ['Road Shows', 'LED Screens'],
-      title: 'Mobile Portals',
-      subtitle: 'Truck-Mounted Visual Rigs',
-      video: 'https://assets.parthproduction.in/Video%205.mp4',
-      description: 'Custom engineered truck setups carrying daylight LED displays and independent sound setups.'
-    },
-    {
-      tags: ['Special FX', 'Lasers'],
-      title: 'Pyrotechnics Arena',
-      subtitle: 'High-Intensity Strobe Gates',
-      video: 'https://assets.parthproduction.in/Video%206.mp4',
-      description: 'DMX-programmed laser setups synchronized to sub-bass layers for EDM shows.'
-    },
-    {
-      tags: ['Elite Club', 'Acoustic Rigs'],
-      title: 'VIP Lounge Nights',
-      subtitle: 'Intimate Indoor Stage Audio',
-      video: 'https://assets.parthproduction.in/Video%207.mp4',
-      description: 'Compact acoustic arrangements engineered for optimal reverberation control within closed structures.'
-    }
-  ];
+  const isReady = videoLoaded && minTimeElapsed;
 
   return (
     <>
@@ -180,15 +77,10 @@ export default function HomePage() {
       <div className="film-grain" />
       <SpotlightNavbar />
 
-      <div ref={containerRef} className="relative min-h-screen bg-black text-white font-sans overflow-x-hidden selection:bg-accent/20 select-none">
-        
-        {/* 1. HERO SECTION */}
-        <section className="relative h-screen flex flex-col justify-center items-center overflow-hidden">
-          {/* Autoplay R2 Video Background */}
-          <motion.div 
-            style={{ y: backgroundY }}
-            className="absolute inset-0 w-full h-full select-none pointer-events-none"
-          >
+      <main className="relative min-h-screen bg-black text-white overflow-x-hidden">
+        {/* Hero — brand + one line + one CTA + full-bleed video */}
+        <section ref={heroRef} className="relative h-[100svh] min-h-[560px] flex items-end md:items-center overflow-hidden">
+          <motion.div style={{ y: backgroundY }} className="absolute inset-0 pointer-events-none">
             <video
               src="https://assets.parthproduction.in/Hero%20Background%20video%20-%20Trim.mp4"
               autoPlay
@@ -197,304 +89,123 @@ export default function HomePage() {
               playsInline
               preload="auto"
               onLoadedData={() => setVideoLoaded(true)}
-              className="w-full h-full object-cover brightness-[0.7]"
+              className="w-full h-full object-cover brightness-[0.72]"
             />
-            {/* Dark overlay */}
-            <div className="absolute inset-0 bg-black/30 bg-gradient-to-t from-black via-transparent to-black" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/35 to-black/50" />
           </motion.div>
 
-          {/* Staggered text content in Vetra style */}
-          <motion.div 
-            initial="hidden"
-            animate="visible"
-            variants={containerVariants}
-            className="relative z-10 text-center max-w-4xl px-6 flex flex-col items-center select-none"
-          >
-            {/* Top Pill Notification */}
-            <motion.div
-              variants={itemVariants}
-              className="inline-flex items-center gap-2 bg-[#1c1c1e] border border-neutral-800 rounded-full px-4 py-1.5 text-xs text-neutral-300 font-medium mb-8 hover:border-neutral-700 transition duration-300 cursor-pointer"
+          <div className="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-12 pb-16 md:pb-0 pt-28">
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              className="font-display text-[clamp(2.75rem,8vw,6.5rem)] leading-[0.92] tracking-[-0.03em] text-white max-w-5xl"
             >
-              <span>✨ Engineering Sound & Light Matrices</span>
-              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-accent text-black font-bold">
-                <ArrowRight className="w-3 h-3" />
-              </span>
-            </motion.div>
-
-            {/* Main Heading */}
-            <motion.h1 
-              variants={itemVariants}
-              className="text-4xl sm:text-7xl font-bold tracking-tight text-white leading-[1.1] max-w-3xl"
-            >
-              Accelerate Your <br className="hidden sm:inline" />
-              <span className="text-white">Production With Us</span>
-            </motion.h1>
-            
-            {/* Subtitle */}
-            <motion.p 
-              variants={itemVariants}
-              className="text-neutral-400 max-w-xl mt-6 text-sm sm:text-base leading-relaxed font-light"
-            >
-              High-intensity sound systems, heavy-duty staging truss rigs, and daylight LED screens engineered across India to amplify your impact.
+              Parth Production
             </motion.p>
-
-            {/* Action Buttons */}
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15, duration: 0.65 }}
+              className="mt-5 max-w-xl text-base md:text-lg text-white/70 font-light leading-relaxed"
+            >
+              Sound, light, and stage systems built for weddings, festivals, and live shows across India.
+            </motion.p>
             <motion.div
-              variants={itemVariants}
-              className="flex flex-col sm:flex-row items-center gap-4 mt-10 w-full sm:w-auto"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.28, duration: 0.6 }}
+              className="mt-9"
             >
               <a
-                href="#showcase"
-                className="w-full sm:w-auto px-6 py-3 rounded-full border border-neutral-800 bg-[#0e0e10]/60 hover:bg-[#161618] hover:border-neutral-700 text-white transition flex items-center justify-center gap-2.5 text-xs font-bold uppercase tracking-wider"
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center px-8 py-3.5 bg-accent text-black text-sm font-semibold tracking-wide uppercase hover:bg-accent/90 transition-colors"
               >
-                <Play className="w-3.5 h-3.5 text-accent fill-accent" /> Watch Showreel
-              </a>
-              <a
-                href="/contact"
-                className="w-full sm:w-auto px-6 py-3 rounded-full bg-accent text-black font-bold text-xs uppercase tracking-wider hover:bg-accent/90 transition shadow-lg shadow-accent/15 flex items-center justify-center"
-              >
-                Get Started For Free
+                Book a production
               </a>
             </motion.div>
-          </motion.div>
-        </section>
-
-        {/* 2. FEATURES GRID */}
-        <section className="relative px-8 py-24 max-w-7xl mx-auto w-full border-t border-gray-800/40">
-          <motion.div 
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-100px' }}
-            variants={containerVariants}
-            className="grid grid-cols-1 md:grid-cols-4 gap-8"
-          >
-            {features.map((feat, idx) => {
-              const Icon = feat.icon;
-              return (
-                <motion.div 
-                  key={idx}
-                  variants={itemVariants}
-                  className="flex flex-col items-start text-left p-6 rounded-2xl bg-secondary/20 border border-gray-800/30 hover:border-gray-850 hover:bg-secondary/40 transition-all duration-300"
-                >
-                  <div className="w-12 h-12 rounded-xl bg-gray-800/30 border border-gray-800/60 flex items-center justify-center text-accent mb-6 shadow-md shadow-accent/5">
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <h3 className="font-semibold text-lg text-white tracking-wide">
-                    {feat.title}
-                  </h3>
-                  <p className="text-gray-400 text-sm mt-3 leading-relaxed">
-                    {feat.description}
-                  </p>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-        </section>
-
-        {/* 3. SHOWCASE EXHIBIT */}
-        <section id="showcase" className="relative px-8 py-20 border-t border-gray-800/40 w-full overflow-hidden">
-          <div className="max-w-7xl mx-auto mb-16 text-center">
-            <span className="text-[10px] uppercase tracking-widest text-accent font-bold block mb-3">// Production Portfolios</span>
-            <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white uppercase">SYSTEM DECKS</h2>
-          </div>
-
-          <div 
-            ref={scrollRef} 
-            className="flex gap-6 overflow-x-auto pb-8 scrollbar-none snap-x snap-mandatory max-w-7xl mx-auto w-full px-2"
-          >
-            {mockups.map((mock, idx) => {
-              return (
-                <motion.div
-                  key={idx}
-                  whileHover={{ scale: 1.01 }}
-                  transition={{ duration: 0.3, ease: 'easeOut' }}
-                  className="w-[calc(50%-12px)] md:w-[calc(33.333%-16px)] flex-shrink-0 snap-start rounded-[2rem] border p-6 flex flex-col justify-between shadow-2xl relative group overflow-hidden transition-colors duration-300 bg-secondary/30 text-white border-neutral-850 hover:border-neutral-750"
-                >
-                  {/* Top: Tags, Title, Subtitle */}
-                  <div className="space-y-4 mb-6">
-                    <div className="flex gap-2 flex-wrap">
-                      {mock.tags.map((tag, tIdx) => (
-                        <span 
-                          key={tIdx} 
-                          className="px-3 py-1 rounded-full border border-neutral-800 text-[9px] font-bold uppercase tracking-widest text-neutral-450 bg-neutral-900/40"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                    <h3 className="text-xl sm:text-2xl font-bold tracking-tight uppercase">
-                      {mock.title}
-                    </h3>
-                    <p className="text-xs font-semibold leading-relaxed text-neutral-400">
-                      {mock.subtitle}
-                    </p>
-                  </div>
-
-                  {/* Middle: Video Cover in vertical 9:16 format */}
-                  <div className="relative w-full aspect-[9/16] rounded-2xl overflow-hidden bg-black border border-black/10">
-                    <video 
-                      src={mock.video} 
-                      autoPlay 
-                      muted 
-                      loop 
-                      playsInline 
-                      preload="auto"
-                      className="w-full h-full object-cover filter brightness-[0.9] group-hover:scale-101 transition-transform duration-500" 
-                    />
-                  </div>
-
-                  {/* Bottom: Description underneath the video */}
-                  <div className="mt-6 space-y-3 pt-4 border-t border-neutral-850">
-                    <p className="text-xs leading-relaxed font-light text-neutral-400">
-                      {mock.description}
-                    </p>
-                    <div className="flex justify-between items-center text-[10px] uppercase font-bold tracking-wider cursor-pointer group-hover:translate-x-1 transition-transform text-accent">
-                      <span>Explore Configuration</span>
-                      <span>→</span>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
           </div>
         </section>
 
-        {/* 4. VALUE PROPOSITION */}
-        <section className="relative px-8 py-24 border-t border-gray-800/40 max-w-6xl mx-auto w-full">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            
-            {/* Left Column */}
-            <motion.div 
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: '-100px' }}
-              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] as const }}
-              className="flex gap-6 items-start p-8 rounded-3xl bg-secondary/10 border border-gray-800/20"
-            >
-              <div className="w-12 h-12 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center text-accent flex-shrink-0">
-                <Star className="w-5 h-5 fill-accent" />
-              </div>
-              <p className="text-xl font-medium leading-relaxed text-white">
-                Cut through the noise of social media with a special experience
+        {/* One job: show the work */}
+        <section id="showcase" className="relative border-t border-white/10 py-16 md:py-24">
+          <div className="max-w-7xl mx-auto px-6 md:px-12 mb-10 md:mb-14 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <div>
+              <h2 className="font-display text-3xl md:text-5xl tracking-tight text-white">
+                Recent stages
+              </h2>
+              <p className="mt-3 text-sm md:text-base text-white/55 max-w-md">
+                Live systems from intimate ceremonies to arena-scale festivals.
               </p>
-            </motion.div>
-
-            {/* Right Column */}
-            <motion.div 
-              initial={{ opacity: 0, x: 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: '-100px' }}
-              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] as const }}
-              className="flex gap-6 items-start p-8 rounded-3xl bg-secondary/10 border border-gray-800/20"
+            </div>
+            <Link
+              href="/gallery"
+              className="text-sm uppercase tracking-[0.18em] text-accent hover:text-white transition-colors"
             >
-              <div className="w-12 h-12 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center text-accent flex-shrink-0">
-                <Landmark className="w-5 h-5" />
-              </div>
-              <p className="text-xl font-medium leading-relaxed text-white">
-                Connect deeper with your top 1% fans, turn followers into a community
-              </p>
-            </motion.div>
-
-          </div>
-        </section>
-
-        {/* 5. CREATOR SHOWCASE */}
-        <section className="relative px-8 py-20 border-t border-gray-800/40 max-w-7xl mx-auto w-full">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="text-[10px] uppercase tracking-widest text-accent font-bold block mb-3">// Creators Index</span>
-            <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white">FEATURED PLANETS</h2>
+              View gallery →
+            </Link>
           </div>
 
-          <motion.div 
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-100px' }}
-            variants={containerVariants}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+          <div
+            ref={scrollRef}
+            className="flex gap-3 md:gap-4 overflow-x-auto scrollbar-none snap-x snap-mandatory px-6 md:px-12"
           >
-            {/* Card 1: Tierra Monique */}
-            <motion.div 
-              variants={itemVariants}
-              whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.3 }}
-              className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-gray-800 group shadow-xl"
-            >
-              <Image 
-                src="https://assets.parthproduction.in/Image%206%20Weddings.png" 
-                alt="Tierra Monique"
-                fill
-                sizes="(max-width: 768px) 100vw, 400px"
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10" />
-              
-              <div className="absolute bottom-6 left-6 right-6 z-20 flex justify-between items-end">
-                <h4 className="text-2xl font-bold text-white leading-none">Tierra Monique</h4>
-                <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-[9px] font-bold text-accent uppercase border border-white/5">
-                  $9.99 a month
-                </span>
-              </div>
-            </motion.div>
-
-            {/* Card 2: Chris Bivins */}
-            <motion.div 
-              variants={itemVariants}
-              whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.3 }}
-              className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-gray-800 group shadow-xl"
-            >
-              <Image 
-                src="https://assets.parthproduction.in/Image%208%20Concert.png" 
-                alt="Chris Bivins"
-                fill
-                sizes="(max-width: 768px) 100vw, 400px"
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10" />
-              
-              <div className="absolute bottom-6 left-6 right-6 z-20 flex justify-between items-end">
-                <h4 className="text-2xl font-bold text-white leading-none">Chris Bivins</h4>
-                <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-[9px] font-bold text-accent uppercase border border-white/5">
-                  $39.99
-                </span>
-              </div>
-            </motion.div>
-
-            {/* Card 3: WIDER card */}
-            <motion.div 
-              variants={itemVariants}
-              whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.3 }}
-              className="relative md:col-span-2 aspect-[16/9] rounded-2xl overflow-hidden border border-gray-800 group shadow-xl"
-            >
-              <Image 
-                src="https://assets.parthproduction.in/Image%203%20Festivals.png" 
-                alt="Light in a rabbit hole"
-                fill
-                sizes="(max-width: 768px) 100vw, 800px"
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent z-10" />
-              
-              <div className="absolute top-6 left-6 z-20">
-                <div className="w-10 h-10 rounded-full bg-gray-800/80 border border-gray-700 flex items-center justify-center text-white backdrop-blur-md">
-                  <Star className="w-4 h-4 text-accent fill-accent" />
-                </div>
-              </div>
-
-              <div className="absolute bottom-6 left-6 right-6 z-20 max-w-xl space-y-2">
-                <h4 className="text-3xl font-bold text-white">Light in a rabbit hole</h4>
-                <p className="text-gray-300 text-xs sm:text-sm leading-relaxed">
-                  Web3 can be overwhelming. We gotchu. We will guide you from here and literally anywhere.
+            {reel.map((item) => (
+              <article
+                key={item.title}
+                className="relative flex-shrink-0 w-[42vw] sm:w-[28vw] md:w-[18vw] aspect-[9/16] snap-start overflow-hidden bg-neutral-950 group"
+              >
+                <video
+                  src={item.video}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                <p className="absolute bottom-4 left-4 right-4 font-display text-lg md:text-xl tracking-tight">
+                  {item.title}
                 </p>
-              </div>
-            </motion.div>
-          </motion.div>
+              </article>
+            ))}
+          </div>
         </section>
 
-      </div>
+        {/* One job: close the loop */}
+        <section className="relative border-t border-white/10">
+          <div className="max-w-7xl mx-auto px-6 md:px-12 py-20 md:py-28 flex flex-col md:flex-row md:items-center md:justify-between gap-8">
+            <div className="max-w-2xl">
+              <h2 className="font-display text-3xl md:text-5xl tracking-tight text-white leading-[1.05]">
+                Ready when the lights go up.
+              </h2>
+              <p className="mt-4 text-white/55 text-sm md:text-base max-w-lg">
+                Tell us the date, venue, and scale — we design the audio, lighting, and stage plan.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center px-7 py-3.5 bg-accent text-black text-sm font-semibold tracking-wide uppercase hover:bg-accent/90 transition-colors"
+              >
+                WhatsApp us
+              </a>
+              <Link
+                href="/contact"
+                className="inline-flex items-center justify-center px-7 py-3.5 border border-white/25 text-white text-sm font-semibold tracking-wide uppercase hover:border-white hover:bg-white/5 transition-colors"
+              >
+                Contact
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
 
-      {/* 6. FOOTER */}
       <Footer />
     </>
   );

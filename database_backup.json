@@ -153,9 +153,9 @@
   ],
   "credentials": {
     "username": "admin",
-    "passwordHash": "meet@_999",
+    "passwordHash": "[REDACTED]",
     "resetCount": 0,
-    "recoveryKey": "KP-777-RESET",
+    "recoveryKeyHash": "[REDACTED]",
     "resetPeriodStart": null
   },
   "vibrants": [

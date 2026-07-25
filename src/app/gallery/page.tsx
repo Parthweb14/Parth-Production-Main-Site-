@@ -86,24 +86,21 @@ export default function GalleryPage() {
 
       <div className="relative min-h-screen bg-black text-white select-none pb-20 pt-20">
         
-        {/* HERO BANNER */}
-        <section className="relative min-h-[30vh] border-b border-gray-800/40 px-6 md:px-12 py-12 flex flex-col justify-center">
+        <section className="relative border-b border-white/10 px-6 md:px-12 py-14 md:py-20">
           <div className="max-w-7xl mx-auto w-full space-y-4">
-            <span className="text-[10px] uppercase tracking-widest text-accent font-bold block mb-2">// Catalogue Index</span>
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white leading-none">
-              VISUALS & <br />
-              <span className="text-accent drop-shadow-[0_0_15px_rgba(255,215,0,0.15)]">BLUEPRINTS</span>
+            <p className="text-xs uppercase tracking-[0.2em] text-accent">Gallery</p>
+            <h1 className="font-display text-4xl md:text-6xl tracking-tight text-white leading-[0.95] max-w-3xl">
+              Stages we have built
             </h1>
-            <p className="text-gray-400 text-sm leading-relaxed max-w-lg">
-              Explore staging and visual setup logs from events completed across India.
+            <p className="text-white/55 text-sm md:text-base leading-relaxed max-w-lg">
+              Selected stills from weddings, festivals, concerts, and road shows.
             </p>
           </div>
         </section>
 
-        {/* CATEGORY FILTERS */}
-        <section className="border-b border-gray-800/40 bg-secondary/10 py-4 px-6 md:px-12">
-          <div className="max-w-7xl mx-auto flex flex-wrap gap-x-8 gap-y-3 text-[11px] font-mono tracking-widest uppercase items-center">
-            <span className="text-gray-500 mr-2 text-[9px]">Filter Logs:</span>
+        <section className="border-b border-white/10 py-4 px-6 md:px-12">
+          <div className="max-w-7xl mx-auto flex flex-wrap gap-x-8 gap-y-3 text-[11px] tracking-[0.14em] uppercase items-center">
+            <span className="text-white/35 mr-2 text-[9px]">Filter</span>
             {categories.map((cat) => {
               const isActive = selectedCategory === cat;
               return (
@@ -138,10 +135,10 @@ export default function GalleryPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.4 }}
-                className="border border-gray-800 p-4 bg-secondary/10 rounded-2xl flex flex-col justify-between hover:border-gray-700 hover:bg-secondary/20 transition-all duration-300 group cursor-pointer"
+                className="flex flex-col justify-between group cursor-pointer"
                 onClick={() => setLightboxIndex(idx)}
               >
-                <div className="relative w-full aspect-[4/3] overflow-hidden rounded-xl border border-gray-850">
+                <div className="relative w-full aspect-[4/3] overflow-hidden border border-white/10">
                   <Image 
                     src={image.src} 
                     alt={image.title}

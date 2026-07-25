@@ -40,6 +40,7 @@ export default function AdminLoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ email, password })
       });
       const data = await res.json();
@@ -48,7 +49,7 @@ export default function AdminLoginPage() {
         throw new Error(data.error || 'Invalid login credentials. Please try again.');
       }
 
-      login(data.token, data.user);
+      login(null, data.user);
       router.push('/admin');
     } catch (err: any) {
       setErrorMsg(err.message || 'Connection error. Please try again.');

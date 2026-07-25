@@ -16,6 +16,7 @@
     "@vercel/kv": "^3.0.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.42.2",
+    "jose": "^6.2.4",
     "lottie-web": "^5.13.0",
     "lucide-react": "^1.23.0",
     "motion": "^12.42.2",
@@ -23,6 +24,7 @@
     "nodemailer": "^9.0.3",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "sharp": "^0.35.3",
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {

@@ -1,33 +1,22 @@
 import { NextResponse } from 'next/server';
 import { vercelDb } from '@/utils/vercelDb';
+import { requireAdmin, safeErrorMessage } from '@/utils/auth';
 
 export async function POST(request: Request) {
   try {
-    const { token } = await request.json();
-
-    if (!token) {
-      return NextResponse.json({ error: 'Token missing.' }, { status: 401 });
-    }
-
-    try {
-      const payload = JSON.parse(Buffer.from(token, 'base64').toString('utf-8'));
-      if (Date.now() > payload.exp) {
-        return NextResponse.json({ error: 'Admin session expired. Please log in again.' }, { status: 401 });
-      }
-    } catch {
-      return NextResponse.json({ error: 'Invalid authentication token.' }, { status: 401 });
-    }
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
 
     const credentials = await vercelDb.getCredentials();
     return NextResponse.json({
       username: credentials.username,
-      password: credentials.passwordHash,
-      recoveryKey: credentials.recoveryKey || 'KP-777-RESET',
       resetCount: credentials.resetCount || 0,
-      resetPeriodStart: credentials.resetPeriodStart || null
+      resetPeriodStart: credentials.resetPeriodStart || null,
+      hasPassword: Boolean(credentials.passwordHash),
     });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    console.error('Credentials error:', err);
+    return NextResponse.json({ error: safeErrorMessage(err) }, { status: 500 });
   }
 }
 

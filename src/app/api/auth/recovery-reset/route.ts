@@ -1,40 +1,47 @@
 import { NextResponse } from 'next/server';
 import { vercelDb } from '@/utils/vercelDb';
+import { hashPassword, safeErrorMessage, verifyRecoveryKey } from '@/utils/auth';
 
 export async function POST(request: Request) {
   try {
     const { recoveryKey, newPassword } = await request.json();
 
-    if (!recoveryKey || !newPassword) {
-      return NextResponse.json({ error: 'Recovery Key and New Password are required.' }, { status: 400 });
+    if (
+      !recoveryKey ||
+      !newPassword ||
+      typeof recoveryKey !== 'string' ||
+      typeof newPassword !== 'string' ||
+      newPassword.length < 8
+    ) {
+      return NextResponse.json(
+        { error: 'Recovery key and a new password (min 8 chars) are required.' },
+        { status: 400 }
+      );
     }
 
     const credentials = await vercelDb.getCredentials();
+    const ok = verifyRecoveryKey(recoveryKey, credentials.recoveryKeyHash);
 
-    // Support multiple keys (db array recoveryKeys or single fallback list)
-    const dbRecoveryKeys: string[] = credentials.recoveryKeys || [
-      credentials.recoveryKey || 'KP-777-RESET',
-      'KP-KADAM-RECOVER-99',
-      'KP-SECURE-ADMIN-77'
-    ];
-
-    const isMatch = dbRecoveryKeys.some((k: string) => k.trim().toLowerCase() === recoveryKey.trim().toLowerCase());
-
-    if (!isMatch) {
-      return NextResponse.json({ error: 'Invalid Master Recovery Key.' }, { status: 401 });
+    if (!ok) {
+      return NextResponse.json({ error: 'Invalid recovery key.' }, { status: 401 });
     }
 
-    // Update password
-    credentials.passwordHash = newPassword;
+    credentials.passwordHash = hashPassword(newPassword);
     credentials.resetToken = null;
     credentials.resetTokenExpiry = null;
-    credentials.resetCount = 0;
-    
+    credentials.otpCode = null;
+    credentials.otpExpiry = null;
+    credentials.resetCount = (credentials.resetCount || 0) + 1;
+    // Clear any legacy plaintext recovery keys from stored credentials
+    delete credentials.recoveryKey;
+    delete credentials.recoveryKeys;
+
     await vercelDb.setCredentials(credentials);
 
     return NextResponse.json({ success: true, message: 'Password has been reset successfully.' });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    console.error('Recovery reset error:', err);
+    return NextResponse.json({ error: safeErrorMessage(err) }, { status: 500 });
   }
 }
 

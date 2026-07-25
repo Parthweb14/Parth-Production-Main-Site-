@@ -1,61 +1,50 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import { vercelDb } from '@/utils/vercelDb';
+import { requireAdmin, safeErrorMessage } from '@/utils/auth';
 
 export async function POST(req: Request) {
   try {
-    const { testEmail, smtp_host, smtp_port, smtp_user, smtp_pass, from_email } = await req.json();
+    const auth = await requireAdmin(req);
+    if (!auth.ok) return auth.response;
 
-    if (!testEmail) {
+    const body = await req.json();
+    const testEmail = body?.testEmail;
+    if (!testEmail || typeof testEmail !== 'string') {
       return NextResponse.json({ error: 'Please provide a recipient test email address.' }, { status: 400 });
     }
 
-    // Use passed settings or fallback to saved database settings
     const settings = await vercelDb.getSettings();
-    const host = smtp_host || settings.smtp_host || 'smtp-relay.brevo.com';
-    const port = parseInt(smtp_port || settings.smtp_port || '587', 10);
-    const user = smtp_user || settings.smtp_user;
-    const pass = smtp_pass || settings.smtp_pass;
-    const from = from_email || settings.from_email || 'parthproductionweb@gmail.com';
+    const host = body.smtp_host || settings.smtp_host || 'smtp-relay.brevo.com';
+    const port = parseInt(body.smtp_port || settings.smtp_port || '587', 10);
+    const user = body.smtp_user || settings.smtp_user;
+    const pass = body.smtp_pass || settings.smtp_pass;
+    const from = body.from_email || settings.from_email || settings.email;
 
-    if (!user || !pass) {
-      return NextResponse.json({ error: 'SMTP Username and Password are required to send emails.' }, { status: 400 });
+    if (!user || !pass || !from) {
+      return NextResponse.json({ error: 'SMTP username, password, and from email are required.' }, { status: 400 });
     }
 
     const transporter = nodemailer.createTransport({
-      host: host,
-      port: port,
+      host,
+      port,
       secure: port === 465,
-      auth: {
-        user: user,
-        pass: pass,
-      },
+      auth: { user, pass },
     });
 
-    const mailOptions = {
+    await transporter.sendMail({
       from: `Parth Production <${from}>`,
       to: testEmail,
       subject: 'Parth Production - Test Email Notification',
-      text: `Hello!\n\nThis is a test email from your Parth Production Admin Dashboard.\nYour SMTP settings (Host: ${host}, Port: ${port}) are configured correctly!\n\nBest regards,\nParth Production Team`,
-      html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #0d0d11; color: #ffffff; border-radius: 12px;">
-          <h2 style="color: #d4af37; margin-top: 0;">SMTP Connection Verified! ✅</h2>
-          <p style="font-size: 14px; color: #cccccc;">This is a test email from your <strong>Parth Production Admin Dashboard</strong>.</p>
-          <div style="background-color: #17171e; padding: 15px; border-radius: 8px; border: 1px solid #2e2e3a; margin: 20px 0;">
-            <p style="margin: 5px 0; font-size: 13px; color: #a1a1aa;"><strong>SMTP Host:</strong> ${host}</p>
-            <p style="margin: 5px 0; font-size: 13px; color: #a1a1aa;"><strong>Port:</strong> ${port}</p>
-            <p style="margin: 5px 0; font-size: 13px; color: #a1a1aa;"><strong>From Address:</strong> ${from}</p>
-          </div>
-          <p style="font-size: 12px; color: #71717a;">Sent successfully via NodeMailer & custom SMTP relay.</p>
-        </div>
-      `,
-    };
+      text: `SMTP test OK. Host: ${host}, Port: ${port}`,
+      html: `<p>SMTP connection verified.</p><p>Host: ${host}<br/>Port: ${port}</p>`,
+    });
 
-    await transporter.sendMail(mailOptions);
-
-    return NextResponse.json({ success: true, message: `Test email sent successfully to ${testEmail}` });
-  } catch (err: any) {
+    return NextResponse.json({ success: true, message: 'Test email sent successfully.' });
+  } catch (err: unknown) {
     console.error('SMTP Test Email Error:', err);
-    return NextResponse.json({ error: err.message || 'Failed to send test email.' }, { status: 500 });
+    return NextResponse.json({ error: safeErrorMessage(err, 'Failed to send test email.') }, { status: 500 });
   }
 }
+
+export const dynamic = 'force-dynamic';

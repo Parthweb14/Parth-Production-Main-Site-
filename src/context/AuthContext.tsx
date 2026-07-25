@@ -23,7 +23,7 @@ interface AuthContextType {
   user: CustomUser | null;
   token: string | null;
   loading: boolean;
-  login: (token: string, user: CustomUser) => void;
+  login: (token: string | null, user: CustomUser) => void;
   logout: () => void;
   siteSettings: SiteSettings;
 }
@@ -34,12 +34,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<CustomUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   const [siteSettings, setSiteSettings] = useState<SiteSettings>({
-    email: 'kadamproduction123@gmail.com',
+    email: 'parthproduction123@gmail.com',
     phone_1: '9537330003',
     phone_2: '8866655651',
-    address: 'Gaurav Path Road, Palanpur, Surat, Gujarat'
+    address: 'Gaurav Path Road, Palanpur, Surat, Gujarat',
   });
 
   useEffect(() => {
@@ -48,29 +48,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const res = await fetch('/api/public/data');
         if (res.ok) {
           const data = await res.json();
-          if (data.settings) {
-            setSiteSettings(data.settings);
-          }
+          if (data.settings) setSiteSettings(data.settings);
         }
       } catch (err) {
         console.error('Failed to load site settings:', err);
       }
 
       try {
-        const cookies = document.cookie.split(';');
-        const tokenCookie = cookies.find(c => c.trim().startsWith('admin_token='));
-        if (tokenCookie) {
-          const val = tokenCookie.split('=')[1];
-          if (val) {
-            // Client-side decode of custom Base64 token payload
-            const payload = JSON.parse(atob(val));
-            if (Date.now() < payload.exp) {
-              setToken(val);
-              setUser({ id: 'admin-id-1', email: 'kadamproductionweb@gmail.com' });
-            } else {
-              // Clear expired cookie
-              document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-            }
+        const sessionRes = await fetch('/api/auth/session', { credentials: 'include' });
+        if (sessionRes.ok) {
+          const session = await sessionRes.json();
+          if (session.authenticated && session.user) {
+            setUser(session.user);
+            // Cookie is HttpOnly — keep a non-secret session marker for admin API bodies that still expect `token`
+            setToken('cookie-session');
           }
         }
       } catch (err) {
@@ -82,16 +73,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkSession();
   }, []);
 
-  const login = (newToken: string, newUser: CustomUser) => {
-    setToken(newToken);
+  const login = (_newToken: string | null, newUser: CustomUser) => {
+    setToken('cookie-session');
     setUser(newUser);
-    document.cookie = `admin_token=${newToken}; path=/; SameSite=Strict; Secure`;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    } catch {
+      // ignore
+    }
     setToken(null);
     setUser(null);
-    document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     window.location.href = '/admin/login';
   };
 

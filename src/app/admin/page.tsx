@@ -171,7 +171,7 @@ export default function AdminPage() {
     setLoading(true);
     setErrorMsg(null);
     try {
-      const res = await fetch(`/api/public/data?t=${Date.now()}`);
+      const res = await fetch(`/api/admin/data?t=${Date.now()}`, { credentials: 'include' });
       if (!res.ok) throw new Error('Failed to load database.');
       const data = await res.json();
 
@@ -192,16 +192,17 @@ export default function AdminPage() {
       const credRes = await fetch('/api/admin/credentials', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token })
+        credentials: 'include',
+        body: JSON.stringify({})
       });
       if (credRes.ok) {
         const credData = await credRes.json();
         setAdminUsername(credData.username);
-        setAdminPassword(credData.password);
-        setAdminRecoveryKey(credData.recoveryKey || 'KP-777-RESET');
+        setAdminPassword('');
+        setAdminRecoveryKey('');
         setInitialAdminUsername(credData.username);
-        setInitialAdminPassword(credData.password);
-        setInitialAdminRecoveryKey(credData.recoveryKey || 'KP-777-RESET');
+        setInitialAdminPassword('');
+        setInitialAdminRecoveryKey('');
         setResetCount(credData.resetCount || 0);
         setResetPeriodStart(credData.resetPeriodStart || null);
       }
@@ -235,6 +236,7 @@ export default function AdminPage() {
       const res = await fetch('/api/admin/test-smtp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           testEmail: testEmailAddress,
           smtp_host: settings.smtp_host,
@@ -261,7 +263,7 @@ export default function AdminPage() {
   // Helper to determine if unsaved changes exist
   const hasChanges = () => {
     if (JSON.stringify(settings) !== settingsSnapshot) return true;
-    if (adminUsername !== initialAdminUsername || adminPassword !== initialAdminPassword || adminRecoveryKey !== initialAdminRecoveryKey) return true;
+    if (adminUsername !== initialAdminUsername) return true;
     
     const currentImagesSerialized = JSON.stringify(images.map(img => ({
       id: img.id,
@@ -532,7 +534,8 @@ export default function AdminPage() {
     const cleanFilename = encodeURIComponent(file.name.replace(/\s+/g, '_'));
     const response = await fetch(`/api/upload?filename=${cleanFilename}`, {
       method: 'POST',
-      body: file
+      body: file,
+      credentials: 'include',
     });
     if (!response.ok) {
       const errData = await response.json();
@@ -644,20 +647,13 @@ export default function AdminPage() {
       const saveResponse = await fetch('/api/admin/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
-          token,
           settings,
           images: processedImages.map((img, idx) => ({ ...img, order_index: idx })),
           videos: processedVideos.map((vid, idx) => ({ ...vid, order_index: idx })),
           serviceImages: processedServices,
           vibrants: processedVibrants.map((v, idx) => ({ ...v, order_index: idx })),
-          adminCredentials: {
-            username: adminUsername,
-            passwordHash: adminPassword,
-            resetCount: resetCount,
-            recoveryKey: adminRecoveryKey,
-            resetPeriodStart: resetPeriodStart
-          },
           deletedUrls
         })
       });
@@ -669,8 +665,6 @@ export default function AdminPage() {
 
       await fetchData();
       setInitialAdminUsername(adminUsername);
-      setInitialAdminPassword(adminPassword);
-      setInitialAdminRecoveryKey(adminRecoveryKey);
       setShowSuccessToast(true);
       setTimeout(() => setShowSuccessToast(false), 5000);
     } catch (err: any) {
@@ -687,7 +681,8 @@ export default function AdminPage() {
     try {
       const res = await fetch('/api/admin/send-otp', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
       });
       const data = await res.json();
       if (!res.ok) {
@@ -713,8 +708,8 @@ export default function AdminPage() {
       const res = await fetch('/api/admin/change-credentials', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
-          token,
           otp: credsOtp,
           newUsername,
           newPassword

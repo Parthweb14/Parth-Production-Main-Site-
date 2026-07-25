@@ -1,88 +1,59 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Footer() {
-  const currentYear = new Date().getFullYear();
+  const year = new Date().getFullYear();
+  const { siteSettings } = useAuth();
+  const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
 
   return (
-    <motion.footer 
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ once: true }}
-      transition={{ delay: 0.6, duration: 0.6 }}
-      className="relative z-20 bg-[#111111] pt-16 pb-12 px-8 border-t border-neutral-900 select-none font-sans"
-    >
-      <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
-        
-        {/* Column 1: Brand / Logo */}
-        <div className="flex flex-col gap-4">
-          <Link href="/" className="inline-block">
-            <img 
-              src="https://assets.parthproduction.in/Parth%20logo%20bg%20.png" 
-              alt="Parth Logo" 
-              className="h-10 object-contain mb-2"
+    <footer className="relative z-20 bg-[#0a0a0a] border-t border-white/10 pt-14 pb-10 px-6 md:px-12">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-10 mb-12">
+        <div>
+          <Link href="/" className="inline-flex items-center gap-3">
+            <img
+              src="https://assets.parthproduction.in/Parth%20logo%20bg%20.png"
+              alt="Parth Production"
+              className="h-10 object-contain"
               onError={(e) => {
-                e.currentTarget.src = "/logo.png";
+                e.currentTarget.src = '/logo.png';
               }}
             />
+            <span className="font-display text-xl tracking-tight">Parth Production</span>
           </Link>
-          <a 
-            href="https://github.com" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="text-xs font-semibold tracking-wider text-neutral-400 hover:text-white transition-colors uppercase"
-          >
-            Parth Collective
-          </a>
-          <p className="text-[11px] text-neutral-500 font-normal">
-            © {currentYear} Parth Production. <br /> All Rights Reserved.
+          <p className="mt-4 text-sm text-white/50 max-w-xs leading-relaxed">
+            Live event production — sound, lighting, staging, and SFX for Gujarat and beyond.
           </p>
         </div>
 
-        {/* Column 2: Terms & Privacy */}
-        <div className="flex flex-col gap-3 text-xs text-neutral-400">
-          <h4 className="font-bold text-white uppercase tracking-widest text-[10px] mb-1">Legal</h4>
-          <Link href="/terms" className="hover:text-white transition-colors">
-            Terms of Service
-          </Link>
-          <Link href="/privacy" className="hover:text-white transition-colors">
-            Privacy Policy
-          </Link>
+        <div className="flex flex-col gap-3 text-sm text-white/55">
+          <h4 className="font-display text-base text-white mb-1">Explore</h4>
+          <Link href="/services" className="hover:text-white transition-colors">Services</Link>
+          <Link href="/gallery" className="hover:text-white transition-colors">Gallery</Link>
+          <Link href="/about" className="hover:text-white transition-colors">About</Link>
+          <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
         </div>
 
-        {/* Column 3: Governance & Social */}
-        <div className="flex flex-col gap-3 text-xs text-neutral-400">
-          <h4 className="font-bold text-white uppercase tracking-widest text-[10px] mb-1">Community</h4>
-          <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
-            Governance
+        <div className="flex flex-col gap-3 text-sm text-white/55">
+          <h4 className="font-display text-base text-white mb-1">Connect</h4>
+          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+            WhatsApp {siteSettings.phone_1}
           </a>
-          <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
-            Twitter
+          <a href={`tel:+91${siteSettings.phone_2}`} className="hover:text-white transition-colors">
+            Call {siteSettings.phone_2}
+          </a>
+          <a href={`mailto:${siteSettings.email}`} className="hover:text-white transition-colors">
+            {siteSettings.email}
           </a>
         </div>
-
-        {/* Column 4: Support & FAQ */}
-        <div className="flex flex-col gap-3 text-xs text-neutral-400">
-          <h4 className="font-bold text-white uppercase tracking-widest text-[10px] mb-1">Enquiries</h4>
-          <Link href="/contact" className="hover:text-white transition-colors">
-            Support
-          </Link>
-          <Link href="/faq" className="hover:text-white transition-colors">
-            FAQ
-          </Link>
-        </div>
-
       </div>
 
-      {/* Bottom info */}
-      <div className="max-w-7xl mx-auto pt-8 border-t border-neutral-900/60 flex flex-col sm:flex-row justify-between items-center gap-4 text-center text-[10px] text-neutral-500 font-mono tracking-wider uppercase">
-        <p>engineered for live ecosystems</p>
-        <p>
-          Studio — <a href="https://www.trishulhub.in" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors font-bold">Trishulhub</a>
-        </p>
+      <div className="max-w-7xl mx-auto pt-6 border-t border-white/10 flex flex-col sm:flex-row justify-between gap-3 text-xs text-white/40 tracking-wide uppercase">
+        <span>© {year} Parth Production</span>
+        <span>{siteSettings.address}</span>
       </div>
-    </motion.footer>
+    </footer>
   );
 }
