@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, ArrowUpRight } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 interface NavItem {
@@ -23,87 +23,79 @@ export default function SpotlightNavbar() {
   const pathname = usePathname();
   const { siteSettings } = useAuth();
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
-  
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 h-16 md:h-20 bg-[#12100E] border-b border-[#E7E3DC]/10 z-50 flex items-stretch select-none">
+      <header className="fixed top-0 left-0 right-0 h-20 bg-black/60 backdrop-blur-md border-b border-neutral-900 z-50 flex items-center justify-between px-6 md:px-12 select-none">
         
-        {/* Left Side: Brand Box */}
-        <Link 
-          href="/" 
-          className="flex items-center px-6 md:px-8 border-r border-[#E7E3DC]/10 hover:bg-[#E7E3DC]/3 transition-colors cursor-pointer"
-        >
-          <span 
-            className="text-lg md:text-xl tracking-wider text-[#E7E3DC] font-normal uppercase"
-            style={{ fontFamily: 'var(--font-cormorant), serif' }}
-          >
-            PARTH PRODUCTION
+        {/* Top Left: Logo */}
+        <Link href="/" className="flex items-center gap-3 cursor-pointer">
+          <img 
+            src="https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Parth%20logo%20bg%20.png" 
+            alt="Parth Logo" 
+            className="h-10 object-contain"
+            onError={(e) => {
+              // fallback if R2 file doesn't load
+              e.currentTarget.src = "/logo.png";
+            }}
+          />
+          <span className="text-xl font-bold tracking-tight text-white font-sans uppercase">
+            leam
           </span>
         </Link>
 
-        {/* Center: Desktop Navigation Grid */}
-        <nav className="hidden md:flex items-stretch flex-1">
+        {/* Center: Links */}
+        <nav className="hidden md:flex items-center gap-8">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link 
                 key={item.label}
                 href={item.href}
-                className={`flex items-center justify-center px-8 border-r border-[#E7E3DC]/10 text-[10px] tracking-[0.2em] uppercase transition-all duration-300 relative group cursor-pointer ${
-                  isActive ? 'text-[#C87A53] bg-[#E7E3DC]/3' : 'text-[#A39E93] hover:text-[#E7E3DC] hover:bg-[#E7E3DC]/2'
+                className={`text-sm tracking-wider uppercase transition-colors duration-200 cursor-pointer ${
+                  isActive ? 'text-white font-semibold' : 'text-neutral-400 hover:text-white'
                 }`}
-                style={{ fontFamily: 'var(--font-mono), monospace' }}
               >
                 {item.label}
-                {isActive && (
-                  <motion.div 
-                    layoutId="activeHeaderDot"
-                    className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#C87A53]"
-                  />
-                )}
               </Link>
             );
           })}
         </nav>
 
-        {/* Right Side: Desktop Booking Button */}
+        {/* Top Right: Action Button */}
         <a 
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="hidden md:flex items-center gap-2 px-8 bg-transparent text-[#C87A53] hover:text-[#E7E3DC] hover:bg-[#C87A53]/10 text-[10px] tracking-[0.2em] font-bold uppercase transition-all duration-300 border-l border-[#E7E3DC]/10 cursor-pointer"
-          style={{ fontFamily: 'var(--font-mono), monospace' }}
+          className="hidden md:block bg-white text-black font-semibold rounded-full px-6 py-2.5 text-xs tracking-wider uppercase transition-all duration-300 hover:bg-white/90 active:scale-95 cursor-pointer"
         >
-          BOOK EVENT <ArrowUpRight className="w-3.5 h-3.5" />
+          Get the App
         </a>
 
-        {/* Mobile Hamburger toggle */}
+        {/* Mobile Hamburger menu */}
         <button 
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="md:hidden flex items-center justify-center px-6 border-l border-[#E7E3DC]/10 text-[#E7E3DC] cursor-pointer ml-auto"
+          className="md:hidden flex items-center justify-center p-2 text-white cursor-pointer"
         >
-          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </header>
 
-      {/* Mobile Drawer Grid Overlay */}
+      {/* Mobile Drawer */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-[#12100E] z-40 md:hidden flex flex-col pt-24 px-6 justify-between pb-8"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed inset-0 bg-black z-40 md:hidden flex flex-col pt-24 px-6 justify-between pb-8"
           >
-            {/* Nav list */}
-            <div className="flex flex-col border-t border-[#E7E3DC]/10 divide-y divide-[#E7E3DC]/10">
+            <div className="flex flex-col gap-6 text-lg font-medium tracking-wide">
               <Link
                 href="/"
                 onClick={() => setMobileOpen(false)}
-                className="py-5 text-sm tracking-[0.15em] uppercase text-[#A39E93] hover:text-[#E7E3DC]"
-                style={{ fontFamily: 'var(--font-mono), monospace' }}
+                className={`pb-4 border-b border-neutral-900 ${pathname === '/' ? 'text-white' : 'text-neutral-400'}`}
               >
                 Home
               </Link>
@@ -112,29 +104,24 @@ export default function SpotlightNavbar() {
                   key={item.label}
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
-                  className={`py-5 text-sm tracking-[0.15em] uppercase transition-colors ${
-                    pathname === item.href ? 'text-[#C87A53] font-bold' : 'text-[#A39E93] hover:text-[#E7E3DC]'
+                  className={`pb-4 border-b border-neutral-900 ${
+                    pathname === item.href ? 'text-white' : 'text-neutral-400'
                   }`}
-                  style={{ fontFamily: 'var(--font-mono), monospace' }}
                 >
                   {item.label}
                 </Link>
               ))}
             </div>
 
-            {/* CTA */}
-            <div className="space-y-4">
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setMobileOpen(false)}
-                className="w-full h-14 bg-[#C87A53] text-[#12100E] flex items-center justify-center text-xs font-bold tracking-[0.25em] uppercase transition-colors"
-                style={{ fontFamily: 'var(--font-mono), monospace' }}
-              >
-                BOOK EVENT
-              </a>
-            </div>
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setMobileOpen(false)}
+              className="w-full py-4 bg-white text-black rounded-full text-center text-sm font-bold tracking-widest uppercase transition-colors"
+            >
+              Get the App
+            </a>
           </motion.div>
         )}
       </AnimatePresence>

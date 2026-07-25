@@ -1,95 +1,93 @@
 @import "tailwindcss";
 
 @theme {
-  --font-cormorant: var(--font-cormorant);
-  --font-mono: var(--font-mono);
-  --color-amber-500: #C87A53;
-  --color-amber-600: #b0633c;
-  --color-yellow-500: #A39E93;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --color-primary: #000000;
+  --color-secondary: #111111;
+  --color-accent: #FFD700;
+  --color-gray-100: #FFFFFF;
+  --color-gray-300: #A1A1A1;
+  --color-gray-400: #737373;
+  --color-gray-800: #262626;
+  
+  --animate-fade-in-up: fadeInUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  --animate-scale-in: scaleIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 :root {
-  --background: #12100E;
-  --foreground: #E7E3DC;
-  --primary: #C87A53;
-  --primary-hover: #b0633c;
-  --accent: #A39E93;
+  --background: #000000;
+  --foreground: #FFFFFF;
 }
 
 body {
-  font-family: var(--font-mono), monospace;
-  background-color: #12100E;
-  color: #E7E3DC;
+  font-family: var(--font-sans);
+  background-color: #000000;
+  color: #FFFFFF;
   overflow-x: hidden;
   scroll-behavior: smooth;
-  letter-spacing: -0.01em;
 }
 
-/* Enforce Editorial Serif for Headings */
-h1, h2, h3, h4, h5, h6, .hero-heading {
-  font-family: var(--font-cormorant), serif;
-  font-weight: 400 !important;
-  letter-spacing: -0.01em;
-  text-transform: uppercase;
-}
-
-/* Custom Editorial Scrollbar */
+/* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #12100E;
-  border-left: 1px solid rgba(231, 227, 220, 0.05);
+  background: #000000;
 }
 ::-webkit-scrollbar-thumb {
-  background: #C87A53;
+  background: #262626;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #737373;
+}
+
+/* Custom horizontal scrollbar hidden but working */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Selection */
 ::selection {
-  background: rgba(200, 122, 83, 0.25);
-  color: #ffffff;
+  background: rgba(255, 215, 0, 0.2);
+  color: #FFFFFF;
 }
 
-/* Gradient Text Utilities */
-.gradient-text {
-  background: linear-gradient(180deg, #E7E3DC 0%, #A39E93 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  display: inline-block;
-}
-
-.gradient-text-accent {
-  background: linear-gradient(135deg, #C87A53 0%, #E7E3DC 50%, #A39E93 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  display: inline-block;
-}
-
-/* Custom interactive film grain overlay */
+/* Film grain effect if needed, otherwise clean dark surfaces */
 .film-grain {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.015;
   pointer-events: none;
   z-index: 9999;
-}
-
-/* Editorial layout rules */
-.editorial-grid {
-  border: 1px solid rgba(231, 227, 220, 0.08);
-}
-
-.editorial-border-b {
-  border-bottom: 1px solid rgba(231, 227, 220, 0.08);
-}
-
-.editorial-border-r {
-  border-right: 1px solid rgba(231, 227, 220, 0.08);
 }

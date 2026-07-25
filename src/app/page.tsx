@@ -1,123 +1,110 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { ArrowUpRight, Plus, Minus } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { Shield, Video, Users, Clock, Star, Landmark } from 'lucide-react';
 import PageLoader from '@/components/PageLoader';
 import SpotlightNavbar from '@/components/SpotlightNavbar';
 import Footer from '@/components/Footer';
-import ProjectsSection from '@/components/ProjectsSection';
 import { useAuth } from '@/context/AuthContext';
-import LottiePlayer from '@/components/LottiePlayer';
+import Image from 'next/image';
 
-const ASSETS_BASE = 'https://assets.kadamproduction.in';
-
-const defaultVideoSources = [
-  `${ASSETS_BASE}/videos/Trim-6.mp4`,
-  `${ASSETS_BASE}/videos/Trim-3-1.mp4`,
-  `${ASSETS_BASE}/videos/Trim-1.mp4`,
-  `${ASSETS_BASE}/videos/Untitled_design_2_pbfqf3.mp4`,
-  `${ASSETS_BASE}/videos/download_2_sispkn.mp4`,
-  `${ASSETS_BASE}/videos/Untitled_design_3_lw9eld.mp4`,
-  `${ASSETS_BASE}/videos/Trim-6.mp4`,
-  `${ASSETS_BASE}/videos/Trim-3-1.mp4`,
-  `${ASSETS_BASE}/videos/Trim-1.mp4`
-];
-
-const slogans = [
-  'CINEMATIC SOUND DESIGN',
-  'MODULAR TRUSS GATE RIGGINGS',
-  'STADIUM CONCERT ACOUSTICS',
-  'ROYAL WEDDING STAGES',
-  'CULTURAL FESTIVAL INFRASTRUCTURE',
-  'EXPERT LIGHT SYNC ARRAYS'
-];
-
-const statsData = [
-  { number: '1000+', label: 'EVENTS COMPLETED', desc: 'Over a decade of orchestrating high-energy soundscapes and dynamic visual setups.' },
-  { number: '10+', label: 'YEARS OF CRAFT', desc: 'Pioneering event production across Gujarat and all parts of India.' },
-  { number: '500+', label: 'TRUSS SYSTEMS RIGGED', desc: 'Custom structural platforms and heavy duty line array configurations.' },
-  { number: '250+', label: 'ROAD SHOWS PRODUCED', desc: 'High-impact mobile daylight LED displays and sound arrays.' }
-];
-
-interface StageVideoProps {
-  src: string;
-  isActive: boolean;
-  className?: string;
-}
-
-function StageVideo({ src, isActive, className }: StageVideoProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (isActive) {
-      const playPromise = video.play();
-      if (playPromise !== undefined) {
-        playPromise.catch((err) => console.warn('Playback deferred:', err));
-      }
-    } else {
-      video.pause();
+// Framer Motion specifications
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2
     }
-  }, [isActive, src]);
+  }
+};
 
-  return (
-    <video
-      ref={videoRef}
-      src={src}
-      muted
-      playsInline
-      loop
-      preload="auto"
-      className={className}
-    />
-  );
-}
+const itemVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: [0.22, 1, 0.36, 1] as const
+    }
+  }
+};
 
 export default function HomePage() {
-  const router = useRouter();
+  const { siteSettings } = useAuth();
   const [loadingComplete, setLoadingComplete] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
-  const [videoSources, setVideoSources] = useState<string[]>(defaultVideoSources);
-  const { siteSettings } = useAuth();
   const [minTimeElapsed, setMinTimeElapsed] = useState(false);
-  const [activeAccordion, setActiveAccordion] = useState<number | null>(0);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ['start start', 'end end']
+  });
+
+  const backgroundY = useTransform(scrollYProgress, [0, 1], ['0%', '20%']);
 
   const isReady = videoLoaded && minTimeElapsed;
 
   useEffect(() => {
-    const minTimer = setTimeout(() => setMinTimeElapsed(true), 4000);
-    const fallbackTimer = setTimeout(() => setVideoLoaded(true), 8000);
+    const minTimer = setTimeout(() => setMinTimeElapsed(true), 3000);
+    const fallbackTimer = setTimeout(() => setVideoLoaded(true), 6000);
     return () => {
       clearTimeout(minTimer);
       clearTimeout(fallbackTimer);
     };
   }, []);
 
-  useEffect(() => {
-    async function loadKVVideos() {
-      try {
-        const res = await fetch(`/api/public/data?t=${Date.now()}`);
-        if (!res.ok) throw new Error('API request failed');
-        const data = await res.json();
-        if (data.videos && data.videos.length > 0) {
-          const urls = data.videos.map((item: any) => {
-            const url = item.video_url;
-            return url.startsWith('/videos/') ? `${ASSETS_BASE}${url}` : url;
-          });
-          while (urls.length < 3) {
-            urls.push(defaultVideoSources[urls.length % defaultVideoSources.length]);
-          }
-          setVideoSources(urls);
-        }
-      } catch (err) {
-        console.error('Failed to load stage videos:', err);
-      }
+  // Features dataset
+  const features = [
+    {
+      icon: Shield,
+      title: 'Set your rules',
+      description: 'Free for all, tickets, NFTs, subscriptions, custom rules'
+    },
+    {
+      icon: Video,
+      title: 'Host rooms',
+      description: 'Right now, every week, or at random'
+    },
+    {
+      icon: Users,
+      title: 'Share the stage',
+      description: 'Invite guests in advance or right on the spot'
+    },
+    {
+      icon: Clock,
+      title: 'Keep it going',
+      description: 'Hang out in the chat during, before, and after live streams'
     }
-    loadKVVideos();
-  }, []);
+  ];
+
+  // Mobile Showcase mockups dataset
+  const mockups = [
+    {
+      title: 'Behind the Scenes',
+      badge: 'Subscription • $9.99/mo',
+      video: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Trim-1.mp4'
+    },
+    {
+      title: 'Live room with Jacqueline',
+      badge: 'Live Now',
+      video: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Trim-6.mp4'
+    },
+    {
+      title: 'Universe Stages',
+      badge: '4 Participants',
+      video: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Trim-3-1.mp4'
+    },
+    {
+      title: 'Archived Chats',
+      badge: 'Live Chat Feed',
+      video: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/download_2_sispkn.mp4'
+    }
+  ];
 
   return (
     <>
@@ -128,254 +115,268 @@ export default function HomePage() {
       <div className="film-grain" />
       <SpotlightNavbar />
 
-      <main className="min-h-screen bg-[#12100E] text-[#E7E3DC] overflow-hidden pt-16 md:pt-20">
+      <div ref={containerRef} className="relative min-h-screen bg-black text-white font-sans overflow-x-hidden selection:bg-accent/20 select-none">
         
-        {/* HERO SECTION */}
-        <section className="relative min-h-[90vh] flex flex-col justify-between border-b border-[#E7E3DC]/10 px-6 md:px-12 py-12">
-          
-          {/* Top Metadata Row (Editorial style) */}
-          <div className="flex flex-col sm:flex-row justify-between items-start gap-4 font-mono text-[10px] tracking-widest text-[#A39E93] uppercase">
-            <span>OFFICE: GUJARAT / MH / IN</span>
-            <span>CINEMATIC PRODUCTION SPECIALISTS</span>
-            <span>EST. 2016</span>
-          </div>
-
-          {/* Center Cinematic Title Card */}
-          <div className="my-auto py-12 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            <div className="lg:col-span-8 space-y-8 text-left">
-              <h1 
-                className="text-5xl sm:text-7xl md:text-8xl tracking-tight leading-none text-[#E7E3DC]"
-                style={{ fontFamily: 'var(--font-cormorant), serif' }}
-              >
-                THE ART OF <br />
-                <span className="italic font-light text-[#C87A53]">Kinetic Light</span> <br />
-                & ACOUSTICS.
-              </h1>
-              <p className="text-xs sm:text-sm font-mono text-[#A39E93] max-w-xl leading-relaxed">
-                We engineer large-scale stage backdrops, high-fidelity sound fields, and responsive lighting choreography that transforms empty spaces into living monuments.
-              </p>
-              
-              {/* Editorial Outlined Button Triggers */}
-              <div className="flex flex-wrap gap-4 pt-4 font-mono text-[11px] tracking-widest uppercase">
-                <button 
-                  onClick={() => router.push('/services')}
-                  className="px-8 py-4 border border-[#E7E3DC] hover:bg-[#E7E3DC] hover:text-[#12100E] transition-all duration-300 flex items-center gap-2 cursor-pointer"
-                >
-                  Explore Sectors <ArrowUpRight className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={() => router.push('/gallery')}
-                  className="px-8 py-4 border border-[#E7E3DC]/20 hover:border-[#E7E3DC] transition-all duration-300 cursor-pointer text-[#A39E93] hover:text-[#E7E3DC]"
-                >
-                  View Archive
-                </button>
-              </div>
-            </div>
-
-            {/* Circular Abstract Logo on the right */}
-            <div className="lg:col-span-4 flex justify-center items-center relative aspect-square max-w-[320px] mx-auto w-full lg:max-w-none opacity-40">
-              <LottiePlayer src="/Logo.json" className="w-full h-full flex items-center justify-center filter grayscale contrast-125" />
-            </div>
-          </div>
-
-          {/* Bottom Row - Cinematic video background card */}
-          <div className="w-full relative aspect-[21/9] md:aspect-[32/10] overflow-hidden border border-[#E7E3DC]/10 rounded-sm">
-            <video 
-              src={`${ASSETS_BASE}/videos/upscaled-video_v3jizt.mp4`}
-              autoPlay 
-              muted 
-              loop 
-              playsInline 
+        {/* 1. HERO SECTION */}
+        <section className="relative h-screen flex flex-col justify-center items-center overflow-hidden">
+          {/* Autoplay R2 Video Background */}
+          <motion.div 
+            style={{ y: backgroundY }}
+            className="absolute inset-0 w-full h-full select-none pointer-events-none"
+          >
+            <video
+              src="https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Trim.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
               preload="auto"
               onLoadedData={() => setVideoLoaded(true)}
-              className="w-full h-full object-cover grayscale opacity-60 brightness-[0.7] transition-all duration-700"
+              className="w-full h-full object-cover brightness-[0.4]"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#12100E] via-transparent to-transparent" />
-          </div>
+            {/* Dark overlay */}
+            <div className="absolute inset-0 bg-black/60 bg-gradient-to-t from-black via-transparent to-black" />
+          </motion.div>
 
-        </section>
-
-        {/* KINETIC SLOGAN TICKER */}
-        <section className="relative py-8 bg-[#12100E] border-b border-[#E7E3DC]/10 overflow-hidden font-mono text-xs tracking-[0.25em] text-[#E7E3DC] uppercase">
-          <div className="flex gap-12 animate-marquee whitespace-nowrap">
-            {slogans.map((text, idx) => (
-              <span key={idx} className="flex items-center gap-12">
-                <span>{text}</span>
-                <span className="text-[#C87A53]">•</span>
-              </span>
-            ))}
-            {/* Duplicated for loop */}
-            {slogans.map((text, idx) => (
-              <span key={`dup-${idx}`} className="flex items-center gap-12">
-                <span>{text}</span>
-                <span className="text-[#C87A53]">•</span>
-              </span>
-            ))}
-          </div>
-        </section>
-
-        {/* ASYMMETRICAL SELECTED STAGES VIEW */}
-        <section className="py-20 md:py-32 px-6 md:px-12 border-b border-[#E7E3DC]/10 max-w-7xl mx-auto w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start mb-20">
-            <div className="lg:col-span-5 space-y-4">
-              <span className="font-mono text-[10px] tracking-widest text-[#C87A53] block uppercase">// Live Showcases</span>
-              <h2 
-                className="text-4xl sm:text-5xl leading-none text-[#E7E3DC]"
-                style={{ fontFamily: 'var(--font-cormorant), serif' }}
-              >
-                OUR STAGES IN <br />
-                <span className="italic font-light">Kinetic Motion</span>
-              </h2>
-            </div>
-            <div className="lg:col-span-7">
-              <p className="font-mono text-xs text-[#A39E93] leading-relaxed max-w-xl">
-                A curated sequence of live systems executing design choreography. Each installation blends modular rigging precision with synchronized sound wave fields.
-              </p>
-            </div>
-          </div>
-
-          {/* Asymmetric layout frames */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch">
-            
-            {/* Left Frame (Tall Video / Small text) */}
-            <div className="md:col-span-7 border border-[#E7E3DC]/10 p-6 flex flex-col justify-between space-y-8 rounded-sm bg-[#1A1816]/30">
-              <div className="relative w-full aspect-[16/10] md:aspect-square overflow-hidden rounded-sm border border-[#E7E3DC]/5">
-                {videoSources[0] ? (
-                  <StageVideo 
-                    src={videoSources[0]} 
-                    isActive={true} 
-                    className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" 
-                  />
-                ) : (
-                  <div className="w-full h-full bg-zinc-950/40 animate-pulse" />
-                )}
-              </div>
-              <div className="space-y-3">
-                <span className="font-mono text-[9px] uppercase tracking-widest text-[#C87A53] block">Stage Design 01</span>
-                <h3 
-                  className="text-2xl text-[#E7E3DC]"
-                  style={{ fontFamily: 'var(--font-cormorant), serif' }}
-                >
-                  Concert Mainstages & Arena Riggings
-                </h3>
-                <p className="font-mono text-[11px] text-[#A39E93] leading-relaxed">
-                  Line arrays hung on aluminum heavy duty structures configured to cover large audience venues with massive sound pressure levels.
-                </p>
-              </div>
-            </div>
-
-            {/* Right Frame (Short Video / Detailed text accordion) */}
-            <div className="md:col-span-5 flex flex-col justify-between gap-8">
-              
-              {/* Top Frame card */}
-              <div className="border border-[#E7E3DC]/10 p-6 flex flex-col gap-6 rounded-sm bg-[#1A1816]/30">
-                <div className="relative w-full aspect-[16/10] overflow-hidden rounded-sm border border-[#E7E3DC]/5">
-                  {videoSources[1] ? (
-                    <StageVideo 
-                      src={videoSources[1]} 
-                      isActive={true} 
-                      className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" 
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-zinc-950/40 animate-pulse" />
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <span className="font-mono text-[9px] uppercase tracking-widest text-[#C87A53] block">Stage Design 02</span>
-                  <h3 className="text-xl text-[#E7E3DC]" style={{ fontFamily: 'var(--font-cormorant), serif' }}>
-                    Elite Weddings & Varmala Setups
-                  </h3>
-                </div>
-              </div>
-
-              {/* Bottom Frame card */}
-              <div className="border border-[#E7E3DC]/10 p-6 flex flex-col gap-6 rounded-sm bg-[#1A1816]/30">
-                <div className="relative w-full aspect-[16/10] overflow-hidden rounded-sm border border-[#E7E3DC]/5">
-                  {videoSources[2] ? (
-                    <StageVideo 
-                      src={videoSources[2]} 
-                      isActive={true} 
-                      className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" 
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-zinc-950/40 animate-pulse" />
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <span className="font-mono text-[9px] uppercase tracking-widest text-[#C87A53] block">Stage Design 03</span>
-                  <h3 className="text-xl text-[#E7E3DC]" style={{ fontFamily: 'var(--font-cormorant), serif' }}>
-                    Road Shows & Corporate Launches
-                  </h3>
-                </div>
-              </div>
-
-            </div>
-
-          </div>
-        </section>
-
-        {/* EDITORIAL ACCORDION DETAILS SECTION */}
-        <section className="py-20 md:py-32 border-b border-[#E7E3DC]/10 max-w-7xl mx-auto px-6 md:px-12 w-full grid grid-cols-1 lg:grid-cols-12 gap-12">
-          
-          {/* Left Details */}
-          <div className="lg:col-span-5 space-y-4">
-            <span className="font-mono text-[10px] tracking-widest text-[#C87A53] block uppercase">// System Metrics</span>
-            <h2 
-              className="text-4xl md:text-5xl leading-none text-[#E7E3DC]"
-              style={{ fontFamily: 'var(--font-cormorant), serif' }}
+          {/* Staggered text content */}
+          <motion.div 
+            initial="hidden"
+            animate="visible"
+            variants={containerVariants}
+            className="relative z-10 text-center max-w-4xl px-6 flex flex-col items-center"
+          >
+            <motion.h1 
+              variants={itemVariants}
+              className="text-5xl md:text-8xl font-bold tracking-tight text-white leading-none mt-20"
             >
-              METRICS OF <br />
-              <span className="italic font-light">Performance</span>
-            </h2>
-            <p className="font-mono text-xs text-[#A39E93] leading-relaxed max-w-sm pt-4">
-              Our capability mapped out in numbers. Click each item to view details of our structural deployments.
-            </p>
-          </div>
+              Create your <br />
+              <span className="text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]">Universe✨</span>
+            </motion.h1>
+            
+            <motion.p 
+              variants={itemVariants}
+              className="text-gray-300 max-w-xl mt-8 text-md sm:text-lg leading-relaxed font-light"
+            >
+              A Universe is a series of live rooms and a community chat safeguarded with anything you&apos;d like: tickets, subscriptions, NFTs, merch or literally anything else ∞
+            </motion.p>
+          </motion.div>
+        </section>
 
-          {/* Right Accordion */}
-          <div className="lg:col-span-7 border-t border-[#E7E3DC]/10 divide-y divide-[#E7E3DC]/10">
-            {statsData.map((stat, idx) => {
-              const isOpen = activeAccordion === idx;
+        {/* 2. FEATURES GRID */}
+        <section className="relative px-8 py-24 max-w-7xl mx-auto w-full border-t border-gray-800/40">
+          <motion.div 
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-100px' }}
+            variants={containerVariants}
+            className="grid grid-cols-1 md:grid-cols-4 gap-8"
+          >
+            {features.map((feat, idx) => {
+              const Icon = feat.icon;
               return (
-                <div key={idx} className="py-6 transition-all duration-300">
-                  <button 
-                    onClick={() => setActiveAccordion(isOpen ? null : idx)}
-                    className="w-full flex items-center justify-between text-left cursor-pointer focus:outline-none group"
-                  >
-                    <div className="flex items-center gap-6">
-                      <span 
-                        className="text-3xl md:text-4xl text-[#C87A53] font-normal"
-                        style={{ fontFamily: 'var(--font-cormorant), serif' }}
-                      >
-                        {stat.number}
-                      </span>
-                      <span className="font-mono text-xs tracking-wider text-[#E7E3DC] uppercase group-hover:text-[#C87A53] transition-colors">
-                        {stat.label}
-                      </span>
-                    </div>
-                    {isOpen ? <Minus className="w-4 h-4 text-[#C87A53]" /> : <Plus className="w-4 h-4 text-[#A39E93] group-hover:text-[#E7E3DC] transition-colors" />}
-                  </button>
-                  {isOpen && (
-                    <motion.div 
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      className="pt-4 pl-16 pr-8 text-xs font-mono text-[#A39E93] leading-relaxed"
-                    >
-                      {stat.desc}
-                    </motion.div>
-                  )}
-                </div>
+                <motion.div 
+                  key={idx}
+                  variants={itemVariants}
+                  className="flex flex-col items-start text-left p-6 rounded-2xl bg-secondary/20 border border-gray-800/30 hover:border-gray-850 hover:bg-secondary/40 transition-all duration-300"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-gray-800/30 border border-gray-800/60 flex items-center justify-center text-accent mb-6 shadow-md shadow-accent/5">
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-semibold text-lg text-white tracking-wide">
+                    {feat.title}
+                  </h3>
+                  <p className="text-gray-400 text-sm mt-3 leading-relaxed">
+                    {feat.description}
+                  </p>
+                </motion.div>
               );
             })}
-          </div>
-
+          </motion.div>
         </section>
 
-        {/* PROJECTS SHOWCASE */}
-        <ProjectsSection />
+        {/* 3. APP SHOWCASE */}
+        <section className="relative px-8 py-20 border-t border-gray-800/40 w-full overflow-hidden">
+          <div className="max-w-7xl mx-auto mb-16 text-center">
+            <span className="text-[10px] uppercase tracking-widest text-accent font-bold block mb-3">// Experience Leam</span>
+            <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white">LIVE INTERFACES</h2>
+          </div>
 
-      </main>
+          <div className="flex gap-6 overflow-x-auto pb-8 scrollbar-none snap-x snap-mandatory max-w-7xl mx-auto w-full px-2">
+            {mockups.map((mock, idx) => (
+              <motion.div
+                key={idx}
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+                className="aspect-[9/19] w-[280px] sm:w-[320px] flex-shrink-0 snap-start rounded-[2.5rem] border border-gray-800 bg-[#070708] p-3 flex flex-col justify-between shadow-2xl relative group overflow-hidden"
+              >
+                {/* Content Overlay */}
+                <div className="absolute top-6 left-6 z-20 space-y-1">
+                  <span className="px-3 py-1 rounded-full bg-black/60 border border-gray-800 text-[9px] font-bold text-white uppercase tracking-widest block">
+                    {mock.badge}
+                  </span>
+                </div>
 
+                {/* Autoplay video background */}
+                <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
+                  <video 
+                    src={mock.video} 
+                    autoPlay 
+                    muted 
+                    loop 
+                    playsInline 
+                    preload="auto"
+                    className="w-full h-full object-cover filter brightness-[0.7]" 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent" />
+                </div>
+
+                {/* Bottom title info */}
+                <div className="relative z-10 mt-auto p-4 bg-black/40 backdrop-blur-md rounded-2xl border border-gray-800/30">
+                  <h4 className="text-sm font-semibold text-white tracking-wide">
+                    {mock.title}
+                  </h4>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        {/* 4. VALUE PROPOSITION */}
+        <section className="relative px-8 py-24 border-t border-gray-800/40 max-w-6xl mx-auto w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            
+            {/* Left Column */}
+            <motion.div 
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: '-100px' }}
+              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] as const }}
+              className="flex gap-6 items-start p-8 rounded-3xl bg-secondary/10 border border-gray-800/20"
+            >
+              <div className="w-12 h-12 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center text-accent flex-shrink-0">
+                <Star className="w-5 h-5 fill-accent" />
+              </div>
+              <p className="text-xl font-medium leading-relaxed text-white">
+                Cut through the noise of social media with a special experience
+              </p>
+            </motion.div>
+
+            {/* Right Column */}
+            <motion.div 
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: '-100px' }}
+              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] as const }}
+              className="flex gap-6 items-start p-8 rounded-3xl bg-secondary/10 border border-gray-800/20"
+            >
+              <div className="w-12 h-12 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center text-accent flex-shrink-0">
+                <Landmark className="w-5 h-5" />
+              </div>
+              <p className="text-xl font-medium leading-relaxed text-white">
+                Connect deeper with your top 1% fans, turn followers into a community
+              </p>
+            </motion.div>
+
+          </div>
+        </section>
+
+        {/* 5. CREATOR SHOWCASE */}
+        <section className="relative px-8 py-20 border-t border-gray-800/40 max-w-7xl mx-auto w-full">
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <span className="text-[10px] uppercase tracking-widest text-accent font-bold block mb-3">// Creators Index</span>
+            <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white">FEATURED PLANETS</h2>
+          </div>
+
+          <motion.div 
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-100px' }}
+            variants={containerVariants}
+            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+          >
+            {/* Card 1: Tierra Monique */}
+            <motion.div 
+              variants={itemVariants}
+              whileHover={{ scale: 1.02 }}
+              transition={{ duration: 0.3 }}
+              className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-gray-800 group shadow-xl"
+            >
+              <Image 
+                src="https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-13.png" 
+                alt="Tierra Monique"
+                fill
+                sizes="(max-width: 768px) 100vw, 400px"
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10" />
+              
+              <div className="absolute bottom-6 left-6 right-6 z-20 flex justify-between items-end">
+                <h4 className="text-2xl font-bold text-white leading-none">Tierra Monique</h4>
+                <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-[9px] font-bold text-accent uppercase border border-white/5">
+                  $9.99 a month
+                </span>
+              </div>
+            </motion.div>
+
+            {/* Card 2: Chris Bivins */}
+            <motion.div 
+              variants={itemVariants}
+              whileHover={{ scale: 1.02 }}
+              transition={{ duration: 0.3 }}
+              className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-gray-800 group shadow-xl"
+            >
+              <Image 
+                src="https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-18_tdjp2b.png" 
+                alt="Chris Bivins"
+                fill
+                sizes="(max-width: 768px) 100vw, 400px"
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10" />
+              
+              <div className="absolute bottom-6 left-6 right-6 z-20 flex justify-between items-end">
+                <h4 className="text-2xl font-bold text-white leading-none">Chris Bivins</h4>
+                <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-[9px] font-bold text-accent uppercase border border-white/5">
+                  $39.99
+                </span>
+              </div>
+            </motion.div>
+
+            {/* Card 3: WIDER card */}
+            <motion.div 
+              variants={itemVariants}
+              whileHover={{ scale: 1.02 }}
+              transition={{ duration: 0.3 }}
+              className="relative md:col-span-2 aspect-[16/9] rounded-2xl overflow-hidden border border-gray-800 group shadow-xl"
+            >
+              <Image 
+                src="https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-21_atubxz.png" 
+                alt="Light in a rabbit hole"
+                fill
+                sizes="(max-width: 768px) 100vw, 800px"
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent z-10" />
+              
+              <div className="absolute top-6 left-6 z-20">
+                <div className="w-10 h-10 rounded-full bg-gray-800/80 border border-gray-700 flex items-center justify-center text-white backdrop-blur-md">
+                  <Star className="w-4 h-4 text-accent fill-accent" />
+                </div>
+              </div>
+
+              <div className="absolute bottom-6 left-6 right-6 z-20 max-w-xl space-y-2">
+                <h4 className="text-3xl font-bold text-white">Light in a rabbit hole</h4>
+                <p className="text-gray-300 text-xs sm:text-sm leading-relaxed">
+                  Web3 can be overwhelming. We gotchu. We will guide you from here and literally anywhere.
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        </section>
+
+      </div>
+
+      {/* 6. FOOTER */}
       <Footer />
     </>
   );

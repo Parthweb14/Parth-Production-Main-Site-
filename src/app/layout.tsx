@@ -1,20 +1,11 @@
 import type { Metadata, Viewport } from 'next';
-import { Cormorant_Garamond, Space_Mono } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import Script from 'next/script';
 import './globals.css';
 
-const cormorantGaramond = Cormorant_Garamond({
+const inter = Inter({
   subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-cormorant',
-  display: 'swap',
-  style: ['normal', 'italic'],
-});
-
-const spaceMono = Space_Mono({
-  subsets: ['latin'],
-  weight: ['400', '700'],
-  variable: '--font-mono',
+  variable: '--font-sans',
   display: 'swap',
 });
 
@@ -26,8 +17,8 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'Parth Production | Premium DJ & Event Services',
-  description: 'Creating unforgettable atmospheres with premium DJ performances, sound systems, and lighting for weddings, festivals, and corporate events.',
+  title: 'Parth Production | Create your Universe✨',
+  description: 'A Universe of premium soundscapes, event lighting, and modular truss rigs engineered for weddings, festivals, and concerts.',
   keywords: ['DJ services', 'event management', 'wedding DJ', 'sound system', 'lighting design', 'Gujarat events'],
   icons: {
     icon: [
@@ -40,17 +31,6 @@ export const metadata: Metadata = {
     ]
   },
   manifest: '/site.webmanifest',
-  openGraph: {
-    title: 'Parth Production | Premium Event Services',
-    description: '1000+ events completed. Professional DJ, sound, and lighting services.',
-    images: ['/og-image.jpg'],
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Parth Production | Premium Event Services',
-    description: '1000+ events completed. Professional DJ, sound, and lighting services.',
-  },
 };
 
 import { AuthProvider } from '@/context/AuthContext';
@@ -61,21 +41,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${cormorantGaramond.variable} ${spaceMono.variable} dark h-full antialiased`}>
+    <html lang="en" className={`${inter.variable} dark h-full antialiased`}>
       <head>
         <link rel="preload" href="/Logo.json" as="fetch" crossOrigin="anonymous" />
         <link rel="preload" href="/logo.png" as="image" />
       </head>
-      <body className="min-h-full bg-[#12100E] text-[#E7E3DC] flex flex-col font-mono select-none overflow-x-hidden">
+      <body className="min-h-full bg-black text-white flex flex-col font-sans select-none overflow-x-hidden">
         <AuthProvider>
           {children}
         </AuthProvider>
-        {/* Load Lottie player for premium vector animations */}
         <Script 
           src="https://unpkg.com/@lottiefiles/lottie-player@2.0.4/dist/lottie-player.js" 
           strategy="beforeInteractive" 
         />
-        {/* Prevent mobile pinch zoom and double-tap zoom */}
         <Script id="disable-zoom" strategy="afterInteractive">
           {`
             document.addEventListener('gesturestart', function (e) {

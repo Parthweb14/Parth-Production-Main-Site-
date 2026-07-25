@@ -8,15 +8,15 @@ import Footer from '@/components/Footer';
 import Image from 'next/image';
 
 const defaultGalleryImages = [
-  { id: 1, category: 'Weddings', title: 'Premium Varmala Stage', event: 'Wedding Ceremony', src: '/images/Untitled-design-13.png' },
-  { id: 2, category: 'Festivals', title: 'Cultural Garba Arena', event: 'Navratri Dandiya', src: '/images/Untitled-design-18_tdjp2b.png' },
-  { id: 3, category: 'Concerts', title: 'Live Rock concert audio', event: 'Sunburn Arena', src: '/images/Untitled-design-21_atubxz.png' },
-  { id: 4, category: 'Corporate', title: 'Interactive Truss rig', event: 'Launch Production', src: '/images/Untitled-design-20_sm7myc.png' },
-  { id: 5, category: 'Road Shows', title: 'Mobile LED Truss', event: 'Gujarat Promotion', src: '/images/Untitled-design-17_ubz6ho.png' },
-  { id: 6, category: 'Weddings', title: 'Royal Reception Stage', event: 'Elite reception setup', src: '/images/Untitled-design-15_bdfxt9.png' },
-  { id: 7, category: 'Festivals', title: 'Neon Laser EDM show', event: 'Music Festival live', src: '/images/Untitled-design-14_ogyqmd.png' },
-  { id: 8, category: 'Concerts', title: 'Mainstage LED wall', event: 'Ahmedabad Concert Live', src: '/images/Untitled-design-32_atcfrs.png' },
-  { id: 9, category: 'Corporate', title: 'High-end lighting design', event: 'VIP Corporate Meet', src: '/images/Untitled-design-25_f2t475.png' }
+  { id: 1, category: 'Weddings', title: 'Premium Varmala Stage', event: 'Wedding Ceremony', src: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-13.png' },
+  { id: 2, category: 'Festivals', title: 'Cultural Garba Arena', event: 'Navratri Dandiya', src: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-18_tdjp2b.png' },
+  { id: 3, category: 'Concerts', title: 'Live Rock concert audio', event: 'Sunburn Arena', src: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-21_atubxz.png' },
+  { id: 4, category: 'Corporate', title: 'Interactive Truss rig', event: 'Launch Production', src: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-20_sm7myc.png' },
+  { id: 5, category: 'Road Shows', title: 'Mobile LED Truss', event: 'Gujarat Promotion', src: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-17_ubz6ho.png' },
+  { id: 6, category: 'Weddings', title: 'Royal Reception Stage', event: 'Elite reception setup', src: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-15_bdfxt9.png' },
+  { id: 7, category: 'Festivals', title: 'Neon Laser EDM show', event: 'Music Festival live', src: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-14_ogyqmd.png' },
+  { id: 8, category: 'Concerts', title: 'Mainstage LED wall', event: 'Ahmedabad Concert Live', src: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-32_atcfrs.png' },
+  { id: 9, category: 'Corporate', title: 'High-end lighting design', event: 'VIP Corporate Meet', src: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-25_f2t475.png' }
 ];
 
 const categories = ['All Events', 'Weddings', 'Festivals', 'Concerts', 'Corporate', 'Road Shows'];
@@ -39,7 +39,7 @@ export default function GalleryPage() {
             category: item.category,
             title: item.category === 'Weddings' ? 'Premium Varmala Stage' : item.category === 'Festivals' ? 'Cultural Garba Arena' : item.category === 'Concerts' ? 'Live Rock concert audio' : item.category === 'Corporate' ? 'Interactive Truss rig' : 'Mobile LED Truss',
             event: item.category === 'Weddings' ? 'Wedding Ceremony' : item.category === 'Festivals' ? 'Navratri Dandiya' : item.category === 'Concerts' ? 'Sunburn Arena' : item.category === 'Corporate' ? 'Launch Production' : 'Gujarat Promotion',
-            src: item.image_url
+            src: item.image_url.startsWith('/') ? `https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev${item.image_url}` : item.image_url
           }));
           setGalleryImages(mapped);
         }
@@ -84,44 +84,41 @@ export default function GalleryPage() {
       <SpotlightNavbar />
       <div className="film-grain" />
 
-      <div className="relative min-h-screen bg-[#12100E] text-[#E7E3DC] select-none pb-20 pt-16 md:pt-20">
+      <div className="relative min-h-screen bg-black text-white select-none pb-20 pt-20">
         
         {/* HERO BANNER */}
-        <section className="relative min-h-[30vh] border-b border-[#E7E3DC]/10 px-6 md:px-12 py-12 flex flex-col justify-center">
+        <section className="relative min-h-[30vh] border-b border-gray-800/40 px-6 md:px-12 py-12 flex flex-col justify-center">
           <div className="max-w-7xl mx-auto w-full space-y-4">
-            <span className="font-mono text-[10px] tracking-widest text-[#C87A53] uppercase">// Image Catalogue</span>
-            <h1 
-              className="text-5xl md:text-7xl tracking-tight leading-none text-[#E7E3DC]"
-              style={{ fontFamily: 'var(--font-cormorant), serif' }}
-            >
-              VISUAL INDEX OF <br />
-              <span className="italic font-light">Deployments</span>
+            <span className="text-[10px] uppercase tracking-widest text-accent font-bold block mb-2">// Catalogue Index</span>
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white leading-none">
+              VISUALS & <br />
+              <span className="text-accent drop-shadow-[0_0_15px_rgba(255,215,0,0.15)]">BLUEPRINTS</span>
             </h1>
-            <p className="font-mono text-xs text-[#A39E93] leading-relaxed max-w-lg">
-              Analog frames documenting our staging architecture. Filter by event category to navigate the archive logs.
+            <p className="text-gray-400 text-sm leading-relaxed max-w-lg">
+              Explore staging and visual setup logs from events completed across India.
             </p>
           </div>
         </section>
 
-        {/* SWISS CATEGORY FILTER BAR */}
-        <section className="border-b border-[#E7E3DC]/10 bg-[#1A1816]/20 py-4 px-6 md:px-12">
+        {/* CATEGORY FILTERS */}
+        <section className="border-b border-gray-800/40 bg-secondary/10 py-4 px-6 md:px-12">
           <div className="max-w-7xl mx-auto flex flex-wrap gap-x-8 gap-y-3 text-[11px] font-mono tracking-widest uppercase items-center">
-            <span className="text-[#E7E3DC]/30 mr-2 text-[9px]">Filter Log:</span>
+            <span className="text-gray-500 mr-2 text-[9px]">Filter Logs:</span>
             {categories.map((cat) => {
               const isActive = selectedCategory === cat;
               return (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`hover:text-[#C87A53] cursor-pointer transition-colors relative py-1 ${
-                    isActive ? 'text-[#C87A53] font-bold' : 'text-[#A39E93]'
+                  className={`hover:text-accent cursor-pointer transition-colors relative py-1 ${
+                    isActive ? 'text-accent font-bold' : 'text-gray-400'
                   }`}
                 >
                   {cat}
                   {isActive && (
                     <motion.div 
                       layoutId="activeFilterUnderline"
-                      className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-[#C87A53]"
+                      className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-accent"
                     />
                   )}
                 </button>
@@ -130,9 +127,9 @@ export default function GalleryPage() {
           </div>
         </section>
 
-        {/* GRID ARCHIVE PORTFOLIO */}
+        {/* GALLERY GRID */}
         <section className="max-w-7xl mx-auto px-6 md:px-12 py-16">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
             {filteredImages.map((image, idx) => (
               <motion.div
                 layout
@@ -141,34 +138,31 @@ export default function GalleryPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.4 }}
-                className="border border-[#E7E3DC]/10 p-4 bg-[#1A1816]/30 rounded-sm flex flex-col justify-between hover:border-[#E7E3DC]/35 transition-all duration-300 group cursor-pointer"
+                className="border border-gray-800 p-4 bg-secondary/10 rounded-2xl flex flex-col justify-between hover:border-gray-700 hover:bg-secondary/20 transition-all duration-300 group cursor-pointer"
                 onClick={() => setLightboxIndex(idx)}
               >
-                <div className="relative w-full aspect-[4/3] overflow-hidden rounded-sm border border-[#E7E3DC]/5">
+                <div className="relative w-full aspect-[4/3] overflow-hidden rounded-xl border border-gray-850">
                   <Image 
                     src={image.src} 
                     alt={image.title}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
-                    className="object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700 brightness-[0.8]"
+                    className="object-cover transition-all duration-700 brightness-[0.8] group-hover:scale-105"
                   />
                   
-                  {/* Subtle centered indicator */}
-                  <div className="absolute inset-0 bg-[#12100E]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
-                    <div className="w-10 h-10 rounded-sm bg-[#12100E] border border-[#E7E3DC]/15 flex items-center justify-center text-[#E7E3DC]">
+                  {/* Hover indicator */}
+                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
+                    <div className="w-10 h-10 rounded-full bg-black/80 border border-gray-800 flex items-center justify-center text-white backdrop-blur-sm">
                       <Maximize2 className="w-4 h-4" />
                     </div>
                   </div>
                 </div>
 
                 <div className="pt-4 space-y-1">
-                  <span className="font-mono text-[9px] uppercase tracking-widest text-[#C87A53] block">
+                  <span className="text-[9px] uppercase tracking-widest text-accent font-semibold block">
                     {image.category} // {image.event}
                   </span>
-                  <h3 
-                    className="text-lg text-[#E7E3DC] font-normal"
-                    style={{ fontFamily: 'var(--font-cormorant), serif' }}
-                  >
+                  <h3 className="text-lg font-bold text-white uppercase tracking-tight">
                     {image.title}
                   </h3>
                 </div>
@@ -177,25 +171,25 @@ export default function GalleryPage() {
           </div>
         </section>
 
-        {/* LIGHTBOX MODAL */}
+        {/* LIGHTBOX */}
         <AnimatePresence>
           {lightboxIndex !== null && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[10000] bg-[#12100e]/98 flex flex-col justify-center items-center px-4"
+              className="fixed inset-0 z-[10000] bg-black/98 flex flex-col justify-center items-center px-4"
             >
               <button 
                 onClick={() => setLightboxIndex(null)}
-                className="absolute top-6 right-6 p-2 rounded-sm bg-[#E7E3DC]/5 border border-[#E7E3DC]/10 hover:bg-[#E7E3DC]/10 text-white cursor-pointer"
+                className="absolute top-6 right-6 p-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white cursor-pointer"
               >
                 <X className="w-6 h-6" />
               </button>
 
               <button 
                 onClick={handlePrev}
-                className="absolute left-6 top-1/2 -translate-y-1/2 p-3 rounded-full bg-[#E7E3DC]/5 border border-[#E7E3DC]/10 hover:bg-[#E7E3DC]/10 text-white cursor-pointer"
+                className="absolute left-6 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white cursor-pointer"
               >
                 <ChevronLeft className="w-6 h-6" />
               </button>
@@ -209,13 +203,13 @@ export default function GalleryPage() {
                   transition={{ duration: 0.3 }}
                   src={filteredImages[lightboxIndex].src} 
                   alt={filteredImages[lightboxIndex].title}
-                  className="max-w-full max-h-[80vh] object-contain rounded-sm border border-[#E7E3DC]/10 shadow-2xl"
+                  className="max-w-full max-h-[80vh] object-contain rounded-xl border border-gray-800 shadow-2xl"
                 />
               </div>
 
               <button 
                 onClick={handleNext}
-                className="absolute right-6 top-1/2 -translate-y-1/2 p-3 rounded-full bg-[#E7E3DC]/5 border border-[#E7E3DC]/10 hover:bg-[#E7E3DC]/10 text-white cursor-pointer"
+                className="absolute right-6 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white cursor-pointer"
               >
                 <ChevronRight className="w-6 h-6" />
               </button>

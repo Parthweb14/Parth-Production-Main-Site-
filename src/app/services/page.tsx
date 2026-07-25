@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Check, ArrowUpRight } from 'lucide-react';
+import { Check, ArrowRight } from 'lucide-react';
 import SpotlightNavbar from '@/components/SpotlightNavbar';
 import Footer from '@/components/Footer';
 import Image from 'next/image';
@@ -11,73 +11,68 @@ import { useAuth } from '@/context/AuthContext';
 const servicesData = [
   {
     id: 1,
-    number: '01',
     title: 'WEDDINGS',
     subtitle: 'Premium DJ & Stage Audio',
-    description: 'We orchestrate high-fidelity acoustics for elite weddings. From micro-designed speaker arrays for clear vows to high pressure sound fields that keep the dancefloor alive.',
+    description: 'Make your big day unforgettable with the perfect soundtrack. From romantic melodies during the vows to high-energy beats at the reception, we create the right mood for every moment of your wedding.',
     features: [
-      'Custom Bridal Entry Soundtracks',
-      'Architectural Truss Illuminations',
-      'High-Definition Point-Source Audio',
-      'CO2 Sparklers & Low Fog Dry Ice'
+      'Custom Bridal Entry Music',
+      'Intelligent Lighting Programs',
+      'High-Definition sound systems',
+      'SFX Sparklers & Dry-Ice Low Fog'
     ],
-    image: '/images/Untitled-design-15_bdfxt9.png',
+    image: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-15_bdfxt9.png',
   },
   {
     id: 2,
-    number: '02',
     title: 'CONCERTS',
     subtitle: 'Stadium Live Production',
-    description: 'World-class line array setups and active digital mixing consoles calibrated for high decibel environments. We deploy certified structures prioritizing perfect coverage and audience safety.',
+    description: 'From intimate live performances to massive stadium gigs, our expert DJs and technical team provide world-class sound and lights to amplify the impact of every performance.',
     features: [
-      'High Decibel Line Array Rigging',
-      'On-site Sound Engineers',
-      'Digital Audio Control Desks',
-      'Wind-load Certified Aluminum Truss'
+      'Line Array Riggings',
+      'High decibel bass layouts',
+      'Digital Audio Mixers',
+      'Heavy Duty Truss frames'
     ],
-    image: '/images/Untitled-design-20_sm7myc.png',
+    image: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-20_sm7myc.png',
   },
   {
     id: 3,
-    number: '03',
     title: 'FESTIVALS',
     subtitle: 'Vibrant Arena Mixes',
-    description: 'Supplying outdoor sound reinforcements and high-voltage power backups for multi-day cultural events. Specialize in wide-coverage Dandiya and Garba arena production.',
+    description: 'Turn up the energy at any festival with Parth Production! We bring powerful sound systems, vibrant lights, and electrifying mixes that keep the crowd moving.',
     features: [
-      'Wide-Area Sound Reinforcement',
-      'Laser Sky-beam Installations',
-      'Synchronized Stage Lighting',
-      'Silent Power Generator Fleets'
+      'Vast outdoor system coverage',
+      'Dandiya & Garba specialist mixes',
+      'Strobe & Laser sky projection',
+      'High voltage generator backups'
     ],
-    image: '/images/Untitled-design-32_atcfrs.png',
+    image: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-32_atcfrs.png',
   },
   {
     id: 4,
-    number: '04',
     title: 'CORPORATE EVENTS',
     subtitle: 'Sleek Corporate Meets',
-    description: 'Deploying high-contrast LED backdrops, digital podiums, and crystal-clear wireless audio systems for product launches, summits, and executive meets.',
+    description: 'Rigging crystal clear presentation audios, moving head visual beams, and sleek stage production structures for summits and product launches.',
     features: [
-      'Lapel & UHF Wireless Microphones',
-      'High-Contrast LED Backdrop Walls',
-      'Clean Modular Stage Platforms',
-      'Keynote Control Integration'
+      'UHF Wireless Lapel Mics',
+      'High-contrast backdrop LED screens',
+      'Silent Generators setup',
+      'Corporate Podium & Stage layout'
     ],
-    image: '/images/Untitled-design-17_ubz6ho.png',
+    image: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-17_ubz6ho.png',
   },
   {
     id: 5,
-    number: '05',
     title: 'ROAD SHOWS',
     subtitle: 'High-Impact Mobile Visuals',
-    description: 'Engineered truck-mounted daylight LED screens, mobile diesel generator rigs, and compact line arrays designed for rally routes and mobile promotions.',
+    description: 'Custom engineered truck-mounted LED displays, silent generator rigs, and concert truss line arrays bringing high impact mobile audio visuals.',
     features: [
-      'Truck-mounted Truss Gates',
-      'Ultra-bright Daylight LED Panels',
-      'Vibration-proof Speaker Brackets',
-      'Self-contained Power Generators'
+      'Truck mounted truss gates',
+      'Shockproof audio brackets',
+      'Ultra bright daylight LED walls',
+      'Mobile power generators fleet'
     ],
-    image: '/images/Untitled-design-13.png',
+    image: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-13.png',
   }
 ];
 
@@ -86,11 +81,11 @@ export default function ServicesPage() {
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
 
   const [images, setImages] = useState<Record<number, string>>({
-    1: '/images/Untitled-design-15_bdfxt9.png',
-    2: '/images/Untitled-design-20_sm7myc.png',
-    3: '/images/Untitled-design-32_atcfrs.png',
-    4: '/images/Untitled-design-17_ubz6ho.png',
-    5: '/images/Untitled-design-13.png'
+    1: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-15_bdfxt9.png',
+    2: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-20_sm7myc.png',
+    3: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-32_atcfrs.png',
+    4: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-17_ubz6ho.png',
+    5: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Untitled-design-13.png'
   });
 
   useEffect(() => {
@@ -102,7 +97,7 @@ export default function ServicesPage() {
         if (data.services && data.services.length > 0) {
           const mapped: Record<number, string> = {};
           data.services.forEach((item: any) => {
-            mapped[item.id] = item.image_url;
+            mapped[item.id] = item.image_url.startsWith('/') ? `https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev${item.image_url}` : item.image_url;
           });
           setImages(prev => ({ ...prev, ...mapped }));
         }
@@ -118,28 +113,25 @@ export default function ServicesPage() {
       <SpotlightNavbar />
       <div className="film-grain" />
 
-      <div className="relative min-h-screen bg-[#12100E] text-[#E7E3DC] select-none overflow-x-hidden pb-20 pt-16 md:pt-20">
+      <div className="relative min-h-screen bg-black text-white select-none overflow-x-hidden pb-20 pt-20">
         
         {/* HERO BANNER */}
-        <section className="relative min-h-[30vh] border-b border-[#E7E3DC]/10 px-6 md:px-12 py-12 flex flex-col justify-center">
+        <section className="relative min-h-[30vh] border-b border-gray-800/40 px-6 md:px-12 py-12 flex flex-col justify-center">
           <div className="max-w-7xl mx-auto w-full space-y-4">
-            <span className="font-mono text-[10px] tracking-widest text-[#C87A53] uppercase">// Sectors & Operations</span>
-            <h1 
-              className="text-5xl md:text-7xl tracking-tight leading-none text-[#E7E3DC]"
-              style={{ fontFamily: 'var(--font-cormorant), serif' }}
-            >
-              METICULOUS STAGE <br />
-              <span className="italic font-light">Deployments</span>
+            <span className="text-[10px] uppercase tracking-widest text-accent font-bold block mb-2">// Operations & blue prints</span>
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white leading-none">
+              PRODUCTION & <br />
+              <span className="text-accent drop-shadow-[0_0_15px_rgba(255,215,0,0.15)]">SERVICES</span>
             </h1>
-            <p className="font-mono text-xs text-[#A39E93] leading-relaxed max-w-lg">
-              Detailed structural classifications of our design sectors. We supply certified staging, audio engineering, and visual direction.
+            <p className="text-gray-400 text-sm leading-relaxed max-w-lg">
+              Check out our complete setup blue prints for sound riggings, stage truss setups, and generator power routing.
             </p>
           </div>
         </section>
 
-        {/* SERVICES TABLE GRID SECTION */}
-        <section className="max-w-7xl mx-auto px-6 md:px-12 py-12">
-          <div className="border-t border-[#E7E3DC]/10 divide-y divide-[#E7E3DC]/10">
+        {/* SERVICES GRID */}
+        <section className="max-w-7xl mx-auto px-6 md:px-12 py-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
             {servicesData.map((service, idx) => (
               <motion.div
                 key={service.id}
@@ -147,24 +139,10 @@ export default function ServicesPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.08 }}
-                className="py-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start lg:items-stretch group"
+                className="border border-gray-800 p-6 bg-secondary/10 rounded-2xl flex flex-col justify-between hover:border-gray-700 hover:bg-secondary/20 transition-all duration-300 group"
               >
-                
-                {/* Number & Cover image col */}
-                <div className="lg:col-span-4 flex flex-col justify-between gap-6">
-                  <div className="flex items-center gap-6">
-                    <span 
-                      className="text-4xl text-[#C87A53] font-normal"
-                      style={{ fontFamily: 'var(--font-cormorant), serif' }}
-                    >
-                      {service.number}
-                    </span>
-                    <span className="font-mono text-[10px] tracking-wider text-[#A39E93] uppercase">
-                      {service.subtitle}
-                    </span>
-                  </div>
-
-                  <div className="relative w-full aspect-[16/10] rounded-sm overflow-hidden border border-[#E7E3DC]/5 bg-[#1A1816]">
+                <div>
+                  <div className="relative w-full aspect-[16/10] rounded-xl overflow-hidden border border-gray-850 bg-secondary mb-6">
                     <Image 
                       src={images[service.id] || service.image} 
                       alt={service.title}
@@ -173,46 +151,39 @@ export default function ServicesPage() {
                       className="object-cover grayscale group-hover:grayscale-0 transition-all duration-700 brightness-[0.7]"
                     />
                   </div>
-                </div>
 
-                {/* Details col */}
-                <div className="lg:col-span-5 flex flex-col justify-between py-2">
-                  <div className="space-y-4">
-                    <h3 
-                      className="text-3xl text-[#E7E3DC] font-normal uppercase"
-                      style={{ fontFamily: 'var(--font-cormorant), serif' }}
-                    >
-                      {service.title}
-                    </h3>
-                    <p className="font-mono text-xs text-[#A39E93] leading-relaxed">
-                      {service.description}
-                    </p>
-                  </div>
-                </div>
+                  <span className="text-[9px] uppercase tracking-widest text-accent font-semibold block mb-1">
+                    {service.subtitle}
+                  </span>
+                  <h3 className="text-2xl font-bold text-white uppercase tracking-tight mb-4">
+                    {service.title}
+                  </h3>
+                  
+                  <p className="text-gray-400 text-xs leading-relaxed mb-6 font-light">
+                    {service.description}
+                  </p>
 
-                {/* Checklist & Booking link col */}
-                <div className="lg:col-span-3 flex flex-col justify-between py-2 border-l border-[#E7E3DC]/0 lg:border-l lg:border-[#E7E3DC]/10 lg:pl-8">
-                  <ul className="space-y-3 font-mono text-[10px] text-[#A39E93]">
+                  <ul className="space-y-2 text-xs text-gray-300 font-sans border-t border-gray-850 pt-4">
                     {service.features.map((feature, fIdx) => (
                       <li key={fIdx} className="flex items-center gap-3">
-                        <Check className="w-3.5 h-3.5 text-[#C87A53] flex-shrink-0" />
+                        <Check className="w-4 h-4 text-accent flex-shrink-0" />
                         <span>{feature}</span>
                       </li>
                     ))}
                   </ul>
-
-                  <div className="pt-8">
-                    <a 
-                      href={whatsappUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 border border-[#E7E3DC]/20 hover:border-[#C87A53] text-[#A39E93] hover:text-[#C87A53] px-6 py-3.5 font-mono text-[10px] tracking-widest uppercase transition-all duration-300 cursor-pointer"
-                    >
-                      Book Sector <ArrowUpRight className="w-3.5 h-3.5" />
-                    </a>
-                  </div>
                 </div>
 
+                <div className="pt-8">
+                  <a 
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3.5 bg-white text-black hover:bg-white/90 rounded-full text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-2 cursor-pointer transition-all duration-300 text-center shadow-md active:scale-98"
+                  >
+                    Book Now
+                    <ArrowRight className="w-4 h-4" />
+                  </a>
+                </div>
               </motion.div>
             ))}
           </div>
