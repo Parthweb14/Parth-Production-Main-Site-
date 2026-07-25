@@ -85,24 +85,32 @@ export default function HomePage() {
   // Mobile Showcase mockups dataset
   const mockups = [
     {
-      title: 'Behind the Scenes',
-      badge: 'Subscription • $9.99/mo',
-      video: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Trim-1.mp4'
+      tags: ['Weddings', 'Acoustic SPL'],
+      title: 'Royal Weddings',
+      subtitle: 'Premium Varmala Audio Rigs',
+      video: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Trim-1.mp4',
+      description: 'Point-source speaker arrays tuned for outdoor laws. Features automatic feedback control algorithms.'
     },
     {
-      title: 'Live room with Jacqueline',
-      badge: 'Live Now',
-      video: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Trim-6.mp4'
+      tags: ['Concerts', 'Truss Rigs'],
+      title: 'Stadium Concerts',
+      subtitle: 'Heavy-Duty Aluminum Trussing',
+      video: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Trim-6.mp4',
+      description: 'Wind-load certified structures holding up to 4 tons of sound cabinets and automated visual beams.'
     },
     {
-      title: 'Universe Stages',
-      badge: '4 Participants',
-      video: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Trim-3-1.mp4'
+      tags: ['Festivals', 'Power Sync'],
+      title: 'Dandiya Arenas',
+      subtitle: 'Wide Coverage Sound Fields',
+      video: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/Trim-3-1.mp4',
+      description: 'Parallel generator grids supplying 500kVA active backup nodes with zero phase delays.'
     },
     {
-      title: 'Archived Chats',
-      badge: 'Live Chat Feed',
-      video: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/download_2_sispkn.mp4'
+      tags: ['Corporate', 'LED Walls'],
+      title: 'VIP Keynotes',
+      subtitle: 'Ultra-Bright Daylight LED Walls',
+      video: 'https://pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev/download_2_sispkn.mp4',
+      description: 'P2.5 modular screens running redundant fiber loop controllers to prevent data signal drops.'
     }
   ];
 
@@ -194,50 +202,85 @@ export default function HomePage() {
           </motion.div>
         </section>
 
-        {/* 3. APP SHOWCASE */}
+        {/* 3. SHOWCASE EXHIBIT */}
         <section className="relative px-8 py-20 border-t border-gray-800/40 w-full overflow-hidden">
           <div className="max-w-7xl mx-auto mb-16 text-center">
-            <span className="text-[10px] uppercase tracking-widest text-accent font-bold block mb-3">// Experience Leam</span>
-            <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white">LIVE INTERFACES</h2>
+            <span className="text-[10px] uppercase tracking-widest text-accent font-bold block mb-3">// Production Portfolios</span>
+            <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white uppercase">SYSTEM DECKS</h2>
           </div>
 
           <div className="flex gap-6 overflow-x-auto pb-8 scrollbar-none snap-x snap-mandatory max-w-7xl mx-auto w-full px-2">
-            {mockups.map((mock, idx) => (
-              <motion.div
-                key={idx}
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.3, ease: 'easeOut' }}
-                className="aspect-[9/19] w-[280px] sm:w-[320px] flex-shrink-0 snap-start rounded-[2.5rem] border border-gray-800 bg-[#070708] p-3 flex flex-col justify-between shadow-2xl relative group overflow-hidden"
-              >
-                {/* Content Overlay */}
-                <div className="absolute top-6 left-6 z-20 space-y-1">
-                  <span className="px-3 py-1 rounded-full bg-black/60 border border-gray-800 text-[9px] font-bold text-white uppercase tracking-widest block">
-                    {mock.badge}
-                  </span>
-                </div>
+            {mockups.map((mock, idx) => {
+              const isActiveCard = idx === 0;
+              return (
+                <motion.div
+                  key={idx}
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                  className={`w-[300px] sm:w-[360px] flex-shrink-0 snap-start rounded-[2rem] border p-6 flex flex-col justify-between shadow-2xl relative group overflow-hidden transition-colors duration-300 ${
+                    isActiveCard 
+                      ? 'bg-accent text-black border-accent' 
+                      : 'bg-secondary/40 text-white border-gray-850'
+                  }`}
+                >
+                  {/* Top: Tags, Title, Subtitle */}
+                  <div className="space-y-4 mb-6">
+                    <div className="flex gap-2 flex-wrap">
+                      {mock.tags.map((tag, tIdx) => (
+                        <span 
+                          key={tIdx} 
+                          className={`px-3 py-1 rounded-full border text-[9px] font-bold uppercase tracking-widest ${
+                            isActiveCard 
+                              ? 'border-black/30 text-neutral-800' 
+                              : 'border-gray-800 text-gray-400'
+                          }`}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                    <h3 className="text-2xl font-bold tracking-tight uppercase">
+                      {mock.title}
+                    </h3>
+                    <p className={`text-xs font-semibold leading-relaxed ${
+                      isActiveCard ? 'text-neutral-800' : 'text-gray-400'
+                    }`}>
+                      {mock.subtitle}
+                    </p>
+                  </div>
 
-                {/* Autoplay video background */}
-                <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
-                  <video 
-                    src={mock.video} 
-                    autoPlay 
-                    muted 
-                    loop 
-                    playsInline 
-                    preload="auto"
-                    className="w-full h-full object-cover filter brightness-[0.7]" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent" />
-                </div>
+                  {/* Middle: Video Cover */}
+                  <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-black border border-black/10">
+                    <video 
+                      src={mock.video} 
+                      autoPlay 
+                      muted 
+                      loop 
+                      playsInline 
+                      preload="auto"
+                      className="w-full h-full object-cover filter brightness-[0.85] group-hover:scale-102 transition-transform duration-500" 
+                    />
+                  </div>
 
-                {/* Bottom title info */}
-                <div className="relative z-10 mt-auto p-4 bg-black/40 backdrop-blur-md rounded-2xl border border-gray-800/30">
-                  <h4 className="text-sm font-semibold text-white tracking-wide">
-                    {mock.title}
-                  </h4>
-                </div>
-              </motion.div>
-            ))}
+                  {/* Bottom: Description underneath the video */}
+                  <div className={`mt-6 space-y-3 pt-4 border-t ${
+                    isActiveCard ? 'border-black/15' : 'border-gray-850'
+                  }`}>
+                    <p className={`text-xs leading-relaxed font-medium ${
+                      isActiveCard ? 'text-neutral-900' : 'text-gray-400'
+                    }`}>
+                      {mock.description}
+                    </p>
+                    <div className={`flex justify-between items-center text-[10px] uppercase font-bold tracking-wider cursor-pointer group-hover:translate-x-1 transition-transform ${
+                      isActiveCard ? 'text-black' : 'text-accent'
+                    }`}>
+                      <span>Explore Configuration</span>
+                      <span>→</span>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </section>
 

@@ -1,19 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, X, Send, CheckCircle, Sliders, Eye, EyeOff } from 'lucide-react';
+import { Sparkles, X, Send, Copy, Trash2, CheckCircle, Sliders, Eye, EyeOff, ClipboardCheck } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+
+interface ElementNote {
+  id: string;
+  elementTag: string;
+  elementText: string;
+  note: string;
+}
 
 export default function VisualFeedbackWidget() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-  const [notes, setNotes] = useState('');
-  const [rating, setRating] = useState(5);
+  const [inspectActive, setInspectActive] = useState(false);
+  const [notesList, setNotesList] = useState<ElementNote[]>([]);
+  const [currentNote, setCurrentNote] = useState('');
+  const [activeElementInfo, setActiveElementInfo] = useState<{ tag: string; text: string } | null>(null);
+  
   const [grainActive, setGrainActive] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [copied, setCopied] = useState(false);
 
+  // Toggle Film Grain Overlay
   const toggleGrain = () => {
     const grainEl = document.querySelector('.film-grain') as HTMLElement;
     if (grainEl) {
@@ -26,39 +36,106 @@ export default function VisualFeedbackWidget() {
     setGrainActive(!grainActive);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!notes.trim()) return;
+  // Inspector Mode logic
+  useEffect(() => {
+    if (!inspectActive) return;
 
-    setSubmitting(true);
-    try {
-      const res = await fetch('/api/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          page: pathname,
-          notes: notes,
-          rating: rating
-        })
-      });
+    let hoveredEl: HTMLElement | null = null;
 
-      if (res.ok) {
-        setSubmitted(true);
-        setNotes('');
-        setTimeout(() => {
-          setSubmitted(false);
-          setIsOpen(false);
-        }, 2500);
+    const handleMouseOver = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && target !== document.body && target !== document.documentElement) {
+        // Exclude the feedback widget itself from highlights
+        if (target.closest('.feedback-widget-container')) return;
+
+        hoveredEl = target;
+        target.style.outline = '2px dashed #FFD700';
+        target.style.outlineOffset = '2px';
+        target.style.cursor = 'cell';
       }
-    } catch (err) {
-      console.error('Failed to submit refinement feedback:', err);
-    } finally {
-      setSubmitting(false);
-    }
+    };
+
+    const handleMouseOut = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target) {
+        target.style.outline = '';
+        target.style.outlineOffset = '';
+        target.style.cursor = '';
+      }
+    };
+
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && target !== document.body && target !== document.documentElement) {
+        if (target.closest('.feedback-widget-container')) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Extract element details
+        const tag = target.tagName.toLowerCase();
+        let text = target.innerText || target.getAttribute('alt') || target.getAttribute('src') || '';
+        if (text.length > 40) text = text.slice(0, 40) + '...';
+
+        setActiveElementInfo({ tag, text });
+        setIsOpen(true); // Ensure widget panel is open
+      }
+    };
+
+    document.addEventListener('mouseover', handleMouseOver);
+    document.addEventListener('mouseout', handleMouseOut);
+    document.addEventListener('click', handleClick, true);
+
+    return () => {
+      document.removeEventListener('mouseover', handleMouseOver);
+      document.removeEventListener('mouseout', handleMouseOut);
+      document.removeEventListener('click', handleClick, true);
+      if (hoveredEl) {
+        hoveredEl.style.outline = '';
+        hoveredEl.style.outlineOffset = '';
+        hoveredEl.style.cursor = '';
+      }
+    };
+  }, [inspectActive]);
+
+  const addNote = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentNote.trim() || !activeElementInfo) return;
+
+    const newNote: ElementNote = {
+      id: Math.random().toString(36).substring(2, 9),
+      elementTag: activeElementInfo.tag.toUpperCase(),
+      elementText: activeElementInfo.text,
+      note: currentNote.trim()
+    };
+
+    setNotesList(prev => [...prev, newNote]);
+    setCurrentNote('');
+    setActiveElementInfo(null);
+    setInspectActive(false); // turn off inspector after clicking
+  };
+
+  const deleteNote = (id: string) => {
+    setNotesList(prev => prev.filter(n => n.id !== id));
+  };
+
+  const copyToClipboard = () => {
+    if (notesList.length === 0) return;
+
+    let textBlock = `--- PARTH PRODUCTION DESIGN AUDIT (${pathname}) ---\n\n`;
+    notesList.forEach((n, idx) => {
+      textBlock += `${idx + 1}. [${n.elementTag} "${n.elementText}"] : ${n.note}\n`;
+    });
+    textBlock += `\n--------------------------------------------`;
+
+    navigator.clipboard.writeText(textBlock).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-[9999] font-sans">
+    <div className="fixed bottom-6 right-6 z-[9999] font-sans feedback-widget-container">
       {/* Floating Sparkles Trigger Button */}
       <motion.button
         whileHover={{ scale: 1.05 }}
@@ -77,10 +154,10 @@ export default function VisualFeedbackWidget() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="absolute bottom-16 right-0 w-[320px] sm:w-[360px] bg-secondary border border-gray-800 rounded-2xl shadow-2xl overflow-hidden p-6 text-white"
+            className="absolute bottom-16 right-0 w-[320px] sm:w-[360px] bg-secondary border border-gray-800 rounded-2xl shadow-2xl overflow-hidden p-6 text-white max-h-[80vh] flex flex-col justify-between"
           >
             {/* Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-gray-800 mb-4">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-800 mb-4 flex-shrink-0">
               <div className="flex items-center gap-2">
                 <Sliders className="w-4 h-4 text-accent" />
                 <span className="text-xs font-bold uppercase tracking-widest text-white">Refinement Agent</span>
@@ -94,8 +171,9 @@ export default function VisualFeedbackWidget() {
             </div>
 
             {/* Quick Layout Controls */}
-            <div className="space-y-3 mb-6 bg-black/40 p-4 rounded-xl border border-gray-800/40">
+            <div className="space-y-3 mb-4 bg-black/40 p-4 rounded-xl border border-gray-800/40 flex-shrink-0">
               <h4 className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Visual Modifiers</h4>
+              
               <div className="flex items-center justify-between text-xs">
                 <span className="text-gray-300">Analog Film Grain</span>
                 <button
@@ -113,68 +191,107 @@ export default function VisualFeedbackWidget() {
                   )}
                 </button>
               </div>
+
+              {/* Inspector Toggle */}
+              <div className="flex items-center justify-between text-xs pt-2 border-t border-gray-800/40">
+                <span className="text-gray-300">Inspect & Click Element</span>
+                <button
+                  type="button"
+                  onClick={() => setInspectActive(!inspectActive)}
+                  className={`px-3 py-1.5 rounded-lg border transition cursor-pointer text-[10px] font-bold uppercase ${
+                    inspectActive 
+                      ? 'bg-accent text-black border-accent' 
+                      : 'bg-secondary text-gray-300 border-gray-800 hover:border-gray-700'
+                  }`}
+                >
+                  {inspectActive ? 'ACTIVE' : 'START INSPECT'}
+                </button>
+              </div>
             </div>
 
-            {/* Feedback / Refinement Form */}
-            {submitted ? (
-              <div className="py-8 flex flex-col items-center justify-center text-center space-y-3">
-                <CheckCircle className="w-12 h-12 text-accent" />
-                <h4 className="text-sm font-bold text-white uppercase tracking-wider">Refinements Logged</h4>
-                <p className="text-[10px] text-gray-400 max-w-[200px] leading-relaxed">
-                  Your layout review has been written to the workspace. The AI Agent will process these refinements.
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block">
-                    Rate Current Screen Design
-                  </label>
-                  <div className="flex gap-2">
-                    {[1, 2, 3, 4, 5].map((val) => (
-                      <button
-                        type="button"
-                        key={val}
-                        onClick={() => setRating(val)}
-                        className={`text-lg p-1 transition cursor-pointer ${
-                          rating >= val ? 'text-accent' : 'text-gray-600'
-                        }`}
-                      >
-                        ★
-                      </button>
-                    ))}
-                  </div>
+            {/* Modal Input for Clicked Element */}
+            {activeElementInfo && (
+              <form onSubmit={addNote} className="mb-4 bg-accent/5 border border-accent/20 p-4 rounded-xl space-y-3 flex-shrink-0">
+                <div className="flex justify-between items-start">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-accent">
+                    Auditing: {activeElementInfo.tag}
+                  </span>
+                  <button 
+                    type="button" 
+                    onClick={() => setActiveElementInfo(null)}
+                    className="text-gray-400 hover:text-white"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block">
-                    Describe Layout Refinements
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Enter alignment notes, text corrections, or design polish requirements..."
-                    className="w-full bg-black/50 border border-gray-800 rounded-xl p-3 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-accent resize-none"
-                  />
-                </div>
+                <p className="text-[10px] text-gray-300 italic truncate">&quot;{activeElementInfo.text}&quot;</p>
+                
+                <input
+                  type="text"
+                  required
+                  value={currentNote}
+                  onChange={(e) => setCurrentNote(e.target.value)}
+                  placeholder="Enter layout note..."
+                  className="w-full bg-black/60 border border-gray-800 rounded-lg p-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-accent"
+                />
 
                 <button
                   type="submit"
-                  disabled={submitting || !notes.trim()}
-                  className="w-full h-11 bg-white hover:bg-neutral-100 text-black disabled:bg-neutral-800 disabled:text-neutral-500 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-lg"
+                  className="w-full h-9 bg-accent text-black hover:bg-accent/90 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 cursor-pointer"
                 >
-                  {submitting ? 'Logging...' : (
-                    <>
-                      Send to AI Agent <Send className="w-3.5 h-3.5" />
-                    </>
-                  )}
+                  Save Note <Send className="w-3 h-3" />
                 </button>
               </form>
             )}
 
+            {/* Scrollable list of collected feedback notes */}
+            <div className="flex-1 overflow-y-auto mb-4 space-y-3 pr-1 max-h-[220px] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-gray-800">
+              <h4 className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2 flex-shrink-0">Collected Notes ({notesList.length})</h4>
+              
+              {notesList.length === 0 ? (
+                <div className="text-center py-6 text-[10px] text-gray-500 italic">
+                  No notes collected. Use inspect mode and click any element to start.
+                </div>
+              ) : (
+                notesList.map((n) => (
+                  <div key={n.id} className="p-3 bg-black/30 border border-gray-800/60 rounded-lg flex items-start justify-between gap-2 text-xs">
+                    <div className="space-y-1 overflow-hidden">
+                      <span className="text-[9px] font-bold text-accent">[{n.elementTag}]</span>
+                      <p className="text-gray-400 text-[9px] italic truncate">&quot;{n.elementText}&quot;</p>
+                      <p className="text-white text-[11px] leading-relaxed break-words">{n.note}</p>
+                    </div>
+                    <button
+                      onClick={() => deleteNote(n.id)}
+                      className="p-1 text-gray-500 hover:text-red-400 cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Clipboard Action */}
+            {notesList.length > 0 && (
+              <button
+                type="button"
+                onClick={copyToClipboard}
+                className="w-full h-11 bg-white hover:bg-neutral-100 text-black rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-lg flex-shrink-0"
+              >
+                {copied ? (
+                  <>
+                    Copied to Clipboard! <ClipboardCheck className="w-4 h-4 text-green-600" />
+                  </>
+                ) : (
+                  <>
+                    Copy Audit Notes <Copy className="w-3.5 h-3.5" />
+                  </>
+                )}
+              </button>
+            )}
+
             {/* Footer stamp */}
-            <div className="text-center pt-4 border-t border-gray-800/40 mt-4 text-[9px] text-gray-500 uppercase tracking-widest font-mono">
+            <div className="text-center pt-4 border-t border-gray-800/40 mt-4 text-[9px] text-gray-500 uppercase tracking-widest font-mono flex-shrink-0">
               active layout: {pathname}
             </div>
           </motion.div>
