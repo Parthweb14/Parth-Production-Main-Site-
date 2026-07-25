@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, X, Send, Copy, Trash2, CheckCircle, Sliders, Eye, EyeOff, ClipboardCheck } from 'lucide-react';
+import { Sparkles, X, Send, Copy, Trash2, Sliders, Eye, EyeOff, ClipboardCheck } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 interface ElementNote {
   id: string;
   elementTag: string;
   elementText: string;
+  section: string;
+  selectorPath: string;
   note: string;
 }
 
@@ -18,7 +20,12 @@ export default function VisualFeedbackWidget() {
   const [inspectActive, setInspectActive] = useState(false);
   const [notesList, setNotesList] = useState<ElementNote[]>([]);
   const [currentNote, setCurrentNote] = useState('');
-  const [activeElementInfo, setActiveElementInfo] = useState<{ tag: string; text: string } | null>(null);
+  const [activeElementInfo, setActiveElementInfo] = useState<{ 
+    tag: string; 
+    text: string; 
+    section: string; 
+    selectorPath: string; 
+  } | null>(null);
   
   const [grainActive, setGrainActive] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -45,7 +52,6 @@ export default function VisualFeedbackWidget() {
     const handleMouseOver = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (target && target !== document.body && target !== document.documentElement) {
-        // Exclude the feedback widget itself from highlights
         if (target.closest('.feedback-widget-container')) return;
 
         hoveredEl = target;
@@ -72,13 +78,40 @@ export default function VisualFeedbackWidget() {
         e.preventDefault();
         e.stopPropagation();
 
-        // Extract element details
+        // 1. Tag name and classes context
         const tag = target.tagName.toLowerCase();
-        let text = target.innerText || target.getAttribute('alt') || target.getAttribute('src') || '';
-        if (text.length > 40) text = text.slice(0, 40) + '...';
+        const firstClass = target.className ? Array.from(target.classList)[0] : '';
+        const elementTag = `${tag}${target.id ? '#' + target.id : ''}${firstClass ? '.' + firstClass : ''}`;
 
-        setActiveElementInfo({ tag, text });
-        setIsOpen(true); // Ensure widget panel is open
+        // 2. Element text snippet
+        let text = target.innerText || target.getAttribute('alt') || target.getAttribute('src') || '';
+        if (text.length > 50) text = text.slice(0, 50) + '...';
+
+        // 3. Find parent section context
+        let sectionName = 'Global Page Layout';
+        const parentSection = target.closest('section');
+        if (parentSection) {
+          const heading = parentSection.querySelector('h1, h2, h3, h4');
+          if (heading) {
+            sectionName = heading.textContent?.trim() || 'Showcase Section';
+          } else {
+            sectionName = parentSection.className || 'Page Section';
+          }
+        }
+
+        // 4. Extract element selector path
+        const parentClasses = target.parentElement 
+          ? Array.from(target.parentElement.classList).join('.')
+          : '';
+        const selectorPath = `${tag} under parent class [${parentClasses}]`;
+
+        setActiveElementInfo({ 
+          tag: elementTag.toUpperCase(), 
+          text: text.trim(),
+          section: sectionName,
+          selectorPath: selectorPath
+        });
+        setIsOpen(true);
       }
     };
 
@@ -104,8 +137,10 @@ export default function VisualFeedbackWidget() {
 
     const newNote: ElementNote = {
       id: Math.random().toString(36).substring(2, 9),
-      elementTag: activeElementInfo.tag.toUpperCase(),
+      elementTag: activeElementInfo.tag,
       elementText: activeElementInfo.text,
+      section: activeElementInfo.section,
+      selectorPath: activeElementInfo.selectorPath,
       note: currentNote.trim()
     };
 
@@ -122,11 +157,13 @@ export default function VisualFeedbackWidget() {
   const copyToClipboard = () => {
     if (notesList.length === 0) return;
 
-    let textBlock = `--- PARTH PRODUCTION DESIGN AUDIT (${pathname}) ---\n\n`;
+    let textBlock = `--- PARTH PRODUCTION DESIGN AUDIT (URL: https://parthproduction.in${pathname}) ---\n\n`;
     notesList.forEach((n, idx) => {
-      textBlock += `${idx + 1}. [${n.elementTag} "${n.elementText}"] : ${n.note}\n`;
+      textBlock += `${idx + 1}. [SECTION: "${n.section}" > ELEMENT: ${n.elementTag} (Value: "${n.elementText}")]\n`;
+      textBlock += `   - Selector Path: ${n.selectorPath}\n`;
+      textBlock += `   - Refinement Request: ${n.note}\n\n`;
     });
-    textBlock += `\n--------------------------------------------`;
+    textBlock += `--------------------------------------------`;
 
     navigator.clipboard.writeText(textBlock).then(() => {
       setCopied(true);
@@ -146,7 +183,7 @@ export default function VisualFeedbackWidget() {
         <Sparkles className="w-5 h-5 text-black" />
       </motion.button>
 
-      {/* Sidebar Panel overlay */}
+      {/* Sidebar Panel */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -170,7 +207,7 @@ export default function VisualFeedbackWidget() {
               </button>
             </div>
 
-            {/* Quick Layout Controls */}
+            {/* Quick Controls */}
             <div className="space-y-3 mb-4 bg-black/40 p-4 rounded-xl border border-gray-800/40 flex-shrink-0">
               <h4 className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Visual Modifiers</h4>
               
@@ -213,9 +250,14 @@ export default function VisualFeedbackWidget() {
             {activeElementInfo && (
               <form onSubmit={addNote} className="mb-4 bg-accent/5 border border-accent/20 p-4 rounded-xl space-y-3 flex-shrink-0">
                 <div className="flex justify-between items-start">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-accent">
-                    Auditing: {activeElementInfo.tag}
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-accent">
+                      Section: {activeElementInfo.section}
+                    </span>
+                    <span className="text-[8px] font-medium text-gray-400 block mt-0.5">
+                      Element: {activeElementInfo.tag}
+                    </span>
+                  </div>
                   <button 
                     type="button" 
                     onClick={() => setActiveElementInfo(null)}
@@ -231,7 +273,7 @@ export default function VisualFeedbackWidget() {
                   required
                   value={currentNote}
                   onChange={(e) => setCurrentNote(e.target.value)}
-                  placeholder="Enter layout note..."
+                  placeholder="Explain layout refinements here..."
                   className="w-full bg-black/60 border border-gray-800 rounded-lg p-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-accent"
                 />
 
@@ -244,19 +286,19 @@ export default function VisualFeedbackWidget() {
               </form>
             )}
 
-            {/* Scrollable list of collected feedback notes */}
+            {/* Collected Notes */}
             <div className="flex-1 overflow-y-auto mb-4 space-y-3 pr-1 max-h-[220px] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-gray-800">
               <h4 className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2 flex-shrink-0">Collected Notes ({notesList.length})</h4>
               
               {notesList.length === 0 ? (
                 <div className="text-center py-6 text-[10px] text-gray-500 italic">
-                  No notes collected. Use inspect mode and click any element to start.
+                  Click &apos;START INSPECT&apos; and select any element to add alignment notes.
                 </div>
               ) : (
                 notesList.map((n) => (
                   <div key={n.id} className="p-3 bg-black/30 border border-gray-800/60 rounded-lg flex items-start justify-between gap-2 text-xs">
                     <div className="space-y-1 overflow-hidden">
-                      <span className="text-[9px] font-bold text-accent">[{n.elementTag}]</span>
+                      <span className="text-[8px] font-bold text-accent block uppercase">[{n.section} &gt; {n.elementTag}]</span>
                       <p className="text-gray-400 text-[9px] italic truncate">&quot;{n.elementText}&quot;</p>
                       <p className="text-white text-[11px] leading-relaxed break-words">{n.note}</p>
                     </div>
@@ -280,7 +322,7 @@ export default function VisualFeedbackWidget() {
               >
                 {copied ? (
                   <>
-                    Copied to Clipboard! <ClipboardCheck className="w-4 h-4 text-green-600" />
+                    Notes Copied! <ClipboardCheck className="w-4 h-4 text-green-600" />
                   </>
                 ) : (
                   <>

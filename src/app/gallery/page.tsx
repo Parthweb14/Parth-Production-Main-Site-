@@ -16,7 +16,7 @@ const defaultGalleryImages = [
   { id: 6, category: 'Weddings', title: 'Royal Reception Stage', event: 'Elite reception setup', src: 'https://assets.parthproduction.in/Image%207%20Weddings.png' },
   { id: 7, category: 'Festivals', title: 'Neon Laser EDM show', event: 'Music Festival live', src: 'https://assets.parthproduction.in/image%2010%20.png' },
   { id: 8, category: 'Concerts', title: 'Mainstage LED wall', event: 'Ahmedabad Concert Live', src: 'https://assets.parthproduction.in/Image%208%20Concert.png' },
-  { id: 9, category: 'Corporate', title: 'High-end lighting design', event: 'VIP Corporate Meet', src: 'https://assets.parthproduction.in/Image%202%20Corporate%20events.png' }
+  { id: 9, category: 'Road Shows', title: 'National Roadshow Rig', event: 'Statewide Campaign', src: 'https://assets.parthproduction.in/Image%205%20Road%20show.png' }
 ];
 
 const categories = ['All Events', 'Weddings', 'Festivals', 'Concerts', 'Corporate', 'Road Shows'];
