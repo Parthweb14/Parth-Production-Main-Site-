@@ -1,129 +1,139 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Calendar, Zap, Home, Image, Users, Mail } from 'lucide-react';
+import { Menu, X, ArrowUpRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 interface NavItem {
   label: string;
   href: string;
-  icon: any;
 }
 
 const navItems: NavItem[] = [
-  { label: 'HOME', href: '/', icon: Home },
-  { label: 'SERVICES', href: '/services', icon: Zap },
-  { label: 'GALLERY', href: '/gallery', icon: Image },
-  { label: 'ABOUT', href: '/about', icon: Users },
-  { label: 'CONTACT', href: '/contact', icon: Mail },
+  { label: 'Services', href: '/services' },
+  { label: 'Gallery', href: '/gallery' },
+  { label: 'About', href: '/about' },
+  { label: 'Contact', href: '/contact' },
 ];
 
 export default function SpotlightNavbar() {
   const pathname = usePathname();
-  const router = useRouter();
   const { siteSettings } = useAuth();
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
-  const navbarRef = useRef<HTMLDivElement>(null);
   
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <>
-      <div 
-        ref={navbarRef}
-        className="fixed top-0 left-0 right-0 h-16 md:h-20 bg-transparent border-none z-50 px-6 md:px-12 flex items-center justify-center transition-all duration-300"
-      >
-        {/* Center Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-12 relative z-50">
+      <header className="fixed top-0 left-0 right-0 h-16 md:h-20 bg-[#12100E] border-b border-[#E7E3DC]/10 z-50 flex items-stretch select-none">
+        
+        {/* Left Side: Brand Box */}
+        <Link 
+          href="/" 
+          className="flex items-center px-6 md:px-8 border-r border-[#E7E3DC]/10 hover:bg-[#E7E3DC]/3 transition-colors cursor-pointer"
+        >
+          <span 
+            className="text-lg md:text-xl tracking-wider text-[#E7E3DC] font-normal uppercase"
+            style={{ fontFamily: 'var(--font-cormorant), serif' }}
+          >
+            PARTH PRODUCTION
+          </span>
+        </Link>
+
+        {/* Center: Desktop Navigation Grid */}
+        <nav className="hidden md:flex items-stretch flex-1">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link 
                 key={item.label}
                 href={item.href}
-                className="relative px-3 py-2 text-xs font-semibold tracking-[0.1em] uppercase text-zinc-400 hover:text-white transition-all cursor-pointer group"
-                style={{ fontFamily: 'var(--font-syne), sans-serif' }}
+                className={`flex items-center justify-center px-8 border-r border-[#E7E3DC]/10 text-[10px] tracking-[0.2em] uppercase transition-all duration-300 relative group cursor-pointer ${
+                  isActive ? 'text-[#C87A53] bg-[#E7E3DC]/3' : 'text-[#A39E93] hover:text-[#E7E3DC] hover:bg-[#E7E3DC]/2'
+                }`}
+                style={{ fontFamily: 'var(--font-mono), monospace' }}
               >
-                <span className="relative z-10">{item.label}</span>
-                {/* Gold Glow underline animation */}
-                {isActive ? (
+                {item.label}
+                {isActive && (
                   <motion.div 
-                    layoutId="activeNavLine"
-                    className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-amber-500 to-yellow-500"
+                    layoutId="activeHeaderDot"
+                    className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#C87A53]"
                   />
-                ) : (
-                  <div className="absolute bottom-0 left-1/2 right-1/2 h-[2px] bg-amber-500/50 group-hover:left-0 group-hover:right-0 transition-all duration-300" />
                 )}
               </Link>
             );
           })}
         </nav>
 
-        {/* Mobile Hamburger menu */}
+        {/* Right Side: Desktop Booking Button */}
+        <a 
+          href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hidden md:flex items-center gap-2 px-8 bg-transparent text-[#C87A53] hover:text-[#E7E3DC] hover:bg-[#C87A53]/10 text-[10px] tracking-[0.2em] font-bold uppercase transition-all duration-300 border-l border-[#E7E3DC]/10 cursor-pointer"
+          style={{ fontFamily: 'var(--font-mono), monospace' }}
+        >
+          BOOK EVENT <ArrowUpRight className="w-3.5 h-3.5" />
+        </a>
+
+        {/* Mobile Hamburger toggle */}
         <button 
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="md:hidden p-2 rounded-xl bg-white/3 border border-white/5 text-zinc-400 hover:text-white cursor-pointer absolute right-6 z-50"
+          className="md:hidden flex items-center justify-center px-6 border-l border-[#E7E3DC]/10 text-[#E7E3DC] cursor-pointer ml-auto"
         >
           {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
-      </div>
+      </header>
 
-      {/* Mobile Drawer Overlay */}
+      {/* Mobile Drawer Grid Overlay */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div 
-            initial={{ opacity: 0, x: '100%' }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="fixed inset-0 bg-[#09090b]/98 backdrop-blur-3xl z-40 md:hidden flex flex-col justify-center px-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-[#12100E] z-40 md:hidden flex flex-col pt-24 px-6 justify-between pb-8"
           >
-            <div className="space-y-8 flex flex-col">
-              {navItems.map((item, idx) => {
-                const Icon = item.icon;
-                const isActive = pathname === item.href;
-                return (
-                  <motion.div
-                    key={item.label}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.08 }}
-                  >
-                    <Link
-                      href={item.href}
-                      onClick={() => setMobileOpen(false)}
-                      className={`flex items-center gap-4 text-2xl font-black tracking-widest uppercase cursor-pointer ${
-                        isActive ? 'text-white font-bold' : 'text-zinc-500 hover:text-white'
-                      }`}
-                      style={{ fontFamily: 'var(--font-syne), sans-serif' }}
-                    >
-                      <Icon className={`w-6 h-6 ${isActive ? 'text-amber-500' : 'text-zinc-600'}`} />
-                      {item.label}
-                    </Link>
-                  </motion.div>
-                );
-              })}
-
-              <motion.div
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: navItems.length * 0.08 }}
-                className="pt-6 border-t border-white/5"
+            {/* Nav list */}
+            <div className="flex flex-col border-t border-[#E7E3DC]/10 divide-y divide-[#E7E3DC]/10">
+              <Link
+                href="/"
+                onClick={() => setMobileOpen(false)}
+                className="py-5 text-sm tracking-[0.15em] uppercase text-[#A39E93] hover:text-[#E7E3DC]"
+                style={{ fontFamily: 'var(--font-mono), monospace' }}
               >
-                <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                Home
+              </Link>
+              {navItems.map((item) => (
+                <Link
+                  key={item.label}
+                  href={item.href}
                   onClick={() => setMobileOpen(false)}
-                  className="w-full py-4 bg-[#d4af37] hover:bg-[#b8901c] text-black rounded-2xl text-md font-bold tracking-widest uppercase cursor-pointer active:scale-98 transition-all flex items-center justify-center"
-                  style={{ fontFamily: 'var(--font-syne), sans-serif' }}
+                  className={`py-5 text-sm tracking-[0.15em] uppercase transition-colors ${
+                    pathname === item.href ? 'text-[#C87A53] font-bold' : 'text-[#A39E93] hover:text-[#E7E3DC]'
+                  }`}
+                  style={{ fontFamily: 'var(--font-mono), monospace' }}
                 >
-                  BOOK NOW
-                </a>
-              </motion.div>
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+
+            {/* CTA */}
+            <div className="space-y-4">
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMobileOpen(false)}
+                className="w-full h-14 bg-[#C87A53] text-[#12100E] flex items-center justify-center text-xs font-bold tracking-[0.25em] uppercase transition-colors"
+                style={{ fontFamily: 'var(--font-mono), monospace' }}
+              >
+                BOOK EVENT
+              </a>
             </div>
           </motion.div>
         )}

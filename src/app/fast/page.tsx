@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { Play, CheckCircle, Zap, Server, RefreshCw, ArrowRight } from 'lucide-react';
+import { Play, CheckCircle, Server, RefreshCw, ArrowRight } from 'lucide-react';
 import SpotlightNavbar from '@/components/SpotlightNavbar';
 import Footer from '@/components/Footer';
 
@@ -64,28 +63,27 @@ export default function FastOptimizationPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-zinc-950 text-zinc-100 font-outfit flex flex-col justify-between selection:bg-[#d4af37]/30 overflow-hidden">
+    <div className="relative min-h-screen bg-[#12100E] text-[#E7E3DC] font-mono flex flex-col justify-between selection:bg-[#C87A53]/30 overflow-hidden">
       
-      {/* Spotlight Navbar */}
       <SpotlightNavbar />
-
-      {/* Visual background glowing effects */}
-      <div className="absolute top-1/4 left-1/4 w-[350px] h-[350px] bg-amber-500/5 rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-[350px] h-[350px] bg-yellow-600/5 rounded-full blur-[100px] pointer-events-none" />
+      <div className="film-grain" />
 
       {/* Main Container */}
       <main className="relative z-10 max-w-4xl mx-auto px-6 py-24 md:py-32 w-full flex-1 flex flex-col justify-center items-center">
         
         {/* Header Title */}
-        <div className="text-center space-y-4 mb-10">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-amber-500/20 bg-amber-500/5 text-xs font-bold text-amber-500 uppercase tracking-wider">
-            <Zap className="w-3.5 h-3.5 animate-pulse" /> Speed Booster Console
+        <div className="text-center space-y-4 mb-12">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 border border-[#E7E3DC]/15 bg-[#1A1816]/30 text-[10px] tracking-widest text-[#C87A53] uppercase font-bold">
+            ⚡ Performance Tuner
           </div>
-          <h1 className="text-3xl sm:text-5xl font-bold uppercase tracking-wider text-white" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
-            SITE SPEED ACCELERATOR
+          <h1 
+            className="text-4xl sm:text-5xl text-[#E7E3DC] tracking-tight leading-none uppercase"
+            style={{ fontFamily: 'var(--font-cormorant), serif' }}
+          >
+            SPEED ACCELERATOR
           </h1>
-          <p className="text-xs sm:text-sm text-zinc-400 max-w-xl mx-auto font-medium leading-relaxed">
-            Optimize Lottie animations, vertical production videos, portfolio images, and local caching protocols in one click.
+          <p className="text-[11px] text-[#A39E93] max-w-xl mx-auto leading-relaxed uppercase tracking-wider">
+            Optimizing vector assets, vertical streams, and image indices for Parth Production portals.
           </p>
         </div>
 
@@ -93,7 +91,7 @@ export default function FastOptimizationPage() {
         <div className="w-full grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch mb-12">
           
           {/* Left panel: Dial and Controls */}
-          <div className="md:col-span-5 rounded-3xl border border-white/10 bg-[#121214]/60 p-6 md:p-8 flex flex-col items-center justify-between shadow-2xl backdrop-blur-xl text-center space-y-6">
+          <div className="md:col-span-5 rounded-sm border border-[#E7E3DC]/10 bg-[#1A1816]/20 p-6 md:p-8 flex flex-col items-center justify-between shadow-2xl text-center space-y-6">
             
             {/* Speed Gauge */}
             <div className="relative w-40 h-40 flex items-center justify-center">
@@ -102,28 +100,31 @@ export default function FastOptimizationPage() {
                   cx="50"
                   cy="50"
                   r="42"
-                  className="stroke-zinc-900"
-                  strokeWidth="8"
+                  className="stroke-[#12100E] border border-[#E7E3DC]/5"
+                  strokeWidth="6"
                   fill="transparent"
                 />
                 <circle
                   cx="50"
                   cy="50"
                   r="42"
-                  className="stroke-amber-500 transition-all duration-500 ease-out"
-                  strokeWidth="8"
+                  className="stroke-[#C87A53] transition-all duration-500 ease-out"
+                  strokeWidth="6"
                   fill="transparent"
                   strokeDasharray={`${2 * Math.PI * 42}`}
                   strokeDashoffset={`${2 * Math.PI * 42 * (1 - speedScore / 100)}`}
-                  strokeLinecap="round"
+                  strokeLinecap="square"
                 />
               </svg>
               
               <div className="absolute flex flex-col items-center justify-center">
-                <span className="text-4xl font-extrabold tracking-tight text-white transition-all duration-300">
+                <span 
+                  className="text-4xl text-[#E7E3DC] font-normal"
+                  style={{ fontFamily: 'var(--font-cormorant), serif' }}
+                >
                   {speedScore}
                 </span>
-                <span className="text-[10px] text-zinc-500 tracking-widest uppercase font-bold">Speed Score</span>
+                <span className="text-[9px] text-[#A39E93] tracking-widest uppercase font-bold">Metrics Index</span>
               </div>
             </div>
 
@@ -132,20 +133,20 @@ export default function FastOptimizationPage() {
               {status === 'idle' && (
                 <button
                   onClick={startOptimization}
-                  className="w-full h-12 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-xs font-bold text-black flex items-center justify-center gap-2 hover:shadow-[0_0_25px_rgba(245,158,11,0.35)] transition-all duration-200 cursor-pointer"
+                  className="w-full h-12 rounded-sm border border-[#C87A53] text-[#C87A53] hover:bg-[#C87A53] hover:text-[#12100E] text-[10px] tracking-[0.2em] font-bold uppercase transition-all duration-300 cursor-pointer"
                 >
-                  <Play className="w-4 h-4 fill-black" /> Start Optimization Flow
+                  Start Optimizer
                 </button>
               )}
 
               {status === 'running' && (
-                <div className="space-y-2">
-                  <div className="w-full h-12 rounded-xl bg-zinc-900/60 border border-white/5 text-xs font-bold text-zinc-400 flex items-center justify-center gap-3">
-                    <RefreshCw className="w-4 h-4 animate-spin text-amber-500" /> Optimizing Assets ({progress}%)
+                <div className="space-y-3">
+                  <div className="w-full h-12 rounded-sm border border-[#E7E3DC]/10 bg-[#1A1816]/40 text-[10px] tracking-wider uppercase text-[#A39E93] flex items-center justify-center gap-3">
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#C87A53]" /> Deploying Optimizations ({progress}%)
                   </div>
-                  <div className="w-full bg-zinc-900 rounded-full h-1.5 overflow-hidden">
+                  <div className="w-full bg-[#12100E] border border-[#E7E3DC]/5 rounded-sm h-1 overflow-hidden">
                     <div 
-                      className="bg-gradient-to-r from-amber-550 to-yellow-500 h-full transition-all duration-300"
+                      className="bg-[#C87A53] h-full transition-all duration-300"
                       style={{ width: `${progress}%` }}
                     />
                   </div>
@@ -154,14 +155,14 @@ export default function FastOptimizationPage() {
 
               {status === 'completed' && (
                 <div className="space-y-4">
-                  <div className="w-full h-12 rounded-xl border border-green-500/20 bg-green-500/5 text-xs font-bold text-green-400 flex items-center justify-center gap-2">
-                    <CheckCircle className="w-4 h-4" /> Optimization Succeeded!
+                  <div className="w-full h-12 rounded-sm border border-green-500/20 bg-green-500/5 text-[10px] tracking-wider uppercase font-bold text-green-400 flex items-center justify-center gap-2">
+                    <CheckCircle className="w-3.5 h-3.5" /> Operations Complete
                   </div>
                   <button
                     onClick={() => router.push('/')}
-                    className="w-full h-12 rounded-xl bg-zinc-900 border border-white/10 text-xs font-bold text-white hover:bg-zinc-800 transition flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full h-12 rounded-sm border border-[#E7E3DC]/10 bg-[#1A1816]/40 text-[10px] tracking-[0.2em] font-bold uppercase hover:bg-[#E7E3DC]/5 transition flex items-center justify-center gap-2 cursor-pointer text-[#E7E3DC]"
                   >
-                    View Optimized Homepage <ArrowRight className="w-4 h-4" />
+                    Return Home <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
               )}
@@ -169,22 +170,22 @@ export default function FastOptimizationPage() {
           </div>
 
           {/* Right panel: Log Viewer Console */}
-          <div className="md:col-span-7 rounded-3xl border border-white/10 bg-[#121214]/60 shadow-2xl p-6 flex flex-col justify-between items-stretch min-h-[300px]">
-            <div className="flex items-center justify-between pb-4 border-b border-white/5 mb-4">
-              <span className="text-[10px] font-bold text-zinc-400 tracking-widest uppercase flex items-center gap-2">
-                <Server className="w-3.5 h-3.5 text-zinc-500" /> System Diagnostics Console
+          <div className="md:col-span-7 rounded-sm border border-[#E7E3DC]/10 bg-[#1A1816]/20 shadow-2xl p-6 flex flex-col justify-between items-stretch min-h-[300px]">
+            <div className="flex items-center justify-between pb-4 border-b border-[#E7E3DC]/10 mb-4">
+              <span className="text-[10px] font-bold text-[#E7E3DC] tracking-widest uppercase flex items-center gap-2">
+                <Server className="w-3.5 h-3.5 text-[#C87A53]" /> System Diagnostics Console
               </span>
               <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-green-500" />
-                <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Live</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-[9px] text-[#A39E93] font-bold uppercase tracking-wider">Online</span>
               </div>
             </div>
 
             {/* Logs display window */}
-            <div className="flex-1 overflow-y-auto max-h-[220px] font-mono text-[11px] text-zinc-450 space-y-2.5 scroll-smooth pr-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-zinc-800 [&::-webkit-scrollbar-track]:bg-transparent">
+            <div className="flex-1 overflow-y-auto max-h-[220px] font-mono text-[10px] text-[#A39E93] space-y-2.5 scroll-smooth pr-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-zinc-800 [&::-webkit-scrollbar-track]:bg-transparent">
               {logs.length === 0 ? (
-                <div className="h-full flex items-center justify-center text-zinc-600 text-center py-10 uppercase tracking-widest text-[10px]">
-                  Click start to begin speed diagnostic checks
+                <div className="h-full flex items-center justify-center text-[#A39E93]/40 text-center py-10 uppercase tracking-widest text-[9px]">
+                  Initiate speed sequence log metrics
                 </div>
               ) : (
                 logs.map((log, idx) => (
@@ -192,7 +193,7 @@ export default function FastOptimizationPage() {
                     {log.startsWith('[SUCCESS]') ? (
                       <span className="text-green-400 font-bold">{log}</span>
                     ) : log.startsWith('[PING]') ? (
-                      <span className="text-amber-400">{log}</span>
+                      <span className="text-[#C87A53]">{log}</span>
                     ) : (
                       log
                     )}

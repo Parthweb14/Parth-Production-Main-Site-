@@ -97,10 +97,10 @@ export default function AdminPage() {
   // Admin credentials states
   const [adminUsername, setAdminUsername] = useState('admin');
   const [adminPassword, setAdminPassword] = useState('');
-  const [adminRecoveryKey, setAdminRecoveryKey] = useState('KP-777-RESET');
+  const [adminRecoveryKey, setAdminRecoveryKey] = useState('PP-777-RESET');
   const [initialAdminUsername, setInitialAdminUsername] = useState('admin');
   const [initialAdminPassword, setInitialAdminPassword] = useState('');
-  const [initialAdminRecoveryKey, setInitialAdminRecoveryKey] = useState('KP-777-RESET');
+  const [initialAdminRecoveryKey, setInitialAdminRecoveryKey] = useState('PP-777-RESET');
   const [resetCount, setResetCount] = useState(0);
   const [resetPeriodStart, setResetPeriodStart] = useState<number | null>(null);
   const [showPass, setShowPass] = useState(false);

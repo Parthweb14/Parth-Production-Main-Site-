@@ -1,23 +1,20 @@
 import type { Metadata, Viewport } from 'next';
-import { Syne, Outfit, Space_Grotesk } from 'next/font/google';
+import { Cormorant_Garamond, Space_Mono } from 'next/font/google';
 import Script from 'next/script';
 import './globals.css';
 
-const syne = Syne({
+const cormorantGaramond = Cormorant_Garamond({
   subsets: ['latin'],
-  variable: '--font-syne',
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-cormorant',
   display: 'swap',
+  style: ['normal', 'italic'],
 });
 
-const outfit = Outfit({
+const spaceMono = Space_Mono({
   subsets: ['latin'],
-  variable: '--font-outfit',
-  display: 'swap',
-});
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ['latin'],
-  variable: '--font-space-grotesk',
+  weight: ['400', '700'],
+  variable: '--font-mono',
   display: 'swap',
 });
 
@@ -64,12 +61,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${syne.variable} ${outfit.variable} ${spaceGrotesk.variable} dark h-full antialiased`}>
+    <html lang="en" className={`${cormorantGaramond.variable} ${spaceMono.variable} dark h-full antialiased`}>
       <head>
         <link rel="preload" href="/Logo.json" as="fetch" crossOrigin="anonymous" />
         <link rel="preload" href="/logo.png" as="image" />
       </head>
-      <body className="min-h-full bg-zinc-950 text-zinc-100 flex flex-col font-outfit select-none overflow-x-hidden">
+      <body className="min-h-full bg-[#12100E] text-[#E7E3DC] flex flex-col font-mono select-none overflow-x-hidden">
         <AuthProvider>
           {children}
         </AuthProvider>

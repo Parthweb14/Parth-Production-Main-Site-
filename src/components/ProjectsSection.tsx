@@ -22,7 +22,7 @@ const projectsData: ProjectItem[] = [
   {
     id: 'wedding-productions',
     number: '01',
-    name: 'Royal Weddings',
+    name: 'Royal Weddings & Varmala Rigs',
     category: 'Wedding Production',
     images: {
       col1_img1: '/images/Untitled-design-13.png',
@@ -34,7 +34,7 @@ const projectsData: ProjectItem[] = [
   {
     id: 'festival-productions',
     number: '02',
-    name: 'Cultural Festivals',
+    name: 'Cultural Festivals & Dandiya Arenas',
     category: 'Arena Production',
     images: {
       col1_img1: '/images/Untitled-design-20_sm7myc.png',
@@ -46,7 +46,7 @@ const projectsData: ProjectItem[] = [
   {
     id: 'concert-productions',
     number: '03',
-    name: 'Live Concerts',
+    name: 'Stadium Concerts & Live Audio',
     category: 'Stadium Production',
     images: {
       col1_img1: '/images/Untitled-design-14_ogyqmd.png',
@@ -67,16 +67,24 @@ export default function ProjectsSection() {
   return (
     <section 
       ref={containerRef}
-      className="relative bg-[#09090b] rounded-t-[40px] sm:rounded-t-[50px] md:rounded-t-[60px] -mt-10 sm:-mt-12 md:-mt-14 z-25 pt-12 pb-[14vh] md:pb-[18vh] px-6 md:px-12 flex flex-col items-center border-t border-amber-500/10"
+      className="relative bg-[#12100E] z-25 pt-20 pb-32 px-6 md:px-12 flex flex-col items-center border-t border-[#E7E3DC]/10"
     >
-      <div className="text-center max-w-2xl space-y-4 mb-6 md:mb-24 relative z-20">
-        <h2 
-          className="text-4xl md:text-6xl font-normal uppercase tracking-wider text-white hero-heading"
-          style={{ fontFamily: 'var(--font-syne), sans-serif' }}
-        >
-          SIGNATURE PRODUCTIONS
-        </h2>
-        <p className="text-xs text-zinc-500 font-semibold uppercase tracking-widest">Creating unforgettable atmospheres across different event genres</p>
+      <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-20">
+        <div className="lg:col-span-5 space-y-4 text-left">
+          <span className="font-mono text-[10px] tracking-widest text-[#C87A53] block uppercase">// Editorial Folio</span>
+          <h2 
+            className="text-4xl sm:text-5xl leading-none text-[#E7E3DC]"
+            style={{ fontFamily: 'var(--font-cormorant), serif' }}
+          >
+            SIGNATURE <br />
+            <span className="italic font-light">Installations</span>
+          </h2>
+        </div>
+        <div className="lg:col-span-7">
+          <p className="font-mono text-xs text-[#A39E93] leading-relaxed max-w-xl">
+            A architectural grid breakdown of our signature structural events. Each deck highlights details of layouts deployed, staging materials, and on-site rig grids.
+          </p>
+        </div>
       </div>
 
       {/* Sticky Stacking Cards Container */}
@@ -132,21 +140,24 @@ function CardWrapper({ project, index, totalCards, globalProgress }: CardWrapper
     >
       <motion.div 
         style={{ scale }}
-        className="w-full bg-[#121214]/90 backdrop-blur-md rounded-[30px] sm:rounded-[40px] md:rounded-[50px] border border-amber-500/20 p-4 sm:p-6 md:p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden"
+        className="w-full bg-[#1A1816] rounded-sm border border-[#E7E3DC]/15 p-4 sm:p-6 md:p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden"
       >
         {/* Top Row Layout */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-amber-500/10 pb-4 md:pb-6">
-          <div className="flex items-center gap-4">
-            <span className="text-4xl sm:text-6xl font-black text-amber-500/20 leading-none">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[#E7E3DC]/10 pb-4 md:pb-6">
+          <div className="flex items-center gap-6">
+            <span 
+              className="text-4xl sm:text-6xl font-normal text-[#C87A53] leading-none"
+              style={{ fontFamily: 'var(--font-cormorant), serif' }}
+            >
               {project.number}
             </span>
             <div>
-              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-amber-500/60 block mb-1">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#A39E93] block mb-1">
                 {project.category}
               </span>
               <h3 
-                className="text-lg sm:text-2xl font-bold text-zinc-100"
-                style={{ fontFamily: 'var(--font-syne), sans-serif' }}
+                className="text-lg sm:text-2xl text-[#E7E3DC] font-normal uppercase"
+                style={{ fontFamily: 'var(--font-cormorant), serif' }}
               >
                 {project.name}
               </h3>
@@ -157,36 +168,36 @@ function CardWrapper({ project, index, totalCards, globalProgress }: CardWrapper
         </div>
 
         {/* Bottom Row Layout: 2-Column Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-10 gap-4 mt-4 flex-1 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-10 gap-4 mt-6 flex-1 items-stretch">
           <div className="hidden md:flex md:col-span-4 flex-col gap-4 justify-between">
-            <div className="relative w-full rounded-[20px] sm:rounded-[30px] overflow-hidden border border-white/5 shadow-md h-[140px] lg:h-[190px]">
+            <div className="relative w-full rounded-sm overflow-hidden border border-[#E7E3DC]/5 shadow-md h-[140px] lg:h-[190px]">
               <Image 
                 src={project.images.col1_img1} 
                 alt={`${project.name} preview 1`}
                 fill
                 sizes="(max-width: 768px) 100vw, 400px"
-                className="object-cover filter brightness-[0.8]"
+                className="object-cover filter grayscale hover:grayscale-0 transition-all duration-700 brightness-[0.7]"
               />
             </div>
             
-            <div className="relative w-full rounded-[20px] sm:rounded-[30px] overflow-hidden border border-white/5 shadow-md h-[180px] lg:h-[250px]">
+            <div className="relative w-full rounded-sm overflow-hidden border border-[#E7E3DC]/5 shadow-md h-[180px] lg:h-[250px]">
               <Image 
                 src={project.images.col1_img2} 
                 alt={`${project.name} preview 2`}
                 fill
                 sizes="(max-width: 768px) 100vw, 400px"
-                className="object-cover filter brightness-[0.8]"
+                className="object-cover filter grayscale hover:grayscale-0 transition-all duration-700 brightness-[0.7]"
               />
             </div>
           </div>
 
-          <div className="col-span-1 md:col-span-6 relative rounded-[20px] sm:rounded-[30px] overflow-hidden border border-white/5 shadow-md min-h-[180px] sm:min-h-[220px] md:min-h-0 aspect-[16/10] md:aspect-auto">
+          <div className="col-span-1 md:col-span-6 relative rounded-sm overflow-hidden border border-[#E7E3DC]/5 shadow-md min-h-[180px] sm:min-h-[220px] md:min-h-0 aspect-[16/10] md:aspect-auto">
             <Image 
               src={project.images.col2_img} 
               alt={`${project.name} main cover`}
               fill
               sizes="(max-width: 768px) 100vw, 600px"
-              className="object-cover filter brightness-[0.8]"
+              className="object-cover filter grayscale hover:grayscale-0 transition-all duration-700 brightness-[0.7]"
             />
           </div>
         </div>

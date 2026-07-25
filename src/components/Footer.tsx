@@ -1,40 +1,19 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  Phone, Mail, MapPin, Clock, ArrowUpRight, ChevronDown 
-} from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-
-const InstagramIcon = (props: any) => (
-  <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-  </svg>
-);
-
-const WhatsAppIcon = (props: any) => (
-  <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" {...props}>
-    <path d="M12.004 0C5.378 0 0 5.377 0 12.002c0 2.112.551 4.165 1.597 5.975L.053 24l6.17-1.619a11.955 11.955 0 005.78 1.48C18.63 23.861 24 18.483 24 11.859c0-3.21-1.25-6.228-3.518-8.496A11.948 11.948 0 0012.004 0zM12 21.855c-1.93 0-3.824-.505-5.49-1.462l-.393-.225-3.66.96.976-3.566-.247-.393a9.817 9.817 0 01-1.503-5.17c0-5.417 4.408-9.824 9.825-9.824 2.624 0 5.091 1.022 6.945 2.877a9.756 9.756 0 012.877 6.947c-.004 5.421-4.413 9.827-9.83 9.827zm5.347-7.3c-.293-.146-1.733-.855-2.002-.953-.268-.098-.463-.146-.658.146-.195.293-.756.953-.927 1.149-.17.195-.341.22-.634.073-.293-.146-1.237-.456-2.356-1.455-.87-.777-1.458-1.738-1.629-2.031-.17-.293-.018-.452.128-.597.132-.131.293-.342.439-.513.147-.171.196-.293.293-.488.098-.195.049-.366-.024-.513-.073-.146-.658-1.587-.902-2.172-.239-.574-.481-.494-.66-.503-.17-.009-.366-.009-.561-.009-.195 0-.512.073-.78.366-.268.293-1.024 1-1.024 2.439 0 1.439 1.049 2.829 1.165 2.99.117.161 2.063 3.149 5.0 4.42.699.303 1.245.484 1.669.619.702.224 1.342.193 1.848.117.563-.083 1.733-.708 1.977-1.391.244-.683.244-1.269.171-1.391-.073-.122-.269-.196-.562-.342z"/>
-  </svg>
-);
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   const pathname = usePathname();
-  const [quickLinksOpen, setQuickLinksOpen] = useState(false);
-  const [servicesLinksOpen, setServicesLinksOpen] = useState(false);
   const { siteSettings } = useAuth();
-
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
 
   const socialLinks = [
-    { name: 'Instagram', icon: InstagramIcon, href: 'https://www.instagram.com/parthproduction' },
-    { name: 'Email', icon: Mail, href: `mailto:${siteSettings.email}?body=Hi%20Parth%20Production%20` },
-    { name: 'WhatsApp', icon: WhatsAppIcon, href: whatsappUrl },
+    { name: 'Instagram', href: 'https://www.instagram.com/parthproduction' },
+    { name: 'Email', href: `mailto:${siteSettings.email}?body=Hi%20Parth%20Production%20` },
+    { name: 'WhatsApp', href: whatsappUrl },
   ];
 
   const quickLinks = [
@@ -61,81 +40,79 @@ export default function Footer() {
   };
 
   return (
-    <footer className="relative z-20 bg-[#070709] border-t border-white/5 pt-20 pb-10 px-6 md:px-12">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-12 mb-16">
-        {/* Brand Description */}
+    <footer className="relative z-20 bg-[#12100E] border-t border-[#E7E3DC]/10 pt-16 pb-12 px-6 md:px-12 select-none">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+        
+        {/* Brand Column */}
         <div className="space-y-6">
-          <Link href="/" className="flex items-center gap-3 group">
-            <img 
-              src="/logo.png" 
-              alt="Parth Production Logo" 
-              className="w-16 h-16 rounded-full border border-white/10 object-cover"
-            />
-            <div>
-              <h4 className="text-md font-black tracking-tight text-white uppercase" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>PARTH PRODUCTION</h4>
-            </div>
+          <Link href="/" className="inline-block">
+            <span 
+              className="text-xl tracking-wider text-[#E7E3DC] font-normal uppercase"
+              style={{ fontFamily: 'var(--font-cormorant), serif' }}
+            >
+              PARTH PRODUCTION
+            </span>
           </Link>
-
-          {/* Social Links */}
-          <div className="flex gap-4">
-            {socialLinks.map((soc) => {
-              const Icon = soc.icon;
-              return (
+          <p className="text-[11px] leading-relaxed text-[#A39E93] max-w-xs font-mono">
+            Crafting premium cinematic environments, acoustics, and structural light installations for events across India.
+          </p>
+          
+          {/* Socials as slashed text */}
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] tracking-widest uppercase font-mono">
+            {socialLinks.map((soc, idx) => (
+              <span key={soc.name} className="text-[#A39E93] flex items-center gap-3">
                 <a 
-                  key={soc.name}
                   href={soc.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-9 h-9 rounded-xl bg-white/3 border border-white/5 flex items-center justify-center text-zinc-400 hover:text-black hover:bg-gradient-to-tr hover:from-amber-500 hover:to-yellow-500 transition-all duration-300 hover:scale-110 cursor-pointer animate-none"
+                  className="hover:text-[#C87A53] transition-colors"
                 >
-                  <Icon className="w-4 h-4" />
+                  {soc.name}
                 </a>
-              );
-            })}
+                {idx < socialLinks.length - 1 && <span className="text-[#E7E3DC]/20">/</span>}
+              </span>
+            ))}
           </div>
         </div>
 
-        {/* Quick Links */}
-        <div className="space-y-4 lg:space-y-6 pb-4 border-b border-white/5 lg:border-none lg:pb-0">
-          <button 
-            onClick={() => setQuickLinksOpen(!quickLinksOpen)}
-            className="flex items-center justify-between w-full text-left lg:pointer-events-none focus:outline-none"
+        {/* Quick Links Column */}
+        <div className="space-y-4">
+          <h4 
+            className="text-xs tracking-[0.2em] text-[#E7E3DC] uppercase font-bold"
+            style={{ fontFamily: 'var(--font-mono), monospace' }}
           >
-            <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-white">Quick Navigation</h4>
-            <ChevronDown className={`w-4 h-4 text-zinc-400 transition-transform duration-300 lg:hidden ${quickLinksOpen ? 'rotate-180' : ''}`} />
-          </button>
-          <ul className={`space-y-3 transition-all duration-300 ${quickLinksOpen ? 'block' : 'hidden lg:block'}`}>
+            Navigation
+          </h4>
+          <ul className="space-y-2.5 text-[11px] font-mono">
             {quickLinks.map((link) => (
               <li key={link.label}>
                 <Link 
                   href={link.href}
                   onClick={(e) => handleLinkClick(e, link.href)}
-                  className="text-xs text-zinc-400 hover:text-amber-500 transition-colors flex items-center gap-1 group"
+                  className="text-[#A39E93] hover:text-[#C87A53] transition-colors uppercase tracking-wider"
                 >
                   {link.label}
-                  <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
               </li>
             ))}
           </ul>
         </div>
 
-        {/* Services */}
-        <div className="space-y-4 lg:space-y-6 pb-4 border-b border-white/5 lg:border-none lg:pb-0">
-          <button 
-            onClick={() => setServicesLinksOpen(!servicesLinksOpen)}
-            className="flex items-center justify-between w-full text-left lg:pointer-events-none focus:outline-none"
+        {/* Services Column */}
+        <div className="space-y-4">
+          <h4 
+            className="text-xs tracking-[0.2em] text-[#E7E3DC] uppercase font-bold"
+            style={{ fontFamily: 'var(--font-mono), monospace' }}
           >
-            <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-white">Our Services</h4>
-            <ChevronDown className={`w-4 h-4 text-zinc-400 transition-transform duration-300 lg:hidden ${servicesLinksOpen ? 'rotate-180' : ''}`} />
-          </button>
-          <ul className={`space-y-3 transition-all duration-300 ${servicesLinksOpen ? 'block' : 'hidden lg:block'}`}>
+            Sectors
+          </h4>
+          <ul className="space-y-2.5 text-[11px] font-mono">
             {servicesLinks.map((link) => (
               <li key={link.label}>
                 <Link 
                   href={link.href}
                   onClick={(e) => handleLinkClick(e, link.href)}
-                  className="text-xs text-zinc-400 hover:text-amber-500 transition-colors"
+                  className="text-[#A39E93] hover:text-[#C87A53] transition-colors uppercase tracking-wider"
                 >
                   {link.label}
                 </Link>
@@ -144,49 +121,48 @@ export default function Footer() {
           </ul>
         </div>
 
-        {/* Contact Info */}
-        <div className="space-y-6">
-          <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-white">Contact Info</h4>
-          <ul className="space-y-4 text-xs">
-            <li className="flex gap-3 text-zinc-400">
-              <Phone className="w-4 h-4 text-amber-500 flex-shrink-0" />
-              <div>
-                <a href={`tel:+91${siteSettings.phone_1}`} className="hover:text-white transition-all block font-semibold">+91 {siteSettings.phone_1}</a>
-                <a href={`tel:+91${siteSettings.phone_2}`} className="hover:text-white transition-all block text-zinc-500 mt-1">+91 {siteSettings.phone_2}</a>
-              </div>
+        {/* Contact Info Column */}
+        <div className="space-y-4">
+          <h4 
+            className="text-xs tracking-[0.2em] text-[#E7E3DC] uppercase font-bold"
+            style={{ fontFamily: 'var(--font-mono), monospace' }}
+          >
+            Office
+          </h4>
+          <ul className="space-y-4 text-[11px] font-mono text-[#A39E93]">
+            <li>
+              <span className="text-[9px] uppercase tracking-widest text-[#E7E3DC]/30 block mb-1">Direct Lines</span>
+              <a href={`tel:+91${siteSettings.phone_1}`} className="hover:text-[#C87A53] block transition-colors font-bold text-[#E7E3DC]">+91 {siteSettings.phone_1}</a>
+              <a href={`tel:+91${siteSettings.phone_2}`} className="hover:text-[#C87A53] block mt-0.5 transition-colors">+91 {siteSettings.phone_2}</a>
             </li>
-            <li className="flex gap-3 text-zinc-400">
-              <Mail className="w-4 h-4 text-amber-500 flex-shrink-0" />
-              <a href={`mailto:${siteSettings.email}`} className="hover:text-white transition-all block">
+            <li>
+              <span className="text-[9px] uppercase tracking-widest text-[#E7E3DC]/30 block mb-1">Email Enquiries</span>
+              <a href={`mailto:${siteSettings.email}`} className="hover:text-[#C87A53] transition-colors block break-all">
                 {siteSettings.email}
               </a>
             </li>
-            <li className="flex gap-3 text-zinc-400">
-              <MapPin className="w-4 h-4 text-amber-500 flex-shrink-0" />
+            <li>
+              <span className="text-[9px] uppercase tracking-widest text-[#E7E3DC]/30 block mb-1">Corporate HQ</span>
               <a 
                 href={`https://maps.google.com/?q=${encodeURIComponent(siteSettings.address || '')}`} 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="hover:text-white transition-colors"
+                className="hover:text-[#C87A53] transition-colors leading-relaxed block"
               >
                 {siteSettings.address || 'Gaurav Path Road, Palanpur, Surat, Gujarat'}
               </a>
-            </li>
-            <li className="flex gap-3 text-zinc-400">
-              <Clock className="w-4 h-4 text-amber-500 flex-shrink-0" />
-              <span>Available 24/7 for Events</span>
             </li>
           </ul>
         </div>
       </div>
 
       {/* Bottom Bar */}
-      <div className="max-w-7xl mx-auto pt-8 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 text-center">
-        <p className="text-[10px] text-zinc-500">
-          © {currentYear} Parth Production. All rights reserved.
+      <div className="max-w-7xl mx-auto pt-8 border-t border-[#E7E3DC]/10 flex flex-col sm:flex-row justify-between items-center gap-4 text-center font-mono text-[9px] text-[#A39E93]/60 uppercase tracking-widest">
+        <p>
+          © {currentYear} Parth Production. All Rights Reserved.
         </p>
-        <p className="text-[10px] text-zinc-500 flex items-center gap-1">
-          Designed by <a href="https://www.trishulhub.in" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-white font-bold uppercase transition-colors">Trishulhub agency</a>
+        <p>
+          Studio — <a href="https://www.trishulhub.in" target="_blank" rel="noopener noreferrer" className="hover:text-[#C87A53] font-bold transition-colors">Trishulhub Agency</a>
         </p>
       </div>
     </footer>

@@ -1,55 +1,59 @@
 @import "tailwindcss";
 
 @theme {
-  --font-syne: var(--font-syne);
-  --font-outfit: var(--font-outfit);
-  --font-space-grotesk: var(--font-space-grotesk);
+  --font-cormorant: var(--font-cormorant);
+  --font-mono: var(--font-mono);
+  --color-amber-500: #C87A53;
+  --color-amber-600: #b0633c;
+  --color-yellow-500: #A39E93;
 }
 
 :root {
-  --background: #09090b;
-  --foreground: #f4f4f5;
-  --primary: #d4af37;
-  --primary-hover: #b8901c;
-  --accent: #f59e0b;
+  --background: #12100E;
+  --foreground: #E7E3DC;
+  --primary: #C87A53;
+  --primary-hover: #b0633c;
+  --accent: #A39E93;
 }
 
 body {
-  font-family: var(--font-outfit), sans-serif;
-  background-color: #09090b;
-  color: #f4f4f5;
+  font-family: var(--font-mono), monospace;
+  background-color: #12100E;
+  color: #E7E3DC;
   overflow-x: hidden;
   scroll-behavior: smooth;
+  letter-spacing: -0.01em;
 }
 
-/* Universal Heading Font style override to enforce Syne font */
+/* Enforce Editorial Serif for Headings */
 h1, h2, h3, h4, h5, h6, .hero-heading {
-  font-family: var(--font-syne), sans-serif;
-  font-weight: 700 !important;
-  letter-spacing: -0.02em;
+  font-family: var(--font-cormorant), serif;
+  font-weight: 400 !important;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
 }
 
-/* Custom Scrollbar */
+/* Custom Editorial Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0d0d0f;
+  background: #12100E;
+  border-left: 1px solid rgba(231, 227, 220, 0.05);
 }
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #f59e0b, #d4af37);
-  border-radius: 4px;
+  background: #C87A53;
 }
 
 /* Selection */
 ::selection {
-  background: rgba(212, 175, 55, 0.25);
+  background: rgba(200, 122, 83, 0.25);
   color: #ffffff;
 }
 
 /* Gradient Text Utilities */
 .gradient-text {
-  background: linear-gradient(180deg, #ffffff 0%, #a1a1aa 100%);
+  background: linear-gradient(180deg, #E7E3DC 0%, #A39E93 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -57,44 +61,35 @@ h1, h2, h3, h4, h5, h6, .hero-heading {
 }
 
 .gradient-text-accent {
-  background: linear-gradient(135deg, #f59e0b 0%, #d4af37 50%, #f97316 100%);
+  background: linear-gradient(135deg, #C87A53 0%, #E7E3DC 50%, #A39E93 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   display: inline-block;
 }
 
-/* Glow Effects */
-.glow-gold {
-  box-shadow: 0 0 40px rgba(212, 175, 55, 0.35);
+/* Custom interactive film grain overlay */
+.film-grain {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.025;
+  pointer-events: none;
+  z-index: 9999;
 }
 
-.glow-amber {
-  box-shadow: 0 0 40px rgba(245, 158, 11, 0.35);
+/* Editorial layout rules */
+.editorial-grid {
+  border: 1px solid rgba(231, 227, 220, 0.08);
 }
 
-/* Custom classes for animations */
-.perspective-1000 {
-  perspective: 1000px;
+.editorial-border-b {
+  border-bottom: 1px solid rgba(231, 227, 220, 0.08);
 }
 
-.preserve-3d {
-  transform-style: preserve-3d;
-}
-
-.backface-hidden {
-  backface-visibility: hidden;
-}
-
-/* Glassmorphism utility */
-.glass-panel {
-  background: rgba(18, 18, 20, 0.6);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(212, 175, 55, 0.1);
-}
-
-.glass-panel-hover:hover {
-  background: rgba(24, 24, 28, 0.7);
-  border: 1px solid rgba(212, 175, 55, 0.2);
-  box-shadow: 0 0 30px rgba(212, 175, 55, 0.05);
+.editorial-border-r {
+  border-right: 1px solid rgba(231, 227, 220, 0.08);
 }
