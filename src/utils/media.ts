@@ -43,6 +43,7 @@ export const STAGE_IMAGES = [
   { title: 'Campaign', src: `${ASSET_BASE}/Image%205%20Road%20show.png`, tag: 'Fireworks Ready' },
 ];
 
+/** Home celebration showcase — Sound, Lighting, DJ only */
 export const CRAFT = [
   {
     title: 'Sound',
@@ -53,21 +54,6 @@ export const CRAFT = [
     title: 'Lighting',
     copy: 'Moving heads, beam lights, wash fixtures, lasers, and synchronized lighting programmed to match every beat.',
     image: `${ASSET_BASE}/image%2010%20.png`,
-  },
-  {
-    title: 'SFX',
-    copy: 'Cold spark fountains, CO₂ cannons, fog machines, confetti, haze, and immersive special effects.',
-    image: `${ASSET_BASE}/Image%203%20Festivals.png`,
-  },
-  {
-    title: 'Truss',
-    copy: 'Certified truss systems supporting LED walls, lighting rigs, sound equipment, and aerial stage installations.',
-    image: `${ASSET_BASE}/Image%201%20Concert%20.png`,
-  },
-  {
-    title: 'Fireworks',
-    copy: 'Indoor and outdoor pyrotechnics creating breathtaking finales and unforgettable celebrations.',
-    image: `${ASSET_BASE}/Image%205%20Road%20show.png`,
   },
   {
     title: 'DJ Artists',

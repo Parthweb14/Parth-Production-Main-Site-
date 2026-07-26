@@ -52,8 +52,8 @@ export default function HomeServicesGrid() {
             </h2>
 
             <p className="mt-4 max-w-md text-[14px] md:text-[15px] leading-[1.65] text-[#b8b8b8]">
-              Sound, lighting, SFX, truss, fireworks, and professional DJs delivering unforgettable
-              experiences for weddings, concerts, festivals, and corporate events.
+              Sound, lighting, and professional DJs delivering unforgettable experiences for
+              weddings, concerts, festivals, and corporate events.
             </p>
 
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
