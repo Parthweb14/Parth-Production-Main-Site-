@@ -6,7 +6,7 @@ import SpotlightNavbar from '@/components/SpotlightNavbar';
 import Footer from '@/components/Footer';
 import QuoteCta from '@/components/QuoteCta';
 import MediaImage from '@/components/MediaImage';
-import LiquidGlassBackdrop from '@/components/LiquidGlassBackdrop';
+import PageHero from '@/components/PageHero';
 import { OWNER_IMAGE, STAGE_IMAGES } from '@/utils/media';
 
 const journey = [
@@ -61,36 +61,10 @@ export default function AboutPage() {
       <div className="film-grain" />
 
       <main className="relative overflow-x-hidden bg-black">
-        {/* SECTION 1: Cool liquid hero (no orange wash) */}
-        <section className="relative min-h-[48svh] md:min-h-[56svh] flex items-center justify-center px-6 md:px-10 py-20 md:py-24 overflow-hidden">
-          <LiquidGlassBackdrop tone="cool" />
-          <div className="relative z-10 max-w-4xl mx-auto text-center">
-            <motion.p
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-[11px] md:text-xs uppercase tracking-[0.35em] text-white/55 font-semibold mb-4"
-            >
-              Parth Production
-            </motion.p>
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 }}
-              className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold uppercase tracking-tight leading-[0.95] glass-heading-cool"
-            >
-              About Us
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.12 }}
-              className="mt-5 md:mt-6 text-white/65 text-base md:text-lg leading-relaxed max-w-2xl mx-auto"
-            >
-              Full-stack live production. From first mic check to final firework — sound, light,
-              SFX, truss, and DJ artistry under one crew.
-            </motion.p>
-          </div>
-        </section>
+        <PageHero
+          title="About Us"
+          description="Full-stack live production. From first mic check to final firework — sound, light, SFX, truss, and DJ artistry under one crew."
+        />
 
         {/* Philosophy quote */}
         <section className="relative py-14 md:py-20 px-4 sm:px-6 md:px-10 overflow-hidden border-t border-white/10">

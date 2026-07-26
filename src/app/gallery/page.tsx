@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import SpotlightNavbar from '@/components/SpotlightNavbar';
 import Footer from '@/components/Footer';
 import MediaImage from '@/components/MediaImage';
+import PageHero from '@/components/PageHero';
 import { STAGE_IMAGES, resolveGallerySrc } from '@/utils/media';
 
 type GalleryItem = {
@@ -47,7 +48,6 @@ export default function GalleryPage() {
             };
           }
         );
-        // Keep only items that still resolve to a usable src
         setItems(mapped.length ? mapped : defaults);
       } catch {
         // keep defaults
@@ -69,33 +69,22 @@ export default function GalleryPage() {
     <>
       <SpotlightNavbar />
       <div className="film-grain" />
-      <main className="pt-20">
-        <section className="px-6 md:px-10 py-16 md:py-22 border-b border-white/10">
-          <div className="max-w-7xl mx-auto">
-            <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-xs uppercase tracking-[0.22em] text-accent mb-4">
-              Gallery
-            </motion.p>
-            <motion.h1
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="font-display text-4xl md:text-6xl tracking-tight max-w-3xl"
-            >
-              Frames from the floor
-            </motion.h1>
-            <p className="mt-5 text-white/55 max-w-xl">
-              Weddings, festivals, concerts, corporate stages, and road shows — captured under Parth Production systems.
-            </p>
-          </div>
-        </section>
+      <main className="relative overflow-x-hidden bg-black">
+        <PageHero
+          title="Frames from the floor"
+          description="Weddings, festivals, concerts, corporate stages, and road shows — captured under Parth Production systems."
+        />
 
-        <section className="sticky top-20 z-30 border-b border-white/10 bg-black/70 backdrop-blur-xl">
-          <div className="max-w-7xl mx-auto px-6 md:px-10 py-4 flex gap-5 overflow-x-auto scrollbar-none text-[11px] uppercase tracking-[0.18em]">
+        <section className="sticky top-[96px] md:top-[104px] z-30 border-b border-white/10 bg-black/70 backdrop-blur-xl">
+          <div className="max-w-7xl mx-auto px-6 md:px-10 py-4 flex flex-wrap justify-center gap-x-6 gap-y-2 text-[11px] uppercase tracking-[0.18em] font-bold">
             {filters.map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`whitespace-nowrap pb-1 border-b transition-colors ${
-                  filter === f ? 'text-accent border-accent' : 'text-white/45 border-transparent hover:text-white'
+                className={`whitespace-nowrap pb-1 border-b-2 transition-colors min-h-[44px] ${
+                  filter === f
+                    ? 'text-accent border-accent'
+                    : 'text-white/55 border-transparent hover:text-white'
                 }`}
               >
                 {f}
@@ -116,7 +105,7 @@ export default function GalleryPage() {
                   exit={{ opacity: 0, scale: 0.96 }}
                   transition={{ duration: 0.35 }}
                   onClick={() => setActive(idx)}
-                  className="relative break-inside-avoid w-full overflow-hidden border border-white/10 group text-left"
+                  className="relative break-inside-avoid w-full overflow-hidden border border-white/10 group text-left rounded-2xl"
                 >
                   <div className="relative aspect-[4/5] overflow-hidden">
                     <MediaImage
@@ -126,8 +115,10 @@ export default function GalleryPage() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
                     <div className="absolute bottom-4 left-4 right-4">
-                      <p className="text-[10px] uppercase tracking-[0.18em] text-accent">{image.category}</p>
-                      <p className="font-display text-lg mt-1">{image.title}</p>
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-accent font-semibold">
+                        {image.category}
+                      </p>
+                      <p className="font-display text-lg mt-1 font-semibold">{image.title}</p>
                     </div>
                   </div>
                 </motion.button>
@@ -145,12 +136,15 @@ export default function GalleryPage() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[10000] bg-black/95 flex items-center justify-center px-4"
           >
-            <button onClick={() => setActive(null)} className="absolute top-6 right-6 p-2 border border-white/15 hover:border-white">
+            <button
+              onClick={() => setActive(null)}
+              className="absolute top-6 right-6 p-2 border border-white/15 hover:border-white min-h-[44px] min-w-[44px]"
+            >
               <X className="w-6 h-6" />
             </button>
             <button
               onClick={() => setActive((i) => (i === null ? i : (i - 1 + filtered.length) % filtered.length))}
-              className="absolute left-4 md:left-8 p-3 border border-white/15 hover:border-accent"
+              className="absolute left-4 md:left-8 p-3 border border-white/15 hover:border-accent min-h-[44px] min-w-[44px]"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -164,7 +158,7 @@ export default function GalleryPage() {
             />
             <button
               onClick={() => setActive((i) => (i === null ? i : (i + 1) % filtered.length))}
-              className="absolute right-4 md:right-8 p-3 border border-white/15 hover:border-accent"
+              className="absolute right-4 md:right-8 p-3 border border-white/15 hover:border-accent min-h-[44px] min-w-[44px]"
             >
               <ChevronRight className="w-5 h-5" />
             </button>

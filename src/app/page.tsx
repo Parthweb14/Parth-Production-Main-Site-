@@ -84,7 +84,7 @@ export default function HomePage() {
               variants={fadeUp}
               initial="hidden"
               animate="visible"
-              className="font-display text-[clamp(2.4rem,7.2vw,5.8rem)] leading-[0.95] tracking-tight uppercase font-bold max-w-5xl"
+              className="font-display text-[clamp(2.4rem,7.2vw,5.8rem)] leading-[0.95] tracking-tight uppercase font-semibold max-w-5xl"
             >
               One stop solution
               <br />
@@ -117,9 +117,9 @@ export default function HomePage() {
         </section>
 
         <div className="border-y border-white/10 bg-black overflow-hidden py-4">
-          <div className="marquee-track flex w-max gap-10 whitespace-nowrap text-sm md:text-base uppercase tracking-[0.22em] text-white/65">
+          <div className="marquee-track flex w-max gap-16 md:gap-24 whitespace-nowrap text-sm md:text-base uppercase tracking-[0.22em] text-white/65">
             {[...Array(2)].map((_, loop) => (
-              <div key={loop} className="flex gap-10">
+              <div key={loop} className="flex gap-16 md:gap-24 px-8">
                 {[
                   'Sound Systems',
                   'Stage Lighting',

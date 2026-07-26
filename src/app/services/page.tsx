@@ -6,6 +6,7 @@ import SpotlightNavbar from '@/components/SpotlightNavbar';
 import Footer from '@/components/Footer';
 import QuoteCta from '@/components/QuoteCta';
 import MediaImage from '@/components/MediaImage';
+import PageHero from '@/components/PageHero';
 import { useAuth } from '@/context/AuthContext';
 import { STAGE_IMAGES, resolveGallerySrc } from '@/utils/media';
 
@@ -125,87 +126,32 @@ export default function ServicesPage() {
       <div className="film-grain" />
 
       <main className="relative overflow-x-hidden bg-black">
-        {/* Black hero with extra top space under navbar */}
-        <section className="relative bg-black flex items-center justify-center px-6 md:px-10 pt-36 md:pt-44 pb-14 md:pb-16 overflow-hidden border-b border-white/10">
-          <div className="relative z-10 max-w-3xl mx-auto text-center">
-            <motion.p
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-[11px] uppercase tracking-[0.35em] text-white/50 font-semibold mb-3"
-            >
-              Parth Production
-            </motion.p>
-            <motion.h1
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 }}
-              className="font-display text-3xl sm:text-4xl md:text-5xl font-bold uppercase tracking-tight leading-[0.95] text-white"
-            >
-              Our Services
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="mt-4 text-white/65 text-sm md:text-base leading-relaxed max-w-xl mx-auto"
-            >
-              Full-stack live production — sound, light, SFX, truss, and DJ artistry under one crew.
-            </motion.p>
-          </div>
-        </section>
+        <PageHero
+          title="Our Services"
+          description="Full-stack live production — sound, light, SFX, truss, and DJ artistry under one crew."
+        />
 
-        {/* Services connected by a traveling rope */}
+        {/* Services with a very subtle connecting rope */}
         <div className="relative">
-          {/* Desktop serpentine rope */}
           <svg
-            className="pointer-events-none absolute inset-y-0 left-0 right-0 w-full h-full hidden lg:block z-0"
-            viewBox="0 0 100 1000"
+            className="pointer-events-none absolute inset-y-8 left-1/2 -translate-x-1/2 w-px h-[calc(100%-4rem)] hidden lg:block z-0 opacity-[0.12]"
+            viewBox="0 0 4 1000"
             preserveAspectRatio="none"
             aria-hidden
           >
             <path
-              d="M50 0
-                 C 50 40, 18 70, 18 110
-                 C 18 150, 82 180, 82 220
-                 C 82 260, 18 290, 18 330
-                 C 18 370, 82 400, 82 440
-                 C 82 480, 18 510, 18 550
-                 C 18 590, 82 620, 82 660
-                 C 82 700, 50 740, 50 780
-                 C 50 820, 50 900, 50 1000"
+              d="M2 0 C 2 120, 2 200, 2 1000"
               fill="none"
               stroke="#FF5F1F"
-              strokeWidth="0.55"
+              strokeWidth="2"
               strokeLinecap="round"
-              opacity="0.55"
-              vectorEffect="non-scaling-stroke"
-            />
-            <path
-              d="M50 0
-                 C 50 40, 18 70, 18 110
-                 C 18 150, 82 180, 82 220
-                 C 82 260, 18 290, 18 330
-                 C 18 370, 82 400, 82 440
-                 C 82 480, 18 510, 18 550
-                 C 18 590, 82 620, 82 660
-                 C 82 700, 50 740, 50 780
-                 C 50 820, 50 900, 50 1000"
-              fill="none"
-              stroke="#FF5F1F"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-              opacity="0.18"
-              filter="blur(1px)"
             />
           </svg>
-
-          {/* Mobile vertical rope */}
           <div
-            className="lg:hidden pointer-events-none absolute top-0 bottom-0 left-5 w-px z-0"
+            className="lg:hidden pointer-events-none absolute top-0 bottom-0 left-5 w-px z-0 opacity-[0.12]"
             style={{
               background:
-                'linear-gradient(180deg, transparent, rgba(255,95,31,0.7), rgba(255,95,31,0.35), transparent)',
-              boxShadow: '0 0 10px rgba(255,95,31,0.35)',
+                'linear-gradient(180deg, transparent, rgba(255,95,31,0.9), transparent)',
             }}
             aria-hidden
           />
@@ -222,9 +168,8 @@ export default function ServicesPage() {
                 id={service.title.toLowerCase().replace(/\s+/g, '-')}
                 className="relative z-10 border-t border-white/10 py-10 md:py-14"
               >
-                {/* Rope knot at each service */}
                 <span
-                  className="absolute left-5 lg:left-1/2 top-10 -translate-x-1/2 h-3 w-3 rounded-full bg-accent shadow-[0_0_14px_rgba(255,95,31,0.85)] z-20"
+                  className="absolute left-5 lg:left-1/2 top-10 -translate-x-1/2 h-2 w-2 rounded-full bg-accent/40 z-20"
                   aria-hidden
                 />
 
