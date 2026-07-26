@@ -75,28 +75,28 @@ export default function QuoteCta({
         </div>
       </div>
 
-      <div className="relative mx-auto w-full max-w-[1100px] px-6 py-10 md:px-10 md:py-12">
-        <div className="mx-auto max-w-2xl text-center">
+      <div className="relative mx-auto w-full max-w-[900px] px-6 py-8 md:px-10 md:py-10">
+        <div className="mx-auto max-w-xl text-center">
           <motion.p
             initial={{ opacity: 0, y: 8 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-40px' }}
             transition={{ duration: 0.4, ease }}
-            className="mb-3 text-[10px] font-semibold uppercase tracking-[0.28em] text-[#ff5a3c]"
+            className="mb-2 text-[9px] font-semibold uppercase tracking-[0.28em] text-[#ff5a3c]"
           >
             Lock the night
           </motion.p>
 
           {lines ? (
-            <h2 className="font-display font-bold uppercase tracking-tight text-white leading-[1.05]">
+            <h2 className="font-display font-bold uppercase tracking-tight text-white leading-[1.15]">
               {lines.map((line, i) => (
                 <motion.span
                   key={line}
-                  initial={{ opacity: 0, y: 14 }}
+                  initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: '-40px' }}
-                  transition={{ duration: 0.45, delay: 0.05 + i * 0.08, ease }}
-                  className={`block text-2xl md:text-3xl lg:text-4xl ${
+                  transition={{ duration: 0.4, delay: 0.04 + i * 0.06, ease }}
+                  className={`block text-lg md:text-xl ${
                     i === lines.length - 1 ? 'text-[#ff5a3c]' : ''
                   }`}
                 >
@@ -106,11 +106,11 @@ export default function QuoteCta({
             </h2>
           ) : (
             <motion.h2
-              initial={{ opacity: 0, y: 14 }}
+              initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-40px' }}
-              transition={{ duration: 0.45, ease }}
-              className="font-display text-2xl md:text-3xl lg:text-4xl font-bold uppercase tracking-tight text-white leading-[1.05]"
+              transition={{ duration: 0.4, ease }}
+              className="font-display text-lg md:text-xl font-bold uppercase tracking-tight text-white leading-[1.15]"
             >
               {title}
             </motion.h2>
@@ -120,8 +120,8 @@ export default function QuoteCta({
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: 0.2, ease }}
-            className="mx-auto mt-3 max-w-md text-xs md:text-sm leading-relaxed text-white/55"
+            transition={{ duration: 0.4, delay: 0.15, ease }}
+            className="mx-auto mt-2.5 max-w-md text-[11px] md:text-xs leading-relaxed text-white/55"
           >
             {subtitle}
           </motion.p>
