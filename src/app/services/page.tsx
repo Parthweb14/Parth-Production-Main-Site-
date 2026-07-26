@@ -272,7 +272,7 @@ export default function ServicesPage() {
                       </div>
                     </div>
 
-                    <div className="border-t border-white/10 px-3 pb-3 pt-3 md:px-4 md:pb-4 md:pt-4">
+                    <div className="border-t border-white/10 px-3 pb-3 pt-8 md:px-5 md:pb-5 md:pt-10">
                       <div className="relative grid grid-cols-3 gap-px overflow-hidden rounded-xl bg-white/10">
                         {service.gallery.map((src, gi) => (
                           <motion.div
