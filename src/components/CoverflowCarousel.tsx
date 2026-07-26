@@ -18,14 +18,16 @@ export default function CoverflowCarousel() {
   return (
     <section className="relative py-16 md:py-24 bg-[#0A0E27] overflow-hidden border-b border-white/10">
       <div className="absolute inset-0 site-grid opacity-20" />
-      <div className="relative max-w-7xl mx-auto px-4 md:px-8 mb-10 md:mb-14 text-center">
-        <p className="section-label mb-3">Stage gallery</p>
-        <h2 className="font-display text-3xl md:text-5xl font-semibold text-white uppercase tracking-tight">
-          Built for the big night
-        </h2>
-        <p className="mt-4 text-slate-400 text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
-          Drag through real stages — LED walls, corporate sets, and wedding builds from the Parth
-          Production floor.
+      <div className="relative max-w-7xl mx-auto px-4 md:px-8 mb-10 md:mb-14 flex flex-col md:flex-row md:items-end md:justify-between gap-5">
+        <div>
+          <p className="section-label mb-3">Stage previewer</p>
+          <h2 className="font-display text-3xl md:text-5xl font-semibold text-white uppercase tracking-tight max-w-xl">
+            Built for the big night
+          </h2>
+        </div>
+        <p className="text-slate-400 text-base md:text-lg max-w-md leading-relaxed md:text-right">
+          Orbit real stages — LED walls, corporate sets, and wedding builds from the production
+          floor.
         </p>
       </div>
 

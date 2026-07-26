@@ -217,6 +217,17 @@ body::-webkit-scrollbar {
   color: #22D3EE;
 }
 
+@keyframes scanDrop {
+  0% { transform: translateY(0); opacity: 0; }
+  15% { opacity: 0.8; }
+  100% { transform: translateY(280px); opacity: 0; }
+}
+
+.scan-line {
+  background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.85), transparent);
+  animation: scanDrop 2.4s ease-in-out infinite;
+}
+
 .aurora-blob {
   position: absolute;
   border-radius: 9999px;
@@ -235,7 +246,8 @@ body::-webkit-scrollbar {
   .liquid-orb,
   .marquee-track,
   .site-grid,
-  .cta-book-btn {
+  .cta-book-btn,
+  .scan-line {
     animation: none !important;
   }
 }

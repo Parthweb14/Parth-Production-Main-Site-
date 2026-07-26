@@ -9,6 +9,7 @@ import Footer from '@/components/Footer';
 import CoverflowCarousel from '@/components/CoverflowCarousel';
 import VideoShowcaseCarousel from '@/components/VideoShowcaseCarousel';
 import HomeServicesGrid from '@/components/HomeServicesGrid';
+import PlatformStrip from '@/components/PlatformStrip';
 import QuoteCta from '@/components/QuoteCta';
 import { useAuth } from '@/context/AuthContext';
 import { HERO_VIDEO } from '@/utils/media';
@@ -163,6 +164,8 @@ export default function HomePage() {
             ))}
           </div>
         </div>
+
+        <PlatformStrip />
 
         <div id="video-showcase">
           <VideoShowcaseCarousel />

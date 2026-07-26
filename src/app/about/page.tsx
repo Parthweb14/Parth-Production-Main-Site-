@@ -1,6 +1,7 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Users, Sparkles, Settings2 } from 'lucide-react';
 import SpotlightNavbar from '@/components/SpotlightNavbar';
 import Footer from '@/components/Footer';
@@ -55,6 +56,9 @@ const values = [
 ];
 
 export default function AboutPage() {
+  const [activeYear, setActiveYear] = useState(0);
+  const milestone = journey[activeYear];
+
   return (
     <>
       <SpotlightNavbar />
@@ -79,11 +83,7 @@ export default function AboutPage() {
             viewport={{ once: true }}
             className="relative z-10 max-w-4xl mx-auto text-center saas-card px-6 py-10 md:px-12 md:py-14"
           >
-            <div className="flex items-center justify-center gap-4 mb-6 text-cyan-300">
-              <Sparkles className="w-5 h-5" />
-              <span className="text-[10px] uppercase tracking-[0.3em] font-semibold">Our philosophy</span>
-              <Sparkles className="w-5 h-5" />
-            </div>
+            <p className="section-label mb-5">Operating principle</p>
             <p className="font-serif italic text-2xl md:text-4xl text-white leading-snug">
               “We don&apos;t just play music — we create moments that last forever.”
             </p>
@@ -92,83 +92,88 @@ export default function AboutPage() {
 
         <section className="relative border-t border-white/10 py-14 md:py-20 px-4 sm:px-6 md:px-10 overflow-hidden">
           <div className="absolute inset-0 site-grid opacity-20" />
-          <div className="relative max-w-5xl mx-auto">
-            <motion.h2
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="font-display text-3xl md:text-5xl font-semibold uppercase tracking-tight text-center mb-10 md:mb-14"
-            >
-              Our Journey
-            </motion.h2>
-
-            <div className="relative">
-              <div
-                className="absolute left-4 md:left-1/2 top-0 bottom-0 w-px md:-translate-x-1/2"
-                style={{
-                  background:
-                    'linear-gradient(180deg, transparent, rgba(34,211,238,0.7), rgba(56,189,248,0.35), transparent)',
-                  boxShadow: '0 0 12px rgba(34,211,238,0.35)',
-                }}
-              />
-
-              <div className="space-y-10 md:space-y-14">
-                {journey.map((item, i) => {
-                  const onRight = i % 2 === 0;
-                  return (
-                    <motion.article
-                      key={item.year}
-                      initial={{ opacity: 0, x: onRight ? 28 : -28 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true, margin: '-50px' }}
-                      transition={{ duration: 0.5 }}
-                      className="relative pl-12 md:pl-0 md:grid md:grid-cols-2 md:gap-12"
-                    >
-                      <span className="absolute left-[11px] md:left-1/2 top-8 md:top-10 h-3.5 w-3.5 -translate-x-1/2 rounded-full bg-cyan-400 shadow-[0_0_16px_rgba(34,211,238,0.85)] z-10" />
-
-                      {onRight ? (
-                        <>
-                          <div className="hidden md:block" />
-                          <div className="glass-card rounded-2xl p-6 md:p-8 transition-transform duration-300 hover:-translate-y-2 md:ml-6">
-                            <p className="font-display text-4xl font-semibold text-cyan-300 mb-3">{item.year}</p>
-                            <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
-                            <p className="text-sm text-slate-400 leading-relaxed">{item.description}</p>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="glass-card rounded-2xl p-6 md:p-8 transition-transform duration-300 hover:-translate-y-2 md:mr-6 md:text-right">
-                            <p className="font-display text-4xl font-semibold text-cyan-300 mb-3">{item.year}</p>
-                            <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
-                            <p className="text-sm text-slate-400 leading-relaxed">{item.description}</p>
-                          </div>
-                          <div className="hidden md:block" />
-                        </>
-                      )}
-                    </motion.article>
-                  );
-                })}
+          <div className="relative max-w-6xl mx-auto">
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8 md:mb-10">
+              <div>
+                <p className="section-label mb-3">Changelog</p>
+                <h2 className="font-display text-3xl md:text-5xl font-semibold uppercase tracking-tight text-white">
+                  Our Journey
+                </h2>
               </div>
+              <p className="text-slate-400 text-sm md:text-base max-w-sm leading-relaxed">
+                Version history of the brand — tap a year to load that release.
+              </p>
             </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mb-6 md:mb-8">
+              {journey.map((item, i) => {
+                const selected = i === activeYear;
+                return (
+                  <button
+                    key={item.year}
+                    type="button"
+                    onClick={() => setActiveYear(i)}
+                    className={`min-h-[56px] rounded-2xl border px-3 py-3 text-left transition-all ${
+                      selected
+                        ? 'border-cyan-400 bg-cyan-400/15 shadow-[0_0_24px_rgba(34,211,238,0.15)]'
+                        : 'border-white/10 bg-[#111827]/60 hover:border-white/25'
+                    }`}
+                  >
+                    <p className="font-display text-2xl font-semibold text-white">{item.year}</p>
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500 mt-1 truncate">
+                      {item.title}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={milestone.year}
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+                className="saas-card p-6 md:p-10 relative overflow-hidden"
+              >
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/70 to-transparent" />
+                <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-300 font-semibold mb-3">
+                  Release {milestone.year}
+                </p>
+                <h3 className="font-display text-2xl md:text-4xl font-semibold text-white uppercase tracking-tight mb-4">
+                  {milestone.title}
+                </h3>
+                <p className="text-base md:text-lg text-slate-400 leading-relaxed max-w-3xl">
+                  {milestone.description}
+                </p>
+              </motion.div>
+            </AnimatePresence>
           </div>
         </section>
 
         <section className="relative border-t border-white/10 py-14 md:py-20 px-4 sm:px-6 md:px-10">
-          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-stretch">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="relative mx-auto w-full max-w-md"
+              className="lg:col-span-5 relative"
             >
-              <div className="relative rounded-3xl overflow-hidden border border-cyan-400/25 shadow-[0_0_40px_rgba(34,211,238,0.12)] group">
-                <div className="relative aspect-[4/5]">
-                  <MediaImage
-                    src={OWNER_IMAGE}
-                    alt="Parth — Founder of Parth Production"
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0A0E27]/80 via-transparent to-[#0A0E27]/20" />
+              <div className="relative rounded-3xl overflow-hidden border border-cyan-400/25 shadow-[0_0_40px_rgba(34,211,238,0.12)] group h-full min-h-[420px]">
+                <MediaImage
+                  src={OWNER_IMAGE}
+                  alt="Parth — Founder of Parth Production"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0A0E27] via-transparent to-[#0A0E27]/25" />
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-cyan-300 font-bold mb-1">
+                    Founder profile
+                  </p>
+                  <p className="font-display text-3xl font-semibold text-white uppercase tracking-tight">
+                    Parth
+                  </p>
                 </div>
               </div>
             </motion.div>
@@ -178,9 +183,9 @@ export default function AboutPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.08 }}
-              className="text-center lg:text-left"
+              className="lg:col-span-7 saas-card p-6 md:p-10 flex flex-col justify-center"
             >
-              <span className="inline-flex items-center min-h-[32px] px-3 py-1 rounded-full bg-cyan-400 text-[#0A0E27] text-[10px] uppercase tracking-[0.2em] font-bold mb-5">
+              <span className="inline-flex self-start items-center min-h-[32px] px-3 py-1 rounded-full bg-cyan-400 text-[#0A0E27] text-[10px] uppercase tracking-[0.2em] font-bold mb-5">
                 Founder & CEO
               </span>
               <h2 className="font-display text-4xl md:text-5xl font-semibold tracking-tight text-white">
@@ -191,7 +196,7 @@ export default function AboutPage() {
                 “Music is not just what I do — it&apos;s who I am. Every event is a canvas, and
                 together we paint memories.”
               </p>
-              <p className="mt-6 text-base md:text-lg leading-relaxed text-slate-400 max-w-xl mx-auto lg:mx-0">
+              <p className="mt-6 text-base md:text-lg leading-relaxed text-slate-400 max-w-xl">
                 Built from late-night sets and studios in Surat, Parth Production grew from a single
                 DJ desk into a full crew for sound, light, SFX, truss, and finales.
               </p>
@@ -210,7 +215,7 @@ export default function AboutPage() {
             >
               Why Choose Us
             </motion.h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
               {values.map((value, i) => {
                 const Icon = value.icon;
                 return (
@@ -220,8 +225,9 @@ export default function AboutPage() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: '-40px' }}
                     transition={{ delay: i * 0.1 }}
-                    className="saas-card p-6 md:p-8"
+                    className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#111827]/80 p-6 md:p-8 group"
                   >
+                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
                     <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-400/10 border border-cyan-400/25">
                       <Icon className="h-5 w-5 text-cyan-300" />
                     </div>
