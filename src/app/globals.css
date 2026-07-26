@@ -140,6 +140,20 @@ body {
   filter: drop-shadow(0 2px 24px rgba(255, 95, 31, 0.22));
 }
 
+.glass-heading-cool {
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    #f5f5f5 45%,
+    rgba(210, 210, 220, 0.95) 78%,
+    rgba(160, 160, 175, 0.9) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 24px rgba(255, 255, 255, 0.14));
+}
+
 .glass-card {
   background: rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(18px);

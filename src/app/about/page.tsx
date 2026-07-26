@@ -1,21 +1,13 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Music, Calendar, Users, Award, Sparkles, Settings2 } from 'lucide-react';
+import { Users, Sparkles, Settings2 } from 'lucide-react';
 import SpotlightNavbar from '@/components/SpotlightNavbar';
 import Footer from '@/components/Footer';
 import QuoteCta from '@/components/QuoteCta';
 import MediaImage from '@/components/MediaImage';
 import LiquidGlassBackdrop from '@/components/LiquidGlassBackdrop';
-import CountUp from '@/components/CountUp';
-import { STAGE_IMAGES } from '@/utils/media';
-
-const stats = [
-  { label: 'Years of Excellence', end: 5, suffix: '+', icon: Music },
-  { label: 'Events Executed', end: 500, suffix: '+', icon: Calendar },
-  { label: 'Equipment Setups', end: 50, suffix: '+', icon: Users },
-  { label: 'Satisfaction Guarantee', end: 100, suffix: '%', icon: Award },
-];
+import { OWNER_IMAGE, STAGE_IMAGES } from '@/utils/media';
 
 const journey = [
   {
@@ -69,14 +61,14 @@ export default function AboutPage() {
       <div className="film-grain" />
 
       <main className="relative overflow-x-hidden bg-black">
-        {/* SECTION 1: Hero */}
-        <section className="relative min-h-[70svh] md:min-h-[100svh] flex items-center justify-center px-6 md:px-10 py-28 md:py-32 overflow-hidden">
-          <LiquidGlassBackdrop />
+        {/* SECTION 1: Cool liquid hero (no orange wash) */}
+        <section className="relative min-h-[48svh] md:min-h-[56svh] flex items-center justify-center px-6 md:px-10 py-20 md:py-24 overflow-hidden">
+          <LiquidGlassBackdrop tone="cool" />
           <div className="relative z-10 max-w-4xl mx-auto text-center">
             <motion.p
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-[11px] md:text-xs uppercase tracking-[0.35em] text-accent font-semibold mb-5"
+              className="text-[11px] md:text-xs uppercase tracking-[0.35em] text-white/55 font-semibold mb-4"
             >
               Parth Production
             </motion.p>
@@ -84,7 +76,7 @@ export default function AboutPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 }}
-              className="font-display text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold uppercase tracking-tight leading-[0.95] glass-heading"
+              className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold uppercase tracking-tight leading-[0.95] glass-heading-cool"
             >
               About Us
             </motion.h1>
@@ -92,7 +84,7 @@ export default function AboutPage() {
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.12 }}
-              className="mt-6 md:mt-8 text-white/65 text-base md:text-lg leading-relaxed max-w-2xl mx-auto"
+              className="mt-5 md:mt-6 text-white/65 text-base md:text-lg leading-relaxed max-w-2xl mx-auto"
             >
               Full-stack live production. From first mic check to final firework — sound, light,
               SFX, truss, and DJ artistry under one crew.
@@ -100,50 +92,21 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* SECTION 2A: Stats */}
-        <section className="relative border-t border-white/10 py-16 md:py-24 px-4 sm:px-6 md:px-10">
-          <div className="max-w-7xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-            {stats.map((stat, i) => {
-              const Icon = stat.icon;
-              return (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 24 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-40px' }}
-                  transition={{ delay: i * 0.08 }}
-                  className="glass-card rounded-3xl p-5 md:p-8 text-center transition-transform duration-300 hover:-translate-y-2"
-                >
-                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/15 border border-accent/30">
-                    <Icon className="h-5 w-5 text-accent" />
-                  </div>
-                  <p className="font-display text-3xl md:text-4xl font-bold text-accent">
-                    <CountUp end={stat.end} suffix={stat.suffix} />
-                  </p>
-                  <p className="mt-2 text-xs md:text-sm uppercase tracking-[0.16em] text-white/55">
-                    {stat.label}
-                  </p>
-                </motion.div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* SECTION 2B: Philosophy quote */}
-        <section className="relative py-16 md:py-24 px-4 sm:px-6 md:px-10 overflow-hidden border-t border-white/10">
+        {/* Philosophy quote */}
+        <section className="relative py-14 md:py-20 px-4 sm:px-6 md:px-10 overflow-hidden border-t border-white/10">
           <MediaImage
             src={STAGE_IMAGES[2].src}
             alt=""
-            className="absolute inset-0 w-full h-full object-cover opacity-25 brightness-50"
+            className="absolute inset-0 w-full h-full object-cover opacity-20 brightness-50"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black via-black/80 to-black" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black via-black/85 to-black" />
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="relative z-10 max-w-4xl mx-auto text-center"
           >
-            <div className="flex items-center justify-center gap-4 mb-6 text-accent">
+            <div className="flex items-center justify-center gap-4 mb-6 text-white/70">
               <Sparkles className="w-5 h-5" />
               <span className="text-[10px] uppercase tracking-[0.3em] font-semibold">Our philosophy</span>
               <Sparkles className="w-5 h-5" />
@@ -154,56 +117,62 @@ export default function AboutPage() {
           </motion.div>
         </section>
 
-        {/* SECTION 3: Journey timeline */}
-        <section className="relative border-t border-white/10 py-16 md:py-24 px-4 sm:px-6 md:px-10">
+        {/* Journey timeline — first card RIGHT, then LEFT, RIGHT, LEFT */}
+        <section className="relative border-t border-white/10 py-14 md:py-20 px-4 sm:px-6 md:px-10">
           <div className="max-w-5xl mx-auto">
             <motion.h2
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="font-display text-3xl md:text-5xl font-bold uppercase tracking-tight text-center mb-12 md:mb-16"
+              className="font-display text-3xl md:text-5xl font-bold uppercase tracking-tight text-center mb-10 md:mb-14"
             >
               Our Journey
             </motion.h2>
 
             <div className="relative">
-              {/* Vertical timeline line */}
               <div
                 className="absolute left-4 md:left-1/2 top-0 bottom-0 w-px md:-translate-x-1/2"
                 style={{
                   background:
-                    'linear-gradient(180deg, transparent, rgba(255,95,31,0.8), rgba(255,179,71,0.6), transparent)',
-                  boxShadow: '0 0 12px rgba(255,95,31,0.45)',
+                    'linear-gradient(180deg, transparent, rgba(255,255,255,0.55), rgba(255,255,255,0.25), transparent)',
+                  boxShadow: '0 0 12px rgba(255,255,255,0.25)',
                 }}
               />
 
-              <div className="space-y-10 md:space-y-16">
+              <div className="space-y-10 md:space-y-14">
                 {journey.map((item, i) => {
-                  const left = i % 2 === 0;
+                  // card 0 on right, card 1 on left, etc.
+                  const onRight = i % 2 === 0;
                   return (
                     <motion.article
                       key={item.year}
-                      initial={{ opacity: 0, x: left ? -28 : 28 }}
+                      initial={{ opacity: 0, x: onRight ? 28 : -28 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true, margin: '-50px' }}
                       transition={{ duration: 0.5 }}
-                      className={`relative pl-12 md:pl-0 md:grid md:grid-cols-2 md:gap-12 ${
-                        left ? '' : 'md:[&>*:first-child]:order-2'
-                      }`}
+                      className="relative pl-12 md:pl-0 md:grid md:grid-cols-2 md:gap-12"
                     >
-                      {/* Connector dot */}
-                      <span className="absolute left-[11px] md:left-1/2 top-8 md:top-10 h-3.5 w-3.5 -translate-x-1/2 rounded-full bg-accent shadow-[0_0_16px_rgba(255,95,31,0.8)] z-10" />
+                      <span className="absolute left-[11px] md:left-1/2 top-8 md:top-10 h-3.5 w-3.5 -translate-x-1/2 rounded-full bg-white shadow-[0_0_16px_rgba(255,255,255,0.7)] z-10" />
 
-                      <div
-                        className={`glass-card rounded-2xl p-6 md:p-8 transition-transform duration-300 hover:-translate-y-2 ${
-                          left ? 'md:text-right md:mr-6' : 'md:ml-6'
-                        }`}
-                      >
-                        <p className="font-display text-4xl font-bold text-accent mb-3">{item.year}</p>
-                        <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
-                        <p className="text-sm text-white/70 leading-relaxed">{item.description}</p>
-                      </div>
-                      <div className="hidden md:block" />
+                      {onRight ? (
+                        <>
+                          <div className="hidden md:block" />
+                          <div className="glass-card rounded-2xl p-6 md:p-8 transition-transform duration-300 hover:-translate-y-2 md:ml-6">
+                            <p className="font-display text-4xl font-bold text-accent mb-3">{item.year}</p>
+                            <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
+                            <p className="text-sm text-white/70 leading-relaxed">{item.description}</p>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="glass-card rounded-2xl p-6 md:p-8 transition-transform duration-300 hover:-translate-y-2 md:mr-6 md:text-right">
+                            <p className="font-display text-4xl font-bold text-accent mb-3">{item.year}</p>
+                            <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
+                            <p className="text-sm text-white/70 leading-relaxed">{item.description}</p>
+                          </div>
+                          <div className="hidden md:block" />
+                        </>
+                      )}
                     </motion.article>
                   );
                 })}
@@ -212,8 +181,8 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* SECTION 4: Founder */}
-        <section className="relative border-t border-white/10 py-16 md:py-24 px-4 sm:px-6 md:px-10">
+        {/* Founder — Cloudflare Owner.png */}
+        <section className="relative border-t border-white/10 py-14 md:py-20 px-4 sm:px-6 md:px-10">
           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
@@ -221,10 +190,10 @@ export default function AboutPage() {
               viewport={{ once: true }}
               className="relative mx-auto w-full max-w-md"
             >
-              <div className="relative rounded-3xl overflow-hidden border border-accent/40 shadow-[0_0_40px_rgba(255,95,31,0.25)] group">
+              <div className="relative rounded-3xl overflow-hidden border border-white/25 shadow-[0_0_40px_rgba(255,255,255,0.08)] group">
                 <div className="relative aspect-[4/5]">
                   <MediaImage
-                    src={STAGE_IMAGES[7].src}
+                    src={OWNER_IMAGE}
                     alt="Parth — Founder of Parth Production"
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
                   />
@@ -298,14 +267,14 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* SECTION 5: Values */}
-        <section className="relative border-t border-white/10 py-16 md:py-24 px-4 sm:px-6 md:px-10">
+        {/* Values */}
+        <section className="relative border-t border-white/10 py-14 md:py-20 px-4 sm:px-6 md:px-10">
           <div className="max-w-7xl mx-auto">
             <motion.h2
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="font-display text-3xl md:text-5xl font-bold uppercase tracking-tight text-center mb-10 md:mb-14"
+              className="font-display text-3xl md:text-5xl font-bold uppercase tracking-tight text-center mb-10 md:mb-12"
             >
               Why Choose Us
             </motion.h2>
@@ -321,8 +290,8 @@ export default function AboutPage() {
                     transition={{ delay: i * 0.1 }}
                     className="glass-card rounded-3xl p-6 md:p-8 transition-transform duration-300 hover:-translate-y-2"
                   >
-                    <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/15 border border-accent/30">
-                      <Icon className="h-5 w-5 text-accent" />
+                    <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 border border-white/20">
+                      <Icon className="h-5 w-5 text-white" />
                     </div>
                     <h3 className="font-display text-xl md:text-2xl font-bold text-white mb-2">
                       {value.title}
@@ -337,7 +306,6 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* SECTION 6: CTA */}
         <QuoteCta
           title="Ready to take your event to the next level?"
           subtitle="Get professional DJ, lighting, and sound for your next event."

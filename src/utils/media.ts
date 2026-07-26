@@ -20,6 +20,7 @@ export function resolveGallerySrc(pathOrUrl: string, fallback: string): string {
 export const HERO_VIDEO = `${ASSET_BASE}/Hero%20Background%20video%20-%20Trim.mp4`;
 export const LOGO_JSON = '/Parth Logo .json';
 export const LOGO_PNG = '/Parth logo .png';
+export const OWNER_IMAGE = `${ASSET_BASE}/Owner.png`;
 
 export const SHOW_VIDEOS = [
   { title: 'Weddings', src: `${ASSET_BASE}/Video%201%20.mp4` },
