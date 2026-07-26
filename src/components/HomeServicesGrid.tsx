@@ -16,7 +16,7 @@ export default function HomeServicesGrid() {
             viewport={{ once: true }}
             className="font-display text-3xl md:text-5xl font-bold text-white mb-3 uppercase tracking-tight"
           >
-            Our Services
+            Designed For Every Celebration
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 12 }}

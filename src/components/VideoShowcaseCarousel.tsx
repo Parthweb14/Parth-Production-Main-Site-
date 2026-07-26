@@ -5,9 +5,33 @@ import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { SHOW_VIDEOS } from '@/utils/media';
 
+function useVisibleCount() {
+  const [count, setCount] = useState(1);
+
+  useEffect(() => {
+    const update = () => {
+      const w = window.innerWidth;
+      if (w >= 1024) setCount(3);
+      else if (w >= 640) setCount(2);
+      else setCount(1);
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
+  return count;
+}
+
 export default function VideoShowcaseCarousel() {
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const [active, setActive] = useState(0);
+  const [page, setPage] = useState(0);
+  const visible = useVisibleCount();
+  const pageCount = Math.max(1, Math.ceil(SHOW_VIDEOS.length / visible));
+
+  useEffect(() => {
+    setPage((p) => Math.min(p, pageCount - 1));
+  }, [pageCount]);
 
   useEffect(() => {
     const root = scrollerRef.current;
@@ -32,21 +56,27 @@ export default function VideoShowcaseCarousel() {
     return () => io.disconnect();
   }, []);
 
-  const scrollByCard = (dir: -1 | 1) => {
+  const goToPage = (next: number) => {
     const el = scrollerRef.current;
     if (!el) return;
-    const card = el.querySelector<HTMLElement>('[data-video-card]');
-    const amount = (card?.offsetWidth || 280) + 24;
-    el.scrollBy({ left: dir * amount, behavior: 'smooth' });
+    const clamped = Math.max(0, Math.min(pageCount - 1, next));
+    setPage(clamped);
+    el.scrollTo({ left: clamped * el.clientWidth, behavior: 'smooth' });
   };
 
   const onScroll = () => {
     const el = scrollerRef.current;
-    if (!el) return;
-    const card = el.querySelector<HTMLElement>('[data-video-card]');
-    const width = (card?.offsetWidth || 280) + 24;
-    setActive(Math.round(el.scrollLeft / width));
+    if (!el || el.clientWidth === 0) return;
+    setPage(Math.round(el.scrollLeft / el.clientWidth));
   };
+
+  const gapClass = 'gap-4 md:gap-6';
+  const cardWidth =
+    visible === 1
+      ? 'w-full'
+      : visible === 2
+        ? 'w-[calc((100%-1rem)/2)] md:w-[calc((100%-1.5rem)/2)]'
+        : 'w-[calc((100%-2rem)/3)] md:w-[calc((100%-3rem)/3)]';
 
   return (
     <section className="relative py-16 md:py-24 bg-black border-b border-white/10">
@@ -65,7 +95,7 @@ export default function VideoShowcaseCarousel() {
         <div className="flex gap-3">
           <button
             type="button"
-            onClick={() => scrollByCard(-1)}
+            onClick={() => goToPage(page - 1)}
             className="w-11 h-11 min-w-[44px] rounded-full border border-white/20 flex items-center justify-center hover:border-accent transition-all"
             aria-label="Previous videos"
           >
@@ -73,7 +103,7 @@ export default function VideoShowcaseCarousel() {
           </button>
           <button
             type="button"
-            onClick={() => scrollByCard(1)}
+            onClick={() => goToPage(page + 1)}
             className="w-11 h-11 min-w-[44px] rounded-full border border-white/20 flex items-center justify-center hover:border-accent transition-all"
             aria-label="Next videos"
           >
@@ -82,47 +112,44 @@ export default function VideoShowcaseCarousel() {
         </div>
       </div>
 
-      <div
-        ref={scrollerRef}
-        onScroll={onScroll}
-        className="max-w-7xl mx-auto px-4 md:px-8 flex gap-4 md:gap-6 lg:gap-8 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-2"
-      >
-        {SHOW_VIDEOS.map((clip, i) => (
-          <motion.article
-            key={clip.src}
-            data-video-card
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-40px' }}
-            transition={{ delay: i * 0.08, duration: 0.45 }}
-            className="relative flex-shrink-0 w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-22px)] aspect-[9/16] snap-center rounded-3xl overflow-hidden bg-black transition-transform duration-300 ease-out hover:scale-[1.02]"
-          >
-            <video
-              src={clip.src}
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-          </motion.article>
-        ))}
+      <div className="max-w-7xl mx-auto px-4 md:px-8 overflow-hidden">
+        <div
+          ref={scrollerRef}
+          onScroll={onScroll}
+          className={`flex ${gapClass} overflow-x-auto snap-x snap-mandatory scrollbar-none pb-2`}
+        >
+          {SHOW_VIDEOS.map((clip, i) => (
+            <motion.article
+              key={clip.src}
+              data-video-card
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-40px' }}
+              transition={{ delay: (i % visible) * 0.08, duration: 0.45 }}
+              className={`relative flex-shrink-0 ${cardWidth} aspect-[9/16] snap-start rounded-3xl overflow-hidden bg-black transition-transform duration-300 ease-out hover:scale-[1.02]`}
+            >
+              <video
+                src={clip.src}
+                muted
+                loop
+                playsInline
+                preload="metadata"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            </motion.article>
+          ))}
+        </div>
       </div>
 
       <div className="flex justify-center gap-2 mt-8">
-        {SHOW_VIDEOS.map((_, i) => (
+        {Array.from({ length: pageCount }).map((_, i) => (
           <button
             key={i}
             type="button"
-            aria-label={`Jump to video ${i + 1}`}
-            onClick={() => {
-              const el = scrollerRef.current;
-              const card = el?.querySelector<HTMLElement>('[data-video-card]');
-              if (!el || !card) return;
-              el.scrollTo({ left: i * (card.offsetWidth + 24), behavior: 'smooth' });
-            }}
+            aria-label={`Jump to video page ${i + 1}`}
+            onClick={() => goToPage(i)}
             className={`h-2 rounded-full transition-all ${
-              i === active ? 'w-7 bg-accent' : 'w-2 bg-white/25'
+              i === page ? 'w-7 bg-accent' : 'w-2 bg-white/25'
             }`}
           />
         ))}

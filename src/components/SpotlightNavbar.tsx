@@ -23,13 +23,15 @@ export default function SpotlightNavbar() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-5 md:px-10 bg-black border-b border-white/10 h-[88px]">
-        <Link href="/" className="flex items-center min-w-0 group py-2">
-          <img
-            src={LOGO_PNG}
-            alt="Parth Production"
-            className="h-16 sm:h-[72px] md:h-20 w-auto object-contain object-left transition-transform duration-500 group-hover:scale-[1.03]"
-          />
+      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-5 md:px-10 bg-black border-b border-white/10 h-[96px] md:h-[104px]">
+        <Link href="/" className="flex items-center min-w-0 group py-1">
+          <span className="relative block h-[64px] sm:h-[72px] md:h-[84px] w-[170px] sm:w-[210px] md:w-[260px] overflow-hidden">
+            <img
+              src={LOGO_PNG}
+              alt="Parth Production"
+              className="absolute left-0 top-1/2 -translate-y-1/2 h-[150%] w-auto max-w-none object-cover object-left transition-transform duration-500 group-hover:scale-[1.03]"
+            />
+          </span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-7">

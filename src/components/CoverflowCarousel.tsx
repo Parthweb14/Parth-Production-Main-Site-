@@ -31,7 +31,7 @@ export default function CoverflowCarousel() {
       </div>
 
       <div className="relative max-w-[1400px] mx-auto px-2 md:px-4">
-        <div className="relative rounded-3xl border border-white/70 p-3 md:p-5 bg-black/40">
+        <div className="relative">
           <div className="relative h-[420px] sm:h-[500px] md:h-[620px] lg:h-[680px]">
             <div
               className="absolute inset-0"

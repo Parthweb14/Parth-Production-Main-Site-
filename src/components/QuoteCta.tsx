@@ -8,20 +8,17 @@ export default function QuoteCta() {
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
 
   return (
-    <section className="relative bg-black border-t border-white/10 py-16 md:py-24 px-6">
+    <section className="relative bg-black border-t border-white/10">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-60px' }}
         transition={{ duration: 0.6 }}
-        className="relative w-full max-w-7xl mx-auto rounded-3xl overflow-hidden px-6 py-16 md:px-12 md:py-24 text-center"
+        className="relative w-full px-6 py-16 md:px-12 md:py-24 text-center"
         style={{
           background: 'linear-gradient(180deg, #0a0a0a 0%, #1a0c05 45%, #3d1608 100%)',
-          boxShadow: '0 0 0 1px rgba(255,95,31,0.25), 0 0 60px rgba(255,95,31,0.18)',
         }}
       >
-        <div className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/10" />
-
         <h2 className="relative font-display text-3xl md:text-5xl font-bold text-white text-center leading-tight">
           Your date. Our system. One crew?
         </h2>

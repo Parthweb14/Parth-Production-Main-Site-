@@ -70,7 +70,7 @@ export default function HomePage() {
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-black/50" />
           </motion.div>
 
-          <div className="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-10 pb-16 md:pb-0 pt-28">
+          <div className="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-10 pb-16 md:pb-0 pt-32">
             <motion.p
               custom={0}
               variants={fadeUp}
