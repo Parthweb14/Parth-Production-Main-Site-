@@ -22,9 +22,9 @@ const CARDS = [
 /** Soft fade band at left/right edges (no hard cut) */
 const FADE_START = 2.35;
 const FADE_END = 3.55;
-/** Cards per second — continuous circular motion (opposite direction) */
-const SPEED = 0.26;
-const EASE_TO_TARGET = 5.5;
+/** Cards per second — continuous circular motion */
+const SPEED = 0.4;
+const EASE_TO_TARGET = 4.2;
 
 function wrapOffset(offset: number, total: number) {
   let o = ((offset % total) + total) % total;
@@ -54,9 +54,10 @@ function cardTransform(offset: number, isMobile: boolean) {
   const x = offset * spacing;
   const y = abs * abs * curve;
   const rotateZ = offset * (isMobile ? 7 : 9);
-  // Smooth center emphasis (no hard snap)
-  const centerMix = Math.max(0, 1 - abs / 0.85);
-  const scale = 0.72 + centerMix * 0.54;
+  // Wider, eased center emphasis so the main image eases in smoothly
+  const raw = Math.max(0, 1 - abs / 1.2);
+  const centerMix = raw * raw * (3 - 2 * raw); // smoothstep
+  const scale = 0.72 + centerMix * 0.56;
   const baseOpacity = 0.55 + centerMix * 0.45;
   const opacity = baseOpacity * edgeFade(abs);
   const zIndex = Math.round(50 - abs * 10);
@@ -99,8 +100,8 @@ export default function CoverflowCarousel() {
             progressRef.current = (current + step + total) % total;
           }
         } else {
-          // Opposite direction: scroll the other way continuously
-          progressRef.current = (progressRef.current - SPEED * dt + total) % total;
+          // Continuous loop (reversed from previous direction)
+          progressRef.current = (progressRef.current + SPEED * dt) % total;
         }
         setProgress(progressRef.current);
       }
