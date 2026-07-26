@@ -26,7 +26,7 @@ export default function QuoteCta({
         transition={{ duration: 0.6 }}
         className="relative w-full px-6 py-16 md:px-12 md:py-24 text-center"
         style={{
-          background: 'linear-gradient(180deg, #0a0a0a 0%, #1a0c05 45%, #3d1608 100%)',
+          background: 'linear-gradient(180deg, #050505 0%, #0a0a0a 55%, #111111 100%)',
         }}
       >
         <h2 className="relative font-display text-3xl md:text-5xl font-bold text-white text-center leading-tight">

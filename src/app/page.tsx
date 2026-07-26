@@ -10,9 +10,8 @@ import CoverflowCarousel from '@/components/CoverflowCarousel';
 import VideoShowcaseCarousel from '@/components/VideoShowcaseCarousel';
 import HomeServicesGrid from '@/components/HomeServicesGrid';
 import QuoteCta from '@/components/QuoteCta';
-import MediaImage from '@/components/MediaImage';
 import { useAuth } from '@/context/AuthContext';
-import { HERO_VIDEO, STAGE_IMAGES } from '@/utils/media';
+import { HERO_VIDEO } from '@/utils/media';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 28 },
@@ -141,10 +140,7 @@ export default function HomePage() {
                   'Live Mix',
                   'Pyro Cues',
                 ].map((item) => (
-                  <span key={`${loop}-${item}`} className="flex items-center gap-10">
-                    <span>{item}</span>
-                    <span className="text-accent">✦</span>
-                  </span>
+                  <span key={`${loop}-${item}`}>{item}</span>
                 ))}
               </div>
             ))}
@@ -155,59 +151,10 @@ export default function HomePage() {
           <VideoShowcaseCarousel />
         </div>
 
-        <CoverflowCarousel />
-
         <HomeServicesGrid />
 
-        {/* Extra still mosaic */}
-        <section className="bg-black py-16 md:py-24 border-t border-white/10">
-          <div className="max-w-7xl mx-auto px-4 md:px-8 mb-10 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.28em] text-accent mb-3 font-bold">Still Frames</p>
-              <h2 className="font-display text-2xl md:text-4xl tracking-tight uppercase font-bold">
-                Where Every Event Comes Alive
-              </h2>
-            </div>
-            <Link href="/gallery" className="text-sm uppercase tracking-[0.18em] text-white/60 hover:text-accent transition-colors font-semibold">
-              Open gallery →
-            </Link>
-          </div>
-          <div className="max-w-7xl mx-auto px-4 md:px-8 grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-            {STAGE_IMAGES.slice(0, 6).map((img, i) => (
-              <motion.figure
-                key={img.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-40px' }}
-                transition={{ delay: i * 0.05 }}
-                className={`relative overflow-hidden rounded-2xl border border-white/10 group ${
-                  i === 0 || i === 5 ? 'md:row-span-2 aspect-[3/4] md:aspect-auto md:min-h-[420px]' : 'aspect-[4/3]'
-                }`}
-              >
-                <MediaImage
-                  src={img.src}
-                  alt={img.title}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />
-                <figcaption className="absolute bottom-4 left-4 right-4">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-accent mb-1">{img.tag}</p>
-                  <p className="font-display text-xl">{img.title}</p>
-                </figcaption>
-              </motion.figure>
-            ))}
-          </div>
-          <div className="flex justify-center mt-10 md:mt-12">
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-primary"
-            >
-              Book your event
-            </a>
-          </div>
-        </section>
+        {/* Coverflow after Designed For Every Celebration */}
+        <CoverflowCarousel />
 
         <QuoteCta />
       </main>

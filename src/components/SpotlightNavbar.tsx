@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import { LOGO_PNG } from '@/utils/media';
 
 const navItems = [
+  { label: 'Home', href: '/' },
   { label: 'Services', href: '/services' },
   { label: 'Gallery', href: '/gallery' },
   { label: 'About', href: '/about' },
@@ -19,12 +20,19 @@ export default function SpotlightNavbar() {
   const pathname = usePathname();
   const { siteSettings } = useAuth();
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [menuOpen]);
 
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-5 md:px-10 bg-black border-b border-white/10 h-[96px] md:h-[104px]">
-        <Link href="/" className="flex items-center min-w-0 group py-1">
+        <Link href="/" className="flex items-center min-w-0 group py-1" onClick={() => setMenuOpen(false)}>
           <span className="relative block h-[64px] sm:h-[72px] md:h-[84px] w-[170px] sm:w-[210px] md:w-[260px] overflow-hidden">
             <img
               src={LOGO_PNG}
@@ -34,50 +42,25 @@ export default function SpotlightNavbar() {
           </span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-7">
-          {navItems.map((item) => {
-            const active = pathname === item.href;
-            return (
-              <Link
-                key={item.label}
-                href={item.href}
-                className={`relative text-xs tracking-[0.18em] uppercase transition-colors ${
-                  active ? 'text-white' : 'text-white/55 hover:text-white'
-                }`}
-              >
-                {item.label}
-                {active && (
-                  <motion.span
-                    layoutId="nav-underline"
-                    className="absolute -bottom-2 left-0 right-0 h-px bg-accent"
-                  />
-                )}
-              </Link>
-            );
-          })}
-          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-primary !py-2.5 !px-4 text-[11px]">
-            Book now
-          </a>
-        </nav>
-
         <button
-          onClick={() => setMobileOpen((v) => !v)}
-          className="md:hidden p-2 text-white min-w-[44px] min-h-[44px]"
-          aria-label="Menu"
+          onClick={() => setMenuOpen((v) => !v)}
+          className="p-2 text-white min-w-[44px] min-h-[44px] flex items-center justify-center"
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={menuOpen}
         >
-          {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {menuOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
         </button>
       </header>
 
       <AnimatePresence>
-        {mobileOpen && (
+        {menuOpen && (
           <motion.div
             initial={{ opacity: 0, y: -16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
-            className="fixed inset-0 bg-black z-40 md:hidden flex flex-col pt-28 px-6 pb-8"
+            className="fixed inset-0 bg-black z-40 flex flex-col pt-28 md:pt-32 px-6 md:px-16 pb-10"
           >
-            <div className="flex flex-col gap-5 text-2xl font-display">
+            <nav className="flex flex-col gap-5 md:gap-7 text-3xl md:text-5xl font-display">
               {navItems.map((item, i) => (
                 <motion.div
                   key={item.label}
@@ -87,22 +70,26 @@ export default function SpotlightNavbar() {
                 >
                   <Link
                     href={item.href}
-                    onClick={() => setMobileOpen(false)}
-                    className={pathname === item.href ? 'text-accent' : 'text-white'}
+                    onClick={() => setMenuOpen(false)}
+                    className={
+                      pathname === item.href
+                        ? 'text-accent'
+                        : 'text-white hover:text-accent transition-colors'
+                    }
                   >
                     {item.label}
                   </Link>
                 </motion.div>
               ))}
-            </div>
+            </nav>
             <a
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => setMobileOpen(false)}
-              className="btn-primary mt-auto w-full"
+              onClick={() => setMenuOpen(false)}
+              className="btn-primary mt-auto w-full md:w-auto md:self-start min-h-[44px]"
             >
-              Book a production
+              Book now
             </a>
           </motion.div>
         )}
