@@ -119,3 +119,51 @@ body {
 .snap-center {
   scroll-snap-align: center;
 }
+
+/* Services page — liquid glass */
+.glass-heading {
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    #ffffff 42%,
+    rgba(255, 180, 120, 0.92) 72%,
+    rgba(255, 95, 31, 0.85) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 24px rgba(255, 95, 31, 0.22));
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 20px 50px rgba(0, 0, 0, 0.35);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+.glass-card:hover {
+  border-color: rgba(255, 95, 31, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 24px 60px rgba(0, 0, 0, 0.45),
+    0 0 28px rgba(255, 95, 31, 0.18);
+}
+
+@media (max-width: 767px) {
+  .liquid-orb-c {
+    display: none;
+  }
+  .liquid-orb {
+    filter: blur(60px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-orb {
+    animation: none !important;
+  }
+}
