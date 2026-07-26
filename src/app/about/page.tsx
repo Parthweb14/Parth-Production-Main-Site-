@@ -117,7 +117,7 @@ export default function AboutPage() {
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex px-7 py-3.5 bg-accent text-black text-sm font-semibold tracking-wide uppercase"
+            className="btn-primary"
           >
             Talk to the team
           </a>

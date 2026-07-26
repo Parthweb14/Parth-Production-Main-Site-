@@ -187,7 +187,7 @@ export default function ServicesPage() {
                     href={`${whatsappUrl}?text=${encodeURIComponent(`Hi Parth Production, I want to book ${service.title}`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-black text-xs font-semibold tracking-[0.16em] uppercase hover:bg-accent/90 transition-colors"
+                    className="btn-primary inline-flex items-center gap-2"
                   >
                     Book {service.title} <ArrowUpRight className="w-4 h-4" />
                   </a>

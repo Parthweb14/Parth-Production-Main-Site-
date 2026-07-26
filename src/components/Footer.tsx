@@ -11,8 +11,7 @@ export default function Footer() {
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
 
   return (
-    <footer className="relative z-20 border-t border-white/10 bg-black pt-16 pb-10 px-6 md:px-10 overflow-hidden">
-      <div className="pointer-events-none absolute inset-x-0 -top-24 h-48 bg-[radial-gradient(circle_at_center,rgba(255,95,31,0.18),transparent_70%)]" />
+    <footer className="relative z-20 border-t border-white/10 bg-black pt-16 pb-10 px-6 md:px-10">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10 mb-12 relative">
         <div>
           <Link href="/" className="inline-flex items-center gap-3">

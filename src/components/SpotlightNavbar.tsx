@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,25 +20,10 @@ export default function SpotlightNavbar() {
   const { siteSettings } = useAuth();
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
 
   return (
     <>
-      <motion.header
-        initial={{ y: -24, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        className={`fixed top-0 left-0 right-0 h-20 z-50 flex items-center justify-between px-5 md:px-10 transition-colors duration-300 ${
-          scrolled ? 'bg-black/75 backdrop-blur-xl border-b border-white/10' : 'bg-transparent'
-        }`}
-      >
+      <header className="fixed top-0 left-0 right-0 h-20 z-50 flex items-center justify-between px-5 md:px-10 bg-black border-b border-white/10">
         <Link href="/" className="flex items-center gap-3 min-w-0 group">
           <img
             src={LOGO_PNG}
@@ -69,24 +54,19 @@ export default function SpotlightNavbar() {
               </Link>
             );
           })}
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ml-1 px-4 py-2 bg-accent text-black text-xs font-semibold tracking-[0.14em] uppercase hover:bg-accent/90 transition-colors"
-          >
+          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-primary !py-2.5 !px-4 text-[11px]">
             Book now
           </a>
         </nav>
 
         <button
           onClick={() => setMobileOpen((v) => !v)}
-          className="md:hidden p-2 text-white"
+          className="md:hidden p-2 text-white min-w-[44px] min-h-[44px]"
           aria-label="Menu"
         >
           {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
-      </motion.header>
+      </header>
 
       <AnimatePresence>
         {mobileOpen && (
@@ -94,7 +74,7 @@ export default function SpotlightNavbar() {
             initial={{ opacity: 0, y: -16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
-            className="fixed inset-0 bg-[#050505] z-40 md:hidden flex flex-col pt-24 px-6 pb-8"
+            className="fixed inset-0 bg-black z-40 md:hidden flex flex-col pt-24 px-6 pb-8"
           >
             <div className="flex flex-col gap-5 text-2xl font-display">
               {navItems.map((item, i) => (
@@ -119,7 +99,7 @@ export default function SpotlightNavbar() {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setMobileOpen(false)}
-              className="mt-auto w-full py-4 bg-accent text-black text-center text-sm font-semibold tracking-[0.16em] uppercase"
+              className="btn-primary mt-auto w-full"
             >
               Book a production
             </a>

@@ -1,15 +1,16 @@
 import type { Metadata, Viewport } from 'next';
-import { Syne, DM_Sans } from 'next/font/google';
+import { Space_Grotesk, Manrope } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
+import VisualFeedbackWidget from '@/components/VisualFeedbackWidget';
 
-const syne = Syne({
+const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
   variable: '--font-display',
   display: 'swap',
 });
 
-const dmSans = DM_Sans({
+const manrope = Manrope({
   subsets: ['latin'],
   variable: '--font-sans',
   display: 'swap',
@@ -52,14 +53,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${syne.variable} ${dmSans.variable} dark h-full antialiased`}>
+    <html lang="en" className={`${spaceGrotesk.variable} ${manrope.variable} dark h-full antialiased`}>
       <head>
         <link rel="preload" href="/Parth Logo .json" as="fetch" crossOrigin="anonymous" />
         <link rel="preload" href="/Parth logo .png" as="image" />
         <link rel="icon" href="/Parth logo .png?v=5" type="image/png" />
       </head>
-      <body className="min-h-full bg-[#050505] text-white flex flex-col font-sans overflow-x-hidden">
-        <AuthProvider>{children}</AuthProvider>
+      <body className="min-h-full bg-black text-white flex flex-col font-sans overflow-x-hidden">
+        <AuthProvider>
+          {children}
+          <VisualFeedbackWidget />
+        </AuthProvider>
       </body>
     </html>
   );

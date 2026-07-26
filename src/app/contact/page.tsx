@@ -49,7 +49,7 @@ export default function ContactPage() {
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex mt-9 px-8 py-3.5 bg-accent text-black text-sm font-semibold tracking-wide uppercase hover:bg-accent/90"
+              className="btn-primary inline-flex mt-9"
             >
               WhatsApp Parth Production
             </motion.a>

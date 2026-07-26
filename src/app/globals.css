@@ -1,15 +1,14 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-sans), "DM Sans", system-ui, sans-serif;
-  --font-display: var(--font-display), "Syne", system-ui, sans-serif;
-  --color-primary: #050505;
-  --color-secondary: #101010;
+  --font-sans: var(--font-sans), "Manrope", system-ui, sans-serif;
+  --font-display: var(--font-display), "Space Grotesk", system-ui, sans-serif;
+  --color-primary: #000000;
+  --color-secondary: #0a0a0a;
   --color-accent: #FF5F1F;
   --color-glow: #FFB347;
   --animate-marquee: marquee 28s linear infinite;
   --animate-pulse-soft: pulseSoft 3.2s ease-in-out infinite;
-  --animate-float-y: floatY 5s ease-in-out infinite;
 }
 
 @keyframes marquee {
@@ -18,31 +17,19 @@
 }
 
 @keyframes pulseSoft {
-  0%, 100% { opacity: 0.45; transform: scale(1); }
-  50% { opacity: 0.9; transform: scale(1.04); }
-}
-
-@keyframes floatY {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-@keyframes shimmer {
-  0% { background-position: 200% center; }
-  100% { background-position: -200% center; }
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
 }
 
 :root {
-  --background: #050505;
+  --background: #000000;
   --foreground: #FFFFFF;
+  --radius-btn: 9999px;
 }
 
 body {
   font-family: var(--font-sans);
-  background:
-    radial-gradient(900px 480px at 85% -5%, rgba(255, 95, 31, 0.16), transparent 55%),
-    radial-gradient(700px 420px at 5% 30%, rgba(255, 179, 71, 0.06), transparent 50%),
-    #050505;
+  background: #000000;
   color: #FFFFFF;
   overflow-x: hidden;
   scroll-behavior: smooth;
@@ -52,13 +39,42 @@ body {
   font-family: var(--font-display);
 }
 
-.text-shimmer {
-  background: linear-gradient(90deg, #fff 0%, #FF5F1F 40%, #FFB347 60%, #fff 100%);
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: shimmer 4.5s linear infinite;
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.9rem 1.9rem;
+  border-radius: var(--radius-btn);
+  background: var(--color-accent);
+  color: #000;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: background 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+.btn-primary:hover {
+  background: color-mix(in srgb, var(--color-accent) 90%, white);
+  box-shadow: 0 0 28px rgba(255, 95, 31, 0.35);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.9rem 1.9rem;
+  border-radius: var(--radius-btn);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: border-color 0.25s ease, background 0.25s ease;
+}
+.btn-ghost:hover {
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .marquee-track {
@@ -82,9 +98,9 @@ body {
   width: 100vw;
   height: 100vh;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.025;
+  opacity: 0.02;
   pointer-events: none;
-  z-index: 9999;
+  z-index: 9998;
 }
 
 .snap-x-mandatory {
@@ -92,4 +108,7 @@ body {
 }
 .snap-start {
   scroll-snap-align: start;
+}
+.snap-center {
+  scroll-snap-align: center;
 }
