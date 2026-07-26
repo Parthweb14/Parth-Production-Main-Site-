@@ -1,390 +1,194 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
-import { MoreHorizontal, Plus, Share2, Trash2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowRight, Monitor, Palette, Zap } from 'lucide-react';
 import { STAGE_IMAGES } from '@/utils/media';
 
-type JournalCard = {
-  id: number;
-  title: string;
-  category: string;
-  images: string[];
-  layout: 'duo' | 'trio' | 'quad';
-};
+const CARDS = [
+  { id: 1, category: 'Concerts', src: STAGE_IMAGES[1].src, title: 'LED Mainstage' },
+  { id: 2, category: 'Weddings', src: STAGE_IMAGES[0].src, title: 'Elegant Lighting' },
+  { id: 3, category: 'Festivals', src: STAGE_IMAGES[2].src, title: 'Festival Floor' },
+  { id: 4, category: 'Corporate', src: STAGE_IMAGES[3].src, title: 'Brand Stage' },
+  { id: 5, category: 'Road Shows', src: STAGE_IMAGES[4].src, title: 'Mobile Rig' },
+  { id: 6, category: 'DJ Booth', src: STAGE_IMAGES[5].src, title: 'Neon DJ Desk' },
+  { id: 7, category: 'SFX', src: STAGE_IMAGES[6].src, title: 'Fog & Lasers' },
+  { id: 8, category: 'Truss', src: STAGE_IMAGES[7].src, title: 'Overhead Rig' },
+];
 
-const CARDS: JournalCard[] = [
+const LOOP = [...CARDS, ...CARDS];
+
+const FEATURES = [
   {
-    id: 1,
-    title: 'Concert Stage',
-    category: 'Large Scale',
-    layout: 'trio',
-    images: [STAGE_IMAGES[1].src, STAGE_IMAGES[7].src, STAGE_IMAGES[6].src],
+    icon: Zap,
+    title: 'Lightning-Fast Setup',
+    description:
+      'From concept to execution in record time. Our expert crew transforms venues into stunning stages within hours, not days.',
+    color: '#00F0FF',
+    glow: 'rgba(0, 240, 255, 0.1)',
   },
   {
-    id: 2,
-    title: 'Wedding Venue',
-    category: 'Premium',
-    layout: 'duo',
-    images: [STAGE_IMAGES[0].src, STAGE_IMAGES[5].src],
+    icon: Palette,
+    title: 'Multiple Styles & Customization',
+    description:
+      "From intimate weddings to massive festivals. Pick your vibe — elegant, energetic, or explosive — and we'll bring it to life.",
+    color: '#FF00E5',
+    glow: 'rgba(255, 0, 229, 0.1)',
   },
   {
-    id: 3,
-    title: 'Corporate LED',
-    category: 'Brand Events',
-    layout: 'quad',
-    images: [STAGE_IMAGES[3].src, STAGE_IMAGES[7].src, STAGE_IMAGES[4].src, STAGE_IMAGES[1].src],
-  },
-  {
-    id: 4,
-    title: 'Festival Floor',
-    category: 'Outdoor',
-    layout: 'trio',
-    images: [STAGE_IMAGES[2].src, STAGE_IMAGES[6].src, STAGE_IMAGES[8].src],
-  },
-  {
-    id: 5,
-    title: 'Road Show Rig',
-    category: 'Mobile',
-    layout: 'duo',
-    images: [STAGE_IMAGES[4].src, STAGE_IMAGES[8].src],
-  },
-  {
-    id: 6,
-    title: 'Reception Night',
-    category: 'DJ Artistic',
-    layout: 'trio',
-    images: [STAGE_IMAGES[5].src, STAGE_IMAGES[0].src, STAGE_IMAGES[6].src],
-  },
-  {
-    id: 7,
-    title: 'Laser Arena',
-    category: 'SFX & Lights',
-    layout: 'quad',
-    images: [STAGE_IMAGES[6].src, STAGE_IMAGES[2].src, STAGE_IMAGES[1].src, STAGE_IMAGES[7].src],
-  },
-  {
-    id: 8,
-    title: 'Mainstage Array',
-    category: 'Live Sound',
-    layout: 'duo',
-    images: [STAGE_IMAGES[7].src, STAGE_IMAGES[1].src],
-  },
-  {
-    id: 9,
-    title: 'Campaign Build',
-    category: 'Fireworks Ready',
-    layout: 'trio',
-    images: [STAGE_IMAGES[8].src, STAGE_IMAGES[4].src, STAGE_IMAGES[3].src],
+    icon: Monitor,
+    title: 'High-Impact Productions',
+    description:
+      'Crystal-clear sound, breathtaking visuals, and effects that leave lasting impressions. Professional quality guaranteed.',
+    color: '#7000FF',
+    glow: 'rgba(112, 0, 255, 0.1)',
   },
 ];
 
-const SWIPE_THRESHOLD = 60;
-const AUTO_MS = 5000;
-
-function getStackStyle(offset: number, isMobile: boolean) {
-  const abs = Math.abs(offset);
-  if (abs > 3) {
-    return {
-      opacity: 0,
-      scale: 0.82,
-      x: offset > 0 ? 160 : -160,
-      rotateY: offset > 0 ? -18 : 18,
-      z: -220,
-      zIndex: 0,
-      filter: 'brightness(0.55)',
-    };
-  }
-
-  const rotate = isMobile ? 10 : 15;
-  const shift = isMobile ? 56 : 80;
-  const depth = isMobile ? 70 : 100;
-
-  if (offset === 0) {
-    return {
-      opacity: 1,
-      scale: 1,
-      x: 0,
-      rotateY: 0,
-      z: 0,
-      zIndex: 10,
-      filter: 'brightness(1)',
-    };
-  }
-
-  const dir = offset < 0 ? -1 : 1;
-  return {
-    opacity: abs === 1 ? 0.6 : abs === 2 ? 0.4 : 0.25,
-    scale: abs === 1 ? 0.9 : abs === 2 ? 0.84 : 0.78,
-    x: dir * (shift + (abs - 1) * (isMobile ? 28 : 40)),
-    rotateY: -dir * (rotate + (abs - 1) * 4),
-    z: -(depth + (abs - 1) * 55),
-    zIndex: 10 - abs,
-    filter: `brightness(${Math.max(0.55, 1 - abs * 0.12)})`,
-  };
-}
-
-function CardCollage({ card }: { card: JournalCard }) {
-  const imgs = card.images;
-
-  if (card.layout === 'duo') {
-    return (
-      <div className="grid h-full grid-rows-2 gap-1.5 p-2.5">
-        {imgs.slice(0, 2).map((src, i) => (
-          <div key={`${card.id}-d-${i}`} className="relative overflow-hidden rounded-xl">
-            <Image src={src} alt="" fill className="object-cover" sizes="400px" loading="lazy" />
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  if (card.layout === 'trio') {
-    return (
-      <div className="grid h-full grid-cols-2 grid-rows-2 gap-1.5 p-2.5">
-        <div className="relative col-span-2 row-span-1 overflow-hidden rounded-xl">
-          <Image src={imgs[0]} alt="" fill className="object-cover" sizes="400px" loading="lazy" />
-        </div>
-        <div className="relative overflow-hidden rounded-xl">
-          <Image src={imgs[1]} alt="" fill className="object-cover" sizes="200px" loading="lazy" />
-        </div>
-        <div className="relative overflow-hidden rounded-xl">
-          <Image src={imgs[2]} alt="" fill className="object-cover" sizes="200px" loading="lazy" />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid h-full grid-cols-2 grid-rows-2 gap-1.5 p-2.5">
-      {imgs.slice(0, 4).map((src, i) => (
-        <div key={`${card.id}-q-${i}`} className="relative overflow-hidden rounded-xl">
-          <Image src={src} alt="" fill className="object-cover" sizes="200px" loading="lazy" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
 export default function CoverflowCarousel() {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [direction, setDirection] = useState(0);
-  const [isMobile, setIsMobile] = useState(false);
   const [paused, setPaused] = useState(false);
-  const [dragging, setDragging] = useState(false);
-  const total = CARDS.length;
-  const sectionRef = useRef<HTMLElement>(null);
+  const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
-    const update = () => setIsMobile(window.innerWidth < 768);
-    update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
+    const onVis = () => setHidden(document.hidden);
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
   }, []);
 
-  const goTo = useCallback(
-    (index: number, dir = 0) => {
-      const next = ((index % total) + total) % total;
-      setDirection(dir);
-      setCurrentIndex(next);
-    },
-    [total]
-  );
-
-  const next = useCallback(() => goTo(currentIndex + 1, 1), [currentIndex, goTo]);
-  const prev = useCallback(() => goTo(currentIndex - 1, -1), [currentIndex, goTo]);
-
-  useEffect(() => {
-    if (paused || dragging) return;
-    const id = window.setInterval(() => {
-      setCurrentIndex((i) => (i + 1) % total);
-      setDirection(1);
-    }, AUTO_MS);
-    return () => window.clearInterval(id);
-  }, [paused, dragging, total]);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (!sectionRef.current) return;
-      const rect = sectionRef.current.getBoundingClientRect();
-      const inView = rect.top < window.innerHeight && rect.bottom > 0;
-      if (!inView) return;
-      if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        next();
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        prev();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [next, prev]);
-
-  const onDragEnd = (_: unknown, info: PanInfo) => {
-    setDragging(false);
-    if (info.offset.x < -SWIPE_THRESHOLD || info.velocity.x < -400) next();
-    else if (info.offset.x > SWIPE_THRESHOLD || info.velocity.x > 400) prev();
-  };
+  const running = !paused && !hidden;
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative w-full overflow-hidden bg-black py-20 md:py-32"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-    >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.05),transparent_65%)]" />
-      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#ff5a3c]/10 blur-3xl" />
+    <section className="relative w-full overflow-hidden bg-black py-20 md:py-32">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute left-1/2 top-[42%] h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#00F0FF]/[0.05] blur-3xl animate-pulse" />
+        <div className="absolute left-[30%] top-[50%] h-[280px] w-[280px] -translate-y-1/2 rounded-full bg-[#FF00E5]/[0.05] blur-3xl" />
+        <div className="absolute right-[25%] top-[48%] h-[260px] w-[260px] -translate-y-1/2 rounded-full bg-[#7000FF]/[0.05] blur-3xl" />
+      </div>
 
-      <div className="relative mx-auto max-w-7xl px-6 md:px-10">
-        <div className="mb-16 text-center">
+      <div className="relative mx-auto max-w-7xl px-4 md:px-6">
+        <div className="mb-10 text-center">
           <motion.h2
             initial={{ opacity: 0, y: 18 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.55 }}
-            className="mb-4 font-display text-4xl font-bold text-white md:text-6xl"
+            className="mb-6 font-display text-3xl font-bold leading-tight text-white md:text-6xl lg:text-7xl"
           >
-            Built for the big night
+            Create Stunning Events with Just a Vision
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 14 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.55, delay: 0.06 }}
-            className="mx-auto mb-0 max-w-2xl text-base text-white/70 md:text-lg"
+            transition={{ delay: 0.05 }}
+            className="mx-auto mb-10 max-w-2xl text-base text-white/60 md:text-lg"
           >
-            Drag through real stages — LED walls, corporate sets, and wedding builds from the Parth
-            Production floor.
+            Turn your ideas into unforgettable experiences in seconds — no event planning stress
+            needed.
           </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+          >
+            <Link
+              href="/services"
+              className="group inline-flex items-center gap-2 rounded-full border-2 border-white/20 px-8 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-white transition-all duration-300 hover:border-[#00F0FF]/60 hover:bg-white/10 hover:shadow-[0_0_28px_rgba(0,240,255,0.25)]"
+            >
+              Explore Services
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+            </Link>
+          </motion.div>
         </div>
 
+        {/* Infinite 3D carousel */}
         <div
-          className="relative mx-auto flex h-[400px] items-center justify-center md:h-[500px] lg:h-[600px]"
-          style={{ perspective: '1000px' }}
+          className="relative mb-20 h-[380px] md:h-[500px] lg:h-[600px]"
+          style={{ perspective: '2000px' }}
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
         >
-          <AnimatePresence initial={false} custom={direction}>
-            {CARDS.map((card, index) => {
-              let offset = index - currentIndex;
-              if (offset > total / 2) offset -= total;
-              if (offset < -total / 2) offset += total;
-              if (Math.abs(offset) > 3) return null;
+          <div className="pointer-events-none absolute left-1/2 top-0 z-40 h-full w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-[#00F0FF]/70 to-transparent opacity-60" />
 
-              const style = getStackStyle(offset, isMobile);
-              const isActive = offset === 0;
-
-              return (
-                <motion.article
-                  key={card.id}
-                  className={`absolute transform-gpu cursor-grab active:cursor-grabbing ${
-                    isActive
-                      ? 'w-[280px] h-[350px] sm:w-[300px] sm:h-[400px] md:w-[400px] md:h-[500px]'
-                      : 'w-[260px] h-[330px] sm:w-[280px] sm:h-[380px] md:w-[360px] md:h-[460px]'
-                  }`}
-                  style={{ transformStyle: 'preserve-3d', zIndex: style.zIndex }}
-                  initial={false}
-                  animate={{
-                    opacity: style.opacity,
-                    scale: style.scale,
-                    x: style.x,
-                    rotateY: style.rotateY,
-                    z: style.z,
-                    filter: style.filter,
-                  }}
-                  transition={{ duration: 0.3, ease: 'easeOut' }}
-                  drag={isActive ? 'x' : false}
-                  dragConstraints={{ left: 0, right: 0 }}
-                  dragElastic={0.18}
-                  onDragStart={() => {
-                    setDragging(true);
-                    setPaused(true);
-                  }}
-                  onDragEnd={onDragEnd}
-                  whileHover={
-                    isActive
-                      ? {
-                          scale: 1.02,
-                          boxShadow:
-                            '0 25px 50px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,90,60,0.45), 0 0 28px rgba(255,90,60,0.25)',
-                        }
-                      : undefined
-                  }
-                  onClick={() => {
-                    if (!isActive) goTo(index, index > currentIndex ? 1 : -1);
-                  }}
+          <div className="absolute inset-0 flex items-center overflow-hidden">
+            <motion.div
+              className="flex will-change-transform"
+              style={{ transformStyle: 'preserve-3d' }}
+              animate={running ? { x: ['0%', '-50%'] } : undefined}
+              transition={
+                running
+                  ? { duration: 40, repeat: Infinity, ease: 'linear', repeatType: 'loop' }
+                  : undefined
+              }
+            >
+              {LOOP.map((card, i) => (
+                <div
+                  key={`${card.id}-${i}`}
+                  className="relative mx-3 h-[350px] w-[280px] flex-shrink-0 md:mx-4 md:h-[500px] md:w-[400px]"
+                  style={{ transformStyle: 'preserve-3d' }}
                 >
-                  <div className="flex h-full w-full flex-col overflow-hidden rounded-2xl bg-[#F9FAFB] shadow-2xl md:rounded-3xl">
-                    <div className="relative min-h-0 flex-1 bg-neutral-200">
-                      <CardCollage card={card} />
+                  <article className="infinite-3d-card group relative h-full w-full overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-gray-900 to-black shadow-2xl transition-all duration-300 hover:scale-[1.05] hover:border-[#00F0FF]/60 hover:shadow-[0_0_60px_rgba(0,240,255,0.3)]">
+                    <Image
+                      src={card.src}
+                      alt={card.title}
+                      fill
+                      loading="lazy"
+                      sizes="(max-width:768px) 280px, 400px"
+                      className="object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                    <span className="absolute left-4 top-4 rounded-full bg-[#00F0FF] px-4 py-2 text-xs font-semibold uppercase tracking-wider text-black">
+                      {card.category}
+                    </span>
+                    <div className="absolute inset-x-0 bottom-0 p-5 md:p-6">
+                      <h3 className="font-display text-xl font-bold text-white md:text-2xl">
+                        {card.title}
+                      </h3>
                     </div>
-                    <div className="flex items-end justify-between gap-3 border-t border-black/5 px-4 py-3 md:px-5 md:py-4">
-                      <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                          {card.category}
-                        </p>
-                        <h3 className="font-display text-lg font-bold tracking-tight text-neutral-900 md:text-xl">
-                          {card.title}
-                        </h3>
-                      </div>
-                      <span className="text-xs font-semibold text-neutral-400">
-                        {String(index + 1).padStart(2, '0')}
-                      </span>
-                    </div>
-                  </div>
-                </motion.article>
-              );
-            })}
-          </AnimatePresence>
+                  </article>
+                </div>
+              ))}
+            </motion.div>
+          </div>
         </div>
 
-        <div className="mt-10 flex justify-center gap-2 md:mt-12">
-          {CARDS.map((card, i) => (
-            <button
-              key={card.id}
-              type="button"
-              aria-label={`Go to ${card.title}`}
-              onClick={() => goTo(i, i > currentIndex ? 1 : -1)}
-              className={`h-2 w-2 rounded-full transition-all duration-300 ${
-                i === currentIndex
-                  ? 'w-7 bg-[#ff5a3c] shadow-[0_0_12px_rgba(255,90,60,0.55)]'
-                  : 'bg-white/30 hover:bg-white/55'
-              }`}
-            />
-          ))}
-        </div>
-
-        <div className="mt-6 flex items-center justify-center gap-3 md:mt-8 md:gap-4">
-          <button
-            type="button"
-            aria-label="More options"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur transition-all duration-300 hover:scale-105 hover:bg-white/20 md:h-12 md:w-12"
-          >
-            <MoreHorizontal className="h-4 w-4 md:h-5 md:w-5" />
-          </button>
-          <button
-            type="button"
-            aria-label="Share"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur transition-all duration-300 hover:scale-105 hover:bg-white/20 md:h-12 md:w-12"
-          >
-            <Share2 className="h-4 w-4 md:h-5 md:w-5" />
-          </button>
-          <button
-            type="button"
-            aria-label="Remove"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur transition-all duration-300 hover:scale-105 hover:bg-white/20 md:h-12 md:w-12"
-          >
-            <Trash2 className="h-4 w-4 md:h-5 md:w-5" />
-          </button>
-          <Link
-            href="/gallery"
-            aria-label="Add new / view gallery"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur transition-all duration-300 hover:scale-105 hover:bg-white/20 md:h-12 md:w-12"
-          >
-            <Plus className="h-4 w-4 md:h-5 md:w-5" />
-          </Link>
+        {/* Feature cards */}
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-2 md:grid-cols-3">
+          {FEATURES.map((feature, i) => {
+            const Icon = feature.icon;
+            return (
+              <motion.article
+                key={feature.title}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08, duration: 0.45 }}
+                className="rounded-3xl border border-white/10 bg-white/[0.03] p-8 transition-all duration-300 ease-out hover:-translate-y-2 hover:bg-white/[0.05]"
+                style={{
+                  // hover border via box-shadow using feature color
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = feature.color;
+                  e.currentTarget.style.boxShadow = `0 0 28px ${feature.glow}`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <div
+                  className="mb-5 inline-flex rounded-2xl p-4"
+                  style={{ background: feature.glow }}
+                >
+                  <Icon className="h-12 w-12" style={{ color: feature.color }} />
+                </div>
+                <h3 className="mb-3 text-xl font-semibold text-white">{feature.title}</h3>
+                <p className="text-sm leading-relaxed text-white/60">{feature.description}</p>
+              </motion.article>
+            );
+          })}
         </div>
       </div>
     </section>

@@ -167,7 +167,6 @@ export default function ServicesPage() {
       />
 
       <main className="relative overflow-x-hidden bg-black">
-        {/* Hero */}
         <section className="relative min-h-[70vh] flex items-end overflow-hidden border-b border-white/10">
           <div className="absolute inset-0">
             <MediaImage
@@ -227,142 +226,154 @@ export default function ServicesPage() {
           </div>
         </section>
 
-        {/* Catalog body */}
+        {/* Timeline + service panels */}
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-12 md:py-16">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
-            <aside className="hidden lg:block lg:col-span-3">
-              <div className="sticky top-28 space-y-2">
-                <p className="text-[10px] uppercase tracking-[0.28em] text-white/40 font-semibold mb-4">
-                  Jump to system
-                </p>
-                {services.map((service) => {
-                  const active = service.id === activeId;
-                  const href = `#${service.title.toLowerCase().replace(/\s+/g, '-')}`;
-                  return (
-                    <a
-                      key={service.id}
-                      href={href}
-                      className={`group flex items-center gap-3 rounded-2xl border px-4 py-3 transition-all duration-300 ${
-                        active
-                          ? 'border-[#ff5a3c]/50 bg-[#ff5a3c]/10 shadow-[0_0_24px_rgba(255,90,60,0.15)]'
-                          : 'border-white/10 bg-white/[0.02] hover:border-white/25'
-                      }`}
-                    >
-                      <span
-                        className={`font-display text-sm font-bold ${
-                          active ? 'text-[#ff5a3c]' : 'text-white/35'
-                        }`}
-                      >
-                        {service.badge}
-                      </span>
-                      <span
-                        className={`text-sm font-semibold uppercase tracking-[0.12em] ${
-                          active ? 'text-white' : 'text-white/60 group-hover:text-white'
-                        }`}
-                      >
-                        {service.title}
-                      </span>
-                    </a>
-                  );
-                })}
-              </div>
-            </aside>
+          <div className="relative">
+            {/* Continuous thin timeline line (desktop) */}
+            <div
+              className="pointer-events-none absolute left-[18px] top-6 bottom-6 hidden w-px md:left-[22px] lg:block"
+              style={{
+                background:
+                  'linear-gradient(180deg, transparent, rgba(255,90,60,0.55) 8%, rgba(255,255,255,0.18) 50%, rgba(255,90,60,0.55) 92%, transparent)',
+              }}
+            />
 
-            <div className="lg:col-span-9 space-y-8 md:space-y-12">
+            <div className="space-y-10 md:space-y-14">
               {services.map((service, index) => {
                 const bookHref = `${whatsappUrl}?text=${encodeURIComponent(
                   `Hi Parth Production, I want to book a ${service.bookLabel} event`
                 )}`;
                 const reverse = index % 2 === 1;
+                const active = service.id === activeId;
+                const slug = service.title.toLowerCase().replace(/\s+/g, '-');
+                const isLast = index === services.length - 1;
 
                 return (
-                  <motion.section
+                  <motion.div
                     key={service.id}
-                    id={service.title.toLowerCase().replace(/\s+/g, '-')}
+                    id={slug}
                     initial={{ opacity: 0, y: 40 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: '-80px' }}
                     transition={{ duration: 0.55, ease }}
-                    className="relative scroll-mt-28 overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03]"
+                    className="relative scroll-mt-28 grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8"
                   >
-                    <div className="absolute inset-0 pointer-events-none">
-                      <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-[#ff5a3c]/10 blur-3xl" />
-                    </div>
-
-                    <div
-                      className={`relative grid grid-cols-1 md:grid-cols-2 ${
-                        reverse ? 'md:[&>*:first-child]:order-2' : ''
-                      }`}
-                    >
-                      <div className="relative min-h-[280px] md:min-h-[420px] overflow-hidden group">
-                        <MediaImage
-                          src={service.hero}
-                          alt={service.title}
-                          className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-                        <div className="absolute left-5 top-5 flex items-center gap-2">
-                          <span className="rounded-full border border-white/20 bg-black/50 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-white backdrop-blur">
-                            System {service.badge}
-                          </span>
+                    {/* Jump button aligned with this service */}
+                    <div className="relative lg:col-span-3">
+                      <div className="lg:sticky lg:top-32 flex items-start gap-3 lg:min-h-[120px]">
+                        <div className="relative z-10 flex flex-col items-center">
+                          <span
+                            className={`mt-3 h-3 w-3 rounded-full border-2 transition-all duration-300 ${
+                              active
+                                ? 'border-[#ff5a3c] bg-[#ff5a3c] shadow-[0_0_14px_rgba(255,90,60,0.75)]'
+                                : 'border-white/30 bg-black'
+                            }`}
+                          />
+                          {!isLast && (
+                            <span className="mt-2 hidden h-full min-h-[40px] w-px bg-white/10 lg:block" />
+                          )}
                         </div>
-                      </div>
-
-                      <div className="flex flex-col justify-center p-6 md:p-8 lg:p-10">
-                        <p className="text-[11px] uppercase tracking-[0.22em] text-[#ff5a3c] font-semibold mb-2">
-                          {service.subtitle}
-                        </p>
-                        <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold uppercase tracking-tight text-white leading-none">
-                          {service.title}
-                        </h2>
-                        <p className="mt-4 text-sm md:text-[15px] leading-relaxed text-white/65">
-                          {service.summary}
-                        </p>
-                        <p className="mt-3 text-sm leading-relaxed text-white/45">{service.detail}</p>
-
-                        <ul className="mt-6 grid grid-cols-2 gap-2">
-                          {service.highlights.map((item) => (
-                            <li
-                              key={item}
-                              className="rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-white/70"
-                            >
-                              <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-[#ff5a3c]" />
-                              {item}
-                            </li>
-                          ))}
-                        </ul>
-
                         <a
-                          href={bookHref}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-7 inline-flex w-fit items-center gap-2 rounded-full bg-[#ff5a3c] px-6 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0_28px_rgba(255,90,60,0.4)]"
+                          href={`#${slug}`}
+                          className={`mt-0.5 inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.14em] transition-all duration-300 ${
+                            active
+                              ? 'border-[#ff5a3c] bg-[#ff5a3c]/15 text-white shadow-[0_0_22px_rgba(255,90,60,0.2)]'
+                              : 'border-white/15 bg-white/[0.03] text-white/55 hover:border-white/30 hover:text-white'
+                          }`}
                         >
-                          Book {service.bookLabel}
-                          <ArrowUpRight className="h-4 w-4" />
+                          <span className={active ? 'text-[#ff5a3c]' : 'text-white/35'}>
+                            {service.badge}
+                          </span>
+                          {service.title}
                         </a>
                       </div>
                     </div>
 
-                    <div className="relative grid grid-cols-3 gap-px border-t border-white/10 bg-white/10">
-                      {service.gallery.map((src, gi) => (
-                        <motion.div
-                          key={`${service.id}-g-${gi}`}
-                          initial={{ opacity: 0, y: 12 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          viewport={{ once: true }}
-                          transition={{ delay: gi * 0.08, duration: 0.4 }}
-                          className="relative aspect-[4/3] overflow-hidden bg-black group"
+                    {/* Service content */}
+                    <div className="lg:col-span-9">
+                      <article className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03]">
+                        <div className="absolute inset-0 pointer-events-none">
+                          <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-[#ff5a3c]/10 blur-3xl" />
+                        </div>
+
+                        <div
+                          className={`relative grid grid-cols-1 md:grid-cols-2 ${
+                            reverse ? 'md:[&>*:first-child]:order-2' : ''
+                          }`}
                         >
-                          <MediaImage
-                            src={src}
-                            alt={`${service.title} ${gi + 1}`}
-                            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
-                        </motion.div>
-                      ))}
+                          <div className="relative min-h-[260px] md:min-h-[400px] overflow-hidden group">
+                            <MediaImage
+                              src={service.hero}
+                              alt={service.title}
+                              className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                            <div className="absolute left-5 top-5">
+                              <span className="rounded-full border border-white/20 bg-black/50 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-white backdrop-blur">
+                                System {service.badge}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col justify-center p-6 md:p-8 lg:p-10">
+                            <p className="text-[11px] uppercase tracking-[0.22em] text-[#ff5a3c] font-semibold mb-2">
+                              {service.subtitle}
+                            </p>
+                            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold uppercase tracking-tight text-white leading-none">
+                              {service.title}
+                            </h2>
+                            <p className="mt-4 text-sm md:text-[15px] leading-relaxed text-white/65">
+                              {service.summary}
+                            </p>
+                            <p className="mt-3 text-sm leading-relaxed text-white/45">
+                              {service.detail}
+                            </p>
+
+                            <ul className="mt-6 grid grid-cols-2 gap-2">
+                              {service.highlights.map((item) => (
+                                <li
+                                  key={item}
+                                  className="rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-white/70"
+                                >
+                                  <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-[#ff5a3c]" />
+                                  {item}
+                                </li>
+                              ))}
+                            </ul>
+
+                            <a
+                              href={bookHref}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-7 inline-flex w-fit items-center gap-2 rounded-full bg-[#ff5a3c] px-6 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0_28px_rgba(255,90,60,0.4)]"
+                            >
+                              Book {service.bookLabel}
+                              <ArrowUpRight className="h-4 w-4" />
+                            </a>
+                          </div>
+                        </div>
+
+                        <div className="relative grid grid-cols-3 gap-px border-t border-white/10 bg-white/10">
+                          {service.gallery.map((src, gi) => (
+                            <motion.div
+                              key={`${service.id}-g-${gi}`}
+                              initial={{ opacity: 0, y: 12 }}
+                              whileInView={{ opacity: 1, y: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ delay: gi * 0.08, duration: 0.4 }}
+                              className="relative aspect-[4/3] overflow-hidden bg-black group"
+                            >
+                              <MediaImage
+                                src={src}
+                                alt={`${service.title} ${gi + 1}`}
+                                className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              />
+                            </motion.div>
+                          ))}
+                        </div>
+                      </article>
                     </div>
-                  </motion.section>
+                  </motion.div>
                 );
               })}
             </div>
