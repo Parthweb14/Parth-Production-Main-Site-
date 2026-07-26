@@ -110,9 +110,9 @@ export default function HomePage() {
               <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-primary">
                 Book a production
               </a>
-              <a href="#video-showcase" className="btn-ghost">
-                Watch reels
-              </a>
+              <Link href="/services" className="btn-ghost">
+                Services
+              </Link>
             </motion.div>
           </div>
         </section>
@@ -121,7 +121,26 @@ export default function HomePage() {
           <div className="marquee-track flex w-max gap-10 whitespace-nowrap text-sm md:text-base uppercase tracking-[0.22em] text-white/65">
             {[...Array(2)].map((_, loop) => (
               <div key={loop} className="flex gap-10">
-                {['Sound', 'Light', 'SFX', 'Truss', 'Firework', 'DJ Artistic', 'Stage', 'LED Walls'].map((item) => (
+                {[
+                  'Sound Systems',
+                  'Stage Lighting',
+                  'Cold Sparklers',
+                  'Heavy Truss',
+                  'Firework Finales',
+                  'DJ Artistic Sets',
+                  'LED Walls',
+                  'Laser Beams',
+                  'Generator Power',
+                  'Wedding Entries',
+                  'Festival Arenas',
+                  'Concert Arrays',
+                  'Corporate Keynotes',
+                  'Road Show Rigs',
+                  'Fog & CO2',
+                  'Moving Heads',
+                  'Live Mix',
+                  'Pyro Cues',
+                ].map((item) => (
                   <span key={`${loop}-${item}`} className="flex items-center gap-10">
                     <span>{item}</span>
                     <span className="text-accent">✦</span>
@@ -144,10 +163,12 @@ export default function HomePage() {
         <section className="bg-black py-16 md:py-24 border-t border-white/10">
           <div className="max-w-7xl mx-auto px-4 md:px-8 mb-10 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.22em] text-accent mb-3">Still frames</p>
-              <h2 className="font-display text-3xl md:text-5xl tracking-tight">More nights under our lights</h2>
+              <p className="text-xs uppercase tracking-[0.28em] text-accent mb-3 font-bold">Still Frames</p>
+              <h2 className="font-display text-3xl md:text-5xl lg:text-6xl tracking-tight uppercase font-bold">
+                Where Every Event Comes Alive
+              </h2>
             </div>
-            <Link href="/gallery" className="text-sm uppercase tracking-[0.18em] text-white/60 hover:text-accent transition-colors">
+            <Link href="/gallery" className="text-sm uppercase tracking-[0.18em] text-white/60 hover:text-accent transition-colors font-semibold">
               Open gallery →
             </Link>
           </div>

@@ -23,10 +23,12 @@ export default function CoverflowCarousel() {
     <section className="relative py-16 md:py-24 bg-black overflow-hidden border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 md:px-8 mb-10 md:mb-14 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
         <div>
-          <p className="text-xs uppercase tracking-[0.22em] text-accent mb-3">Stage deck</p>
-          <h2 className="font-display text-3xl md:text-5xl tracking-tight">3D fan coverflow</h2>
+          <p className="text-xs uppercase tracking-[0.22em] text-accent font-semibold mb-3">Stage deck</p>
+          <h2 className="font-display text-3xl md:text-5xl font-bold tracking-tight uppercase">
+            3D Fan Coverflow
+          </h2>
           <p className="mt-3 text-white/55 max-w-xl text-sm md:text-base leading-relaxed">
-            Center card stays flat, bright, and largest — side cards rotate on the Y-axis and drop back in depth.
+            Center card stays flat and large — side cards fan back in depth.
           </p>
         </div>
         <div className="flex gap-3">
@@ -49,7 +51,11 @@ export default function CoverflowCarousel() {
         </div>
       </div>
 
-      <div className="relative h-[380px] sm:h-[440px] md:h-[520px] max-w-6xl mx-auto px-2" style={{ perspective: '1400px' }}>
+      {/* Wider stage for PC — larger cards */}
+      <div
+        className="relative h-[420px] sm:h-[500px] md:h-[620px] lg:h-[680px] max-w-[1400px] mx-auto px-2 md:px-4"
+        style={{ perspective: '1600px' }}
+      >
         <div className="absolute inset-0 flex items-center justify-center" style={{ transformStyle: 'preserve-3d' }}>
           {items.map((item, index) => {
             let offset = index - active;
@@ -58,11 +64,11 @@ export default function CoverflowCarousel() {
             if (offset < -half) offset += items.length;
 
             const abs = Math.abs(offset);
-            const rotateY = offset * -34;
-            const translateX = offset * 138;
-            const translateZ = -abs * 140;
-            const scale = Math.max(0.72, 1 - abs * 0.11);
-            const opacity = abs > 2 ? 0 : 1 - abs * 0.2;
+            const rotateY = offset * -28;
+            const translateX = offset * 210;
+            const translateZ = -abs * 110;
+            const scale = Math.max(0.78, 1 - abs * 0.08);
+            const opacity = abs > 2 ? 0 : 1 - abs * 0.18;
             const zIndex = 50 - abs;
 
             return (
@@ -70,14 +76,14 @@ export default function CoverflowCarousel() {
                 key={item.src}
                 type="button"
                 onClick={() => setActive(index)}
-                className="absolute w-[200px] sm:w-[240px] md:w-[300px] aspect-[3/4] rounded-[28px] overflow-hidden border border-white/15 cursor-pointer transition-[transform,opacity,box-shadow] duration-500 ease-out"
+                className="absolute w-[240px] sm:w-[300px] md:w-[380px] lg:w-[440px] aspect-[3/4] rounded-[28px] overflow-hidden border border-white/15 cursor-pointer transition-[transform,opacity,box-shadow] duration-500 ease-out"
                 style={{
                   zIndex,
                   opacity,
                   transform: `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`,
                   boxShadow:
                     abs === 0
-                      ? '0 24px 70px rgba(255,95,31,0.25), 0 16px 40px rgba(0,0,0,0.7)'
+                      ? '0 28px 80px rgba(255,95,31,0.28), 0 18px 48px rgba(0,0,0,0.75)'
                       : '0 16px 40px rgba(0,0,0,0.55)',
                   filter: abs === 0 ? 'brightness(1)' : 'brightness(0.55)',
                 }}
@@ -88,7 +94,7 @@ export default function CoverflowCarousel() {
                   style={{
                     background:
                       abs === 0
-                        ? 'linear-gradient(to top, rgba(0,0,0,0.78), transparent 48%)'
+                        ? 'linear-gradient(to top, rgba(0,0,0,0.72), transparent 50%)'
                         : 'rgba(0,0,0,0.38)',
                   }}
                 />
@@ -98,10 +104,12 @@ export default function CoverflowCarousel() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
-                      className="absolute bottom-5 left-5 right-5 text-left"
+                      className="absolute bottom-6 left-6 right-6 text-left"
                     >
-                      <p className="text-[10px] uppercase tracking-[0.18em] text-accent mb-1">{item.tag}</p>
-                      <p className="font-display text-2xl">{item.title}</p>
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-accent mb-1 font-semibold">
+                        {item.tag}
+                      </p>
+                      <p className="font-display text-2xl md:text-3xl font-bold uppercase">{item.title}</p>
                     </motion.div>
                   )}
                 </AnimatePresence>

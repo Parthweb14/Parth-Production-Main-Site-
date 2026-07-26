@@ -23,14 +23,13 @@ export default function SpotlightNavbar() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 h-20 z-50 flex items-center justify-between px-5 md:px-10 bg-black border-b border-white/10">
-        <Link href="/" className="flex items-center gap-3 min-w-0 group">
+      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-5 md:px-10 bg-black border-b border-white/10 h-[88px]">
+        <Link href="/" className="flex items-center min-w-0 group py-2">
           <img
             src={LOGO_PNG}
             alt="Parth Production"
-            className="h-12 md:h-14 w-auto object-contain transition-transform duration-500 group-hover:scale-105"
+            className="h-16 sm:h-[72px] md:h-20 w-auto object-contain object-left transition-transform duration-500 group-hover:scale-[1.03]"
           />
-          <span className="hidden sm:block font-display text-lg tracking-tight">Parth Production</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-7">
@@ -74,7 +73,7 @@ export default function SpotlightNavbar() {
             initial={{ opacity: 0, y: -16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
-            className="fixed inset-0 bg-black z-40 md:hidden flex flex-col pt-24 px-6 pb-8"
+            className="fixed inset-0 bg-black z-40 md:hidden flex flex-col pt-28 px-6 pb-8"
           >
             <div className="flex flex-col gap-5 text-2xl font-display">
               {navItems.map((item, i) => (
