@@ -52,9 +52,12 @@ export default function HomePage() {
       <div className="film-grain" />
       <SpotlightNavbar />
 
-      <main className="relative overflow-x-hidden bg-black">
-        {/* HERO */}
-        <section ref={heroRef} className="relative h-[100svh] min-h-[620px] flex items-end md:items-center overflow-hidden bg-black">
+      <main className="relative overflow-x-hidden bg-[#0A0E27]">
+        {/* HERO — keep original cinematic look (client favorite) */}
+        <section
+          ref={heroRef}
+          className="relative h-[100svh] min-h-[620px] flex items-end md:items-center overflow-hidden bg-black"
+        >
           <motion.div style={{ y }} className="absolute inset-0">
             <video
               src={HERO_VIDEO}
@@ -75,7 +78,7 @@ export default function HomePage() {
               variants={fadeUp}
               initial="hidden"
               animate="visible"
-              className="text-xs uppercase tracking-[0.28em] text-accent mb-5"
+              className="text-xs uppercase tracking-[0.28em] text-[#FF5F1F] mb-5"
             >
               Parth Production
             </motion.p>
@@ -84,11 +87,11 @@ export default function HomePage() {
               variants={fadeUp}
               initial="hidden"
               animate="visible"
-              className="font-display text-[clamp(2.4rem,7.2vw,5.8rem)] leading-[0.95] tracking-tight uppercase font-semibold max-w-5xl"
+              className="font-display text-[clamp(2.4rem,7.2vw,5.8rem)] leading-[0.95] tracking-tight uppercase font-semibold max-w-5xl text-white"
             >
               One stop solution
               <br />
-              <span className="text-accent">For unforgatable moments</span>
+              <span className="text-[#FF5F1F]">For unforgatable moments</span>
             </motion.h1>
             <motion.p
               custom={2}
@@ -97,7 +100,8 @@ export default function HomePage() {
               animate="visible"
               className="mt-6 max-w-xl text-white/70 text-base md:text-lg leading-relaxed"
             >
-              Sound, light, SFX, truss, fireworks, and DJ artistry — built for weddings, festivals, concerts, and nights that stay loud in memory.
+              Sound, light, SFX, truss, fireworks, and DJ artistry — built for weddings, festivals,
+              concerts, and nights that stay loud in memory.
             </motion.p>
             <motion.div
               custom={3}
@@ -106,18 +110,28 @@ export default function HomePage() {
               animate="visible"
               className="mt-9 flex flex-col sm:flex-row gap-3"
             >
-              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-primary">
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center px-[1.9rem] py-[0.9rem] rounded-full bg-[#FF5F1F] text-black text-[0.8rem] font-bold tracking-[0.12em] uppercase hover:brightness-110 transition"
+              >
                 Book a production
               </a>
-              <Link href="/services" className="btn-ghost">
+              <Link
+                href="/services"
+                className="inline-flex items-center justify-center px-[1.9rem] py-[0.9rem] rounded-full border border-white/28 text-white text-[0.8rem] font-bold tracking-[0.12em] uppercase hover:bg-white/10 transition"
+              >
                 Services
               </Link>
             </motion.div>
           </div>
         </section>
 
-        <div className="border-y border-white/10 bg-black overflow-hidden py-4">
-          <div className="marquee-track flex w-max gap-16 md:gap-24 whitespace-nowrap text-sm md:text-base uppercase tracking-[0.22em] text-white/65">
+        {/* SaaS ticker */}
+        <div className="relative border-y border-white/10 bg-[#070B1A] overflow-hidden py-5">
+          <div className="absolute inset-0 site-grid opacity-20" />
+          <div className="relative marquee-track flex w-max gap-16 md:gap-24 whitespace-nowrap text-sm md:text-base uppercase tracking-[0.22em] text-slate-400">
             {[...Array(2)].map((_, loop) => (
               <div key={loop} className="flex gap-16 md:gap-24 px-8">
                 {[
@@ -140,7 +154,10 @@ export default function HomePage() {
                   'Live Mix',
                   'Pyro Cues',
                 ].map((item) => (
-                  <span key={`${loop}-${item}`}>{item}</span>
+                  <span key={`${loop}-${item}`} className="inline-flex items-center gap-4">
+                    <span className="h-1 w-1 rounded-full bg-cyan-400/70" />
+                    {item}
+                  </span>
                 ))}
               </div>
             ))}
@@ -152,10 +169,7 @@ export default function HomePage() {
         </div>
 
         <HomeServicesGrid />
-
-        {/* Coverflow after Designed For Every Celebration */}
         <CoverflowCarousel />
-
         <QuoteCta />
       </main>
 

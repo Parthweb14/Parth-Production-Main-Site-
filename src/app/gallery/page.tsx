@@ -69,22 +69,22 @@ export default function GalleryPage() {
     <>
       <SpotlightNavbar />
       <div className="film-grain" />
-      <main className="relative overflow-x-hidden bg-black">
+      <main className="relative overflow-x-hidden bg-[#0A0E27]">
         <PageHero
           title="Frames from the floor"
           description="Weddings, festivals, concerts, corporate stages, and road shows — captured under Parth Production systems."
         />
 
-        <section className="sticky top-[96px] md:top-[104px] z-30 border-b border-white/10 bg-black/70 backdrop-blur-xl">
-          <div className="max-w-7xl mx-auto px-6 md:px-10 py-5 flex flex-wrap justify-center gap-x-7 md:gap-x-10 gap-y-3 font-display text-sm sm:text-base md:text-lg uppercase tracking-[0.14em] font-extrabold">
+        <section className="sticky top-[88px] md:top-[96px] z-30 border-b border-white/10 bg-[#0A0E27]/80 backdrop-blur-xl">
+          <div className="max-w-7xl mx-auto px-6 md:px-10 py-5 flex flex-wrap justify-center gap-x-7 md:gap-x-10 gap-y-3 font-display text-sm sm:text-base md:text-lg uppercase tracking-[0.14em] font-bold">
             {filters.map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
                 className={`whitespace-nowrap pb-1 border-b-2 transition-colors min-h-[44px] ${
                   filter === f
-                    ? 'text-accent border-accent'
-                    : 'text-white/60 border-transparent hover:text-white'
+                    ? 'text-cyan-300 border-cyan-400'
+                    : 'text-slate-500 border-transparent hover:text-white'
                 }`}
               >
                 {f}
@@ -105,7 +105,7 @@ export default function GalleryPage() {
                   exit={{ opacity: 0, scale: 0.96 }}
                   transition={{ duration: 0.35 }}
                   onClick={() => setActive(idx)}
-                  className="relative break-inside-avoid w-full overflow-hidden border border-white/10 group text-left rounded-2xl"
+                  className="relative break-inside-avoid w-full overflow-hidden border border-white/10 group text-left rounded-2xl bg-[#111827]"
                 >
                   <div className="relative aspect-[4/5] overflow-hidden">
                     <MediaImage
@@ -113,12 +113,12 @@ export default function GalleryPage() {
                       alt={image.title}
                       className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0A0E27] via-transparent to-transparent opacity-90" />
                     <div className="absolute bottom-4 left-4 right-4">
-                      <p className="text-[10px] uppercase tracking-[0.18em] text-accent font-semibold">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-cyan-300 font-semibold">
                         {image.category}
                       </p>
-                      <p className="font-display text-lg mt-1 font-semibold">{image.title}</p>
+                      <p className="font-display text-lg mt-1 font-semibold text-white">{image.title}</p>
                     </div>
                   </div>
                 </motion.button>
@@ -134,17 +134,17 @@ export default function GalleryPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[10000] bg-black/95 flex items-center justify-center px-4"
+            className="fixed inset-0 z-[10000] bg-[#0A0E27]/95 flex items-center justify-center px-4"
           >
             <button
               onClick={() => setActive(null)}
-              className="absolute top-6 right-6 p-2 border border-white/15 hover:border-white min-h-[44px] min-w-[44px]"
+              className="absolute top-6 right-6 p-2 border border-white/15 hover:border-cyan-400 min-h-[44px] min-w-[44px] rounded-xl"
             >
               <X className="w-6 h-6" />
             </button>
             <button
               onClick={() => setActive((i) => (i === null ? i : (i - 1 + filtered.length) % filtered.length))}
-              className="absolute left-4 md:left-8 p-3 border border-white/15 hover:border-accent min-h-[44px] min-w-[44px]"
+              className="absolute left-4 md:left-8 p-3 border border-white/15 hover:border-cyan-400 min-h-[44px] min-w-[44px] rounded-xl"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -154,11 +154,11 @@ export default function GalleryPage() {
               animate={{ opacity: 1, scale: 1 }}
               src={filtered[active].src}
               alt={filtered[active].title}
-              className="max-w-full max-h-[82vh] object-contain"
+              className="max-w-full max-h-[82vh] object-contain rounded-xl"
             />
             <button
               onClick={() => setActive((i) => (i === null ? i : (i + 1) % filtered.length))}
-              className="absolute right-4 md:right-8 p-3 border border-white/15 hover:border-accent min-h-[44px] min-w-[44px]"
+              className="absolute right-4 md:right-8 p-3 border border-white/15 hover:border-cyan-400 min-h-[44px] min-w-[44px] rounded-xl"
             >
               <ChevronRight className="w-5 h-5" />
             </button>

@@ -60,45 +60,44 @@ export default function AboutPage() {
       <SpotlightNavbar />
       <div className="film-grain" />
 
-      <main className="relative overflow-x-hidden bg-black">
+      <main className="relative overflow-x-hidden bg-[#0A0E27]">
         <PageHero
           title="About Us"
           description="Full-stack live production. From first mic check to final firework — sound, light, SFX, truss, and DJ artistry under one crew."
         />
 
-        {/* Philosophy quote */}
         <section className="relative py-14 md:py-20 px-4 sm:px-6 md:px-10 overflow-hidden border-t border-white/10">
           <MediaImage
             src={STAGE_IMAGES[2].src}
             alt=""
-            className="absolute inset-0 w-full h-full object-cover opacity-20 brightness-50"
+            className="absolute inset-0 w-full h-full object-cover opacity-15 brightness-50"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black via-black/85 to-black" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0A0E27] via-[#0A0E27]/85 to-[#0A0E27]" />
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="relative z-10 max-w-4xl mx-auto text-center"
+            className="relative z-10 max-w-4xl mx-auto text-center saas-card px-6 py-10 md:px-12 md:py-14"
           >
-            <div className="flex items-center justify-center gap-4 mb-6 text-accent">
+            <div className="flex items-center justify-center gap-4 mb-6 text-cyan-300">
               <Sparkles className="w-5 h-5" />
               <span className="text-[10px] uppercase tracking-[0.3em] font-semibold">Our philosophy</span>
               <Sparkles className="w-5 h-5" />
             </div>
-            <p className="font-serif italic text-2xl md:text-4xl lg:text-5xl text-white leading-snug">
+            <p className="font-serif italic text-2xl md:text-4xl text-white leading-snug">
               “We don&apos;t just play music — we create moments that last forever.”
             </p>
           </motion.div>
         </section>
 
-        {/* Journey timeline — first card RIGHT, then LEFT, RIGHT, LEFT */}
-        <section className="relative border-t border-white/10 py-14 md:py-20 px-4 sm:px-6 md:px-10">
-          <div className="max-w-5xl mx-auto">
+        <section className="relative border-t border-white/10 py-14 md:py-20 px-4 sm:px-6 md:px-10 overflow-hidden">
+          <div className="absolute inset-0 site-grid opacity-20" />
+          <div className="relative max-w-5xl mx-auto">
             <motion.h2
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="font-display text-3xl md:text-5xl font-bold uppercase tracking-tight text-center mb-10 md:mb-14"
+              className="font-display text-3xl md:text-5xl font-semibold uppercase tracking-tight text-center mb-10 md:mb-14"
             >
               Our Journey
             </motion.h2>
@@ -108,14 +107,13 @@ export default function AboutPage() {
                 className="absolute left-4 md:left-1/2 top-0 bottom-0 w-px md:-translate-x-1/2"
                 style={{
                   background:
-                    'linear-gradient(180deg, transparent, rgba(255,255,255,0.55), rgba(255,255,255,0.25), transparent)',
-                  boxShadow: '0 0 12px rgba(255,255,255,0.25)',
+                    'linear-gradient(180deg, transparent, rgba(34,211,238,0.7), rgba(56,189,248,0.35), transparent)',
+                  boxShadow: '0 0 12px rgba(34,211,238,0.35)',
                 }}
               />
 
               <div className="space-y-10 md:space-y-14">
                 {journey.map((item, i) => {
-                  // card 0 on right, card 1 on left, etc.
                   const onRight = i % 2 === 0;
                   return (
                     <motion.article
@@ -126,23 +124,23 @@ export default function AboutPage() {
                       transition={{ duration: 0.5 }}
                       className="relative pl-12 md:pl-0 md:grid md:grid-cols-2 md:gap-12"
                     >
-                      <span className="absolute left-[11px] md:left-1/2 top-8 md:top-10 h-3.5 w-3.5 -translate-x-1/2 rounded-full bg-accent shadow-[0_0_16px_rgba(255,95,31,0.85)] z-10" />
+                      <span className="absolute left-[11px] md:left-1/2 top-8 md:top-10 h-3.5 w-3.5 -translate-x-1/2 rounded-full bg-cyan-400 shadow-[0_0_16px_rgba(34,211,238,0.85)] z-10" />
 
                       {onRight ? (
                         <>
                           <div className="hidden md:block" />
                           <div className="glass-card rounded-2xl p-6 md:p-8 transition-transform duration-300 hover:-translate-y-2 md:ml-6">
-                            <p className="font-display text-4xl font-bold text-accent mb-3">{item.year}</p>
+                            <p className="font-display text-4xl font-semibold text-cyan-300 mb-3">{item.year}</p>
                             <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
-                            <p className="text-sm text-white/70 leading-relaxed">{item.description}</p>
+                            <p className="text-sm text-slate-400 leading-relaxed">{item.description}</p>
                           </div>
                         </>
                       ) : (
                         <>
                           <div className="glass-card rounded-2xl p-6 md:p-8 transition-transform duration-300 hover:-translate-y-2 md:mr-6 md:text-right">
-                            <p className="font-display text-4xl font-bold text-accent mb-3">{item.year}</p>
+                            <p className="font-display text-4xl font-semibold text-cyan-300 mb-3">{item.year}</p>
                             <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
-                            <p className="text-sm text-white/70 leading-relaxed">{item.description}</p>
+                            <p className="text-sm text-slate-400 leading-relaxed">{item.description}</p>
                           </div>
                           <div className="hidden md:block" />
                         </>
@@ -155,7 +153,6 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* Founder — Cloudflare Owner.png */}
         <section className="relative border-t border-white/10 py-14 md:py-20 px-4 sm:px-6 md:px-10">
           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
             <motion.div
@@ -164,14 +161,14 @@ export default function AboutPage() {
               viewport={{ once: true }}
               className="relative mx-auto w-full max-w-md"
             >
-              <div className="relative rounded-3xl overflow-hidden border border-white/25 shadow-[0_0_40px_rgba(255,255,255,0.08)] group">
+              <div className="relative rounded-3xl overflow-hidden border border-cyan-400/25 shadow-[0_0_40px_rgba(34,211,238,0.12)] group">
                 <div className="relative aspect-[4/5]">
                   <MediaImage
                     src={OWNER_IMAGE}
                     alt="Parth — Founder of Parth Production"
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0A0E27]/80 via-transparent to-[#0A0E27]/20" />
                 </div>
               </div>
             </motion.div>
@@ -183,72 +180,33 @@ export default function AboutPage() {
               transition={{ delay: 0.08 }}
               className="text-center lg:text-left"
             >
-              <span className="inline-flex items-center min-h-[32px] px-3 py-1 rounded-full bg-accent text-black text-[10px] uppercase tracking-[0.2em] font-bold mb-5">
+              <span className="inline-flex items-center min-h-[32px] px-3 py-1 rounded-full bg-cyan-400 text-[#0A0E27] text-[10px] uppercase tracking-[0.2em] font-bold mb-5">
                 Founder & CEO
               </span>
-              <h2 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-white">
+              <h2 className="font-display text-4xl md:text-5xl font-semibold tracking-tight text-white">
                 Parth
               </h2>
-              <p className="mt-2 text-lg text-white/70">Lead DJ & Creative Director</p>
-              <p className="font-serif italic text-xl md:text-2xl text-white/90 mt-6 leading-snug">
+              <p className="mt-2 text-lg text-slate-400">Lead DJ & Creative Director</p>
+              <p className="font-serif italic text-xl md:text-2xl text-slate-200 mt-6 leading-snug">
                 “Music is not just what I do — it&apos;s who I am. Every event is a canvas, and
                 together we paint memories.”
               </p>
-              <p className="mt-6 text-base md:text-lg leading-relaxed text-white/80 max-w-xl mx-auto lg:mx-0">
-                Built from late-night sets and early load-ins in Surat, Parth Production grew from a
-                single DJ desk into a full crew for sound, light, SFX, truss, and finales. The vision
-                stays simple: every date gets a system, a look, and a feeling guests remember on the
-                way home.
+              <p className="mt-6 text-base md:text-lg leading-relaxed text-slate-400 max-w-xl mx-auto lg:mx-0">
+                Built from late-night sets and studios in Surat, Parth Production grew from a single
+                DJ desk into a full crew for sound, light, SFX, truss, and finales.
               </p>
-              <div className="mt-8 flex items-center justify-center lg:justify-start gap-4">
-                <a
-                  href="https://www.instagram.com/parthproduction"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Instagram"
-                  className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full border border-white/20 text-accent hover:border-accent hover:shadow-[0_0_20px_rgba(255,95,31,0.45)] transition-all"
-                >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                    <rect x="3" y="3" width="18" height="18" rx="5" />
-                    <circle cx="12" cy="12" r="4" />
-                    <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
-                  </svg>
-                </a>
-                <a
-                  href="https://www.facebook.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Facebook"
-                  className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full border border-white/20 text-accent hover:border-accent hover:shadow-[0_0_20px_rgba(255,95,31,0.45)] transition-all"
-                >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M14 9h3V6h-3c-1.7 0-3 1.3-3 3v2H8v3h3v7h3v-7h3l1-3h-4V9c0-.6.4-1 1-1z" />
-                  </svg>
-                </a>
-                <a
-                  href="https://www.youtube.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="YouTube"
-                  className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full border border-white/20 text-accent hover:border-accent hover:shadow-[0_0_20px_rgba(255,95,31,0.45)] transition-all"
-                >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M22 12.2c0-2-.2-3.4-.5-4.2-.3-.8-.9-1.4-1.7-1.7C18.5 6 12 6 12 6s-6.5 0-7.8.3c-.8.3-1.4.9-1.7 1.7C2.2 8.8 2 10.2 2 12.2s.2 3.4.5 4.2c.3.8.9 1.4 1.7 1.7C5.5 18.4 12 18.4 12 18.4s6.5 0 7.8-.3c.8-.3 1.4-.9 1.7-1.7.3-.8.5-2.2.5-4.2zM10 15.2V9.2l5.2 3-5.2 3z" />
-                  </svg>
-                </a>
-              </div>
             </motion.div>
           </div>
         </section>
 
-        {/* Values */}
-        <section className="relative border-t border-white/10 py-14 md:py-20 px-4 sm:px-6 md:px-10">
-          <div className="max-w-7xl mx-auto">
+        <section className="relative border-t border-white/10 py-14 md:py-20 px-4 sm:px-6 md:px-10 overflow-hidden">
+          <div className="absolute inset-0 site-grid opacity-20" />
+          <div className="relative max-w-7xl mx-auto">
             <motion.h2
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="font-display text-3xl md:text-5xl font-bold uppercase tracking-tight text-center mb-10 md:mb-12"
+              className="font-display text-3xl md:text-5xl font-semibold uppercase tracking-tight text-center mb-10 md:mb-12"
             >
               Why Choose Us
             </motion.h2>
@@ -262,15 +220,15 @@ export default function AboutPage() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: '-40px' }}
                     transition={{ delay: i * 0.1 }}
-                    className="glass-card rounded-3xl p-6 md:p-8 transition-transform duration-300 hover:-translate-y-2"
+                    className="saas-card p-6 md:p-8"
                   >
-                    <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 border border-white/20">
-                      <Icon className="h-5 w-5 text-white" />
+                    <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-400/10 border border-cyan-400/25">
+                      <Icon className="h-5 w-5 text-cyan-300" />
                     </div>
-                    <h3 className="font-display text-xl md:text-2xl font-bold text-white mb-2">
+                    <h3 className="font-display text-xl md:text-2xl font-semibold text-white mb-2">
                       {value.title}
                     </h3>
-                    <p className="text-sm md:text-base text-white/65 leading-relaxed">
+                    <p className="text-sm md:text-base text-slate-400 leading-relaxed">
                       {value.description}
                     </p>
                   </motion.article>

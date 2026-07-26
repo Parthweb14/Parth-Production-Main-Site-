@@ -31,9 +31,9 @@ export default function SpotlightNavbar() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-5 md:px-10 bg-black border-b border-white/10 h-[96px] md:h-[104px]">
+      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-5 md:px-10 h-[88px] md:h-[96px] border-b border-white/10 bg-[#0A0E27]/75 backdrop-blur-xl">
         <Link href="/" className="relative z-10 flex items-center min-w-0 group py-1" onClick={() => setMenuOpen(false)}>
-          <span className="relative block h-[64px] sm:h-[72px] md:h-[84px] w-[170px] sm:w-[210px] md:w-[260px] overflow-hidden">
+          <span className="relative block h-[56px] sm:h-[64px] md:h-[72px] w-[150px] sm:w-[190px] md:w-[230px] overflow-hidden">
             <img
               src={LOGO_PNG}
               alt="Parth Production"
@@ -42,23 +42,22 @@ export default function SpotlightNavbar() {
           </span>
         </Link>
 
-        {/* Centered desktop nav */}
-        <nav className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-8 lg:gap-10">
+        <nav className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-7 lg:gap-9">
           {navItems.map((item) => {
             const active = pathname === item.href;
             return (
               <Link
                 key={item.label}
                 href={item.href}
-                className={`relative text-xs tracking-[0.18em] uppercase transition-colors ${
-                  active ? 'text-white' : 'text-white/55 hover:text-white'
+                className={`relative text-[11px] tracking-[0.2em] uppercase font-semibold transition-colors ${
+                  active ? 'text-cyan-300' : 'text-slate-400 hover:text-white'
                 }`}
               >
                 {item.label}
                 {active && (
                   <motion.span
                     layoutId="nav-underline"
-                    className="absolute -bottom-2 left-0 right-0 h-px bg-accent"
+                    className="absolute -bottom-2 left-0 right-0 h-px bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]"
                   />
                 )}
               </Link>
@@ -76,14 +75,13 @@ export default function SpotlightNavbar() {
             Book now
           </a>
 
-          {/* Hamburger — mobile only */}
           <button
             onClick={() => setMenuOpen((v) => !v)}
-            className="md:hidden p-2 text-white min-w-[44px] min-h-[44px] flex items-center justify-center"
+            className="md:hidden p-2 text-white min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl border border-white/10 bg-white/5"
             aria-label={menuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={menuOpen}
           >
-            {menuOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
+            {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
       </header>
@@ -94,9 +92,10 @@ export default function SpotlightNavbar() {
             initial={{ opacity: 0, y: -16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
-            className="fixed inset-0 bg-black z-40 md:hidden flex flex-col pt-28 px-6 pb-10"
+            className="fixed inset-0 bg-[#0A0E27] z-40 md:hidden flex flex-col pt-28 px-6 pb-10"
           >
-            <nav className="flex flex-col gap-5 text-3xl font-display">
+            <div className="pointer-events-none absolute inset-0 site-grid opacity-30" />
+            <nav className="relative flex flex-col gap-5 text-3xl font-display font-semibold">
               {navItems.map((item, i) => (
                 <motion.div
                   key={item.label}
@@ -107,11 +106,7 @@ export default function SpotlightNavbar() {
                   <Link
                     href={item.href}
                     onClick={() => setMenuOpen(false)}
-                    className={
-                      pathname === item.href
-                        ? 'text-accent'
-                        : 'text-white hover:text-accent transition-colors'
-                    }
+                    className={pathname === item.href ? 'text-cyan-300' : 'text-white'}
                   >
                     {item.label}
                   </Link>
@@ -123,7 +118,7 @@ export default function SpotlightNavbar() {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setMenuOpen(false)}
-              className="btn-primary mt-auto w-full min-h-[44px]"
+              className="btn-primary mt-auto w-full min-h-[44px] relative"
             >
               Book now
             </a>

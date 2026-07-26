@@ -37,7 +37,6 @@ export default function VideoShowcaseCarousel() {
     const root = scrollerRef.current;
     if (!root) return;
     const videos = Array.from(root.querySelectorAll('video'));
-
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -51,7 +50,6 @@ export default function VideoShowcaseCarousel() {
       },
       { root, threshold: [0.45, 0.7] }
     );
-
     videos.forEach((v) => io.observe(v));
     return () => io.disconnect();
   }, []);
@@ -79,16 +77,15 @@ export default function VideoShowcaseCarousel() {
         : 'w-[calc((100%-2rem)/3)] md:w-[calc((100%-3rem)/3)]';
 
   return (
-    <section className="relative py-16 md:py-24 bg-black border-b border-white/10">
-      <div className="max-w-7xl mx-auto px-4 md:px-8 mb-8 md:mb-12 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+    <section className="relative py-16 md:py-24 bg-[#0A0E27] border-b border-white/10 overflow-hidden">
+      <div className="absolute inset-0 site-grid opacity-20" />
+      <div className="relative max-w-7xl mx-auto px-4 md:px-8 mb-8 md:mb-12 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
         <div>
-          <p className="text-xs uppercase tracking-[0.22em] text-accent font-semibold mb-3">
-            Parth Production
-          </p>
-          <h2 className="font-display text-3xl md:text-5xl font-bold tracking-tight uppercase">
+          <p className="section-label mb-3">Live reels</p>
+          <h2 className="font-display text-3xl md:text-5xl font-semibold tracking-tight uppercase text-white">
             Beyond Events. We Create Experiences
           </h2>
-          <p className="mt-3 text-white/70 max-w-2xl text-base md:text-lg leading-relaxed">
+          <p className="mt-3 text-slate-400 max-w-2xl text-base md:text-lg leading-relaxed">
             Experience our finest DJ, lighting, stage, and event productions.
           </p>
         </div>
@@ -96,7 +93,7 @@ export default function VideoShowcaseCarousel() {
           <button
             type="button"
             onClick={() => goToPage(page - 1)}
-            className="w-11 h-11 min-w-[44px] rounded-full border border-white/20 flex items-center justify-center hover:border-accent transition-all"
+            className="w-11 h-11 min-w-[44px] rounded-full border border-white/15 bg-white/5 flex items-center justify-center hover:border-cyan-400/50 hover:text-cyan-300 transition-all"
             aria-label="Previous videos"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -104,7 +101,7 @@ export default function VideoShowcaseCarousel() {
           <button
             type="button"
             onClick={() => goToPage(page + 1)}
-            className="w-11 h-11 min-w-[44px] rounded-full border border-white/20 flex items-center justify-center hover:border-accent transition-all"
+            className="w-11 h-11 min-w-[44px] rounded-full border border-white/15 bg-white/5 flex items-center justify-center hover:border-cyan-400/50 hover:text-cyan-300 transition-all"
             aria-label="Next videos"
           >
             <ChevronRight className="w-5 h-5" />
@@ -112,7 +109,7 @@ export default function VideoShowcaseCarousel() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-8 overflow-hidden">
+      <div className="relative max-w-7xl mx-auto px-4 md:px-8 overflow-hidden">
         <div
           ref={scrollerRef}
           onScroll={onScroll}
@@ -126,7 +123,7 @@ export default function VideoShowcaseCarousel() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-40px' }}
               transition={{ delay: (i % visible) * 0.08, duration: 0.45 }}
-              className={`relative flex-shrink-0 ${cardWidth} aspect-[9/16] snap-start rounded-3xl overflow-hidden bg-black transition-transform duration-300 ease-out hover:scale-[1.02]`}
+              className={`relative flex-shrink-0 ${cardWidth} aspect-[9/16] snap-start rounded-2xl overflow-hidden border border-white/10 bg-[#111827] shadow-[0_20px_50px_rgba(2,6,23,0.45)] transition-transform duration-300 ease-out hover:scale-[1.02] hover:border-cyan-400/40`}
             >
               <video
                 src={clip.src}
@@ -136,6 +133,7 @@ export default function VideoShowcaseCarousel() {
                 preload="metadata"
                 className="absolute inset-0 w-full h-full object-cover"
               />
+              <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0A0E27] to-transparent" />
             </motion.article>
           ))}
         </div>
@@ -149,7 +147,7 @@ export default function VideoShowcaseCarousel() {
             aria-label={`Jump to video page ${i + 1}`}
             onClick={() => goToPage(i)}
             className={`h-2 rounded-full transition-all ${
-              i === page ? 'w-7 bg-accent' : 'w-2 bg-white/25'
+              i === page ? 'w-7 bg-cyan-400' : 'w-2 bg-white/20'
             }`}
           />
         ))}
