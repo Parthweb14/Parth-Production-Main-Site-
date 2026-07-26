@@ -75,16 +75,16 @@ export default function GalleryPage() {
           description="Weddings, festivals, concerts, corporate stages, and road shows — captured under Parth Production systems."
         />
 
-        <section className="sticky top-[88px] md:top-[96px] z-30 border-b border-white/10 bg-[#0A0E27]/85 backdrop-blur-xl">
-          <div className="max-w-7xl mx-auto px-4 md:px-10 py-4 flex gap-2 md:gap-3 overflow-x-auto scrollbar-none justify-start md:justify-center">
+        <section className="sticky top-[88px] md:top-[96px] z-30 border-b border-white/10 bg-[#0A0E27]/80 backdrop-blur-xl">
+          <div className="max-w-7xl mx-auto px-6 md:px-10 py-5 flex flex-wrap justify-center gap-x-7 md:gap-x-10 gap-y-3 font-display text-sm sm:text-base md:text-lg uppercase tracking-[0.14em] font-bold">
             {filters.map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`flex-shrink-0 whitespace-nowrap min-h-[44px] px-4 md:px-5 rounded-full border text-xs md:text-sm uppercase tracking-[0.16em] font-semibold transition-all ${
+                className={`whitespace-nowrap pb-1 border-b-2 transition-colors min-h-[44px] ${
                   filter === f
-                    ? 'border-cyan-400 bg-cyan-400/15 text-cyan-300 shadow-[0_0_20px_rgba(34,211,238,0.15)]'
-                    : 'border-white/10 text-slate-400 hover:border-white/25 hover:text-white'
+                    ? 'text-cyan-300 border-cyan-400'
+                    : 'text-slate-500 border-transparent hover:text-white'
                 }`}
               >
                 {f}
