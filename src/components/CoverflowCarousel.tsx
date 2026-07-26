@@ -1,9 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { STAGE_IMAGES } from '@/utils/media';
 
 const CARDS = [
@@ -18,203 +19,80 @@ const CARDS = [
   { id: 9, label: 'Mainstage Array', src: STAGE_IMAGES[7].src },
 ];
 
-const CARD_W = 280;
-const CARD_H = 420;
-const GAP = 24;
-const STEP = CARD_W + GAP;
-const LOOP_SECONDS = 32;
-const SPEED = (CARDS.length * STEP) / LOOP_SECONDS;
+const VISIBLE_RADIUS = 3; // show center ± 3
 
-const FEATURES = [
-  {
-    title: 'Lightning-Fast Setup',
-    description:
-      'From concept to execution in record time. Our crew transforms venues into stunning stages within hours, not days.',
-  },
-  {
-    title: 'Multiple Styles & Customization',
-    description:
-      'From intimate weddings to massive festivals — elegant, energetic, or explosive — we build the vibe you want.',
-  },
-  {
-    title: 'High-Impact Productions',
-    description:
-      'Crystal-clear sound, breathtaking visuals, and effects that leave lasting impressions. Professional quality guaranteed.',
-  },
-];
+function cardTransform(offset: number, isMobile: boolean) {
+  const abs = Math.abs(offset);
+  const spacing = isMobile ? 118 : 168;
+  const curve = isMobile ? 14 : 22;
+  const x = offset * spacing;
+  // Downward convex arc (smile curve) like the reference
+  const y = abs * abs * curve;
+  const rotateZ = offset * (isMobile ? 7 : 9);
+  const scale = Math.max(0.72, 1.08 - abs * 0.1);
+  const opacity = Math.max(0.45, 1 - abs * 0.14);
+  const zIndex = 40 - abs;
 
-type CardStyle = {
-  rotateY: number;
-  scale: number;
-  opacity: number;
-  translateZ: number;
-  zIndex: number;
-  isCenter: boolean;
-};
-
-/** Stronger tunnel: center pops forward, sides shrink and recede. */
-function styleForOffset(normalized: number): CardStyle {
-  const abs = Math.abs(normalized);
-  const rotateY = Math.max(-32, Math.min(32, -normalized * 18));
-
-  let scale = 0.48;
-  let opacity = 0.28;
-  let translateZ = -280;
-
-  if (abs < 0.4) {
-    const t = abs / 0.4;
-    scale = 1.22 - t * (1.22 - 0.88);
-    opacity = 1 - t * 0.15;
-    translateZ = 120 - t * 160;
-  } else if (abs < 1.25) {
-    const t = (abs - 0.4) / 0.85;
-    scale = 0.88 - t * (0.88 - 0.62);
-    opacity = 0.85 - t * 0.3;
-    translateZ = -40 - t * 120;
-  } else if (abs < 2.4) {
-    const t = (abs - 1.25) / 1.15;
-    scale = 0.62 - t * (0.62 - 0.48);
-    opacity = 0.55 - t * 0.27;
-    translateZ = -160 - t * 120;
-  }
-
-  return {
-    rotateY,
-    scale,
-    opacity,
-    translateZ,
-    zIndex: Math.round(200 - abs * 40),
-    isCenter: abs < 0.38,
-  };
+  return { x, y, rotateZ, scale, opacity, zIndex };
 }
 
 export default function CoverflowCarousel() {
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const offsetRef = useRef(0);
-  const [offset, setOffset] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const [dragging, setDragging] = useState(false);
-  const [viewportW, setViewportW] = useState(1200);
-  const resumeTimer = useRef<number | null>(null);
-  const dragState = useRef({ active: false, startX: 0, startOffset: 0 });
-  const rafRef = useRef<number | null>(null);
-  const lastTs = useRef<number | null>(null);
-
-  const segment = CARDS.length * STEP;
-  const loopCards = useMemo(() => [...CARDS, ...CARDS, ...CARDS], []);
+  const [active, setActive] = useState(2);
+  const [isMobile, setIsMobile] = useState(false);
+  const total = CARDS.length;
 
   useEffect(() => {
-    const el = viewportRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(([entry]) => {
-      setViewportW(entry.contentRect.width);
-    });
-    ro.observe(el);
-    setViewportW(el.clientWidth);
-    return () => ro.disconnect();
+    const update = () => setIsMobile(window.innerWidth < 768);
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
   }, []);
 
-  const wrapOffset = useCallback(
-    (value: number) => {
-      let v = value % segment;
-      if (v < 0) v += segment;
-      return v;
-    },
-    [segment]
-  );
+  const prev = useCallback(() => {
+    setActive((i) => (i - 1 + total) % total);
+  }, [total]);
+
+  const next = useCallback(() => {
+    setActive((i) => (i + 1) % total);
+  }, [total]);
 
   useEffect(() => {
-    const tick = (ts: number) => {
-      if (lastTs.current == null) lastTs.current = ts;
-      const dt = Math.min(0.05, (ts - lastTs.current) / 1000);
-      lastTs.current = ts;
-
-      if (!paused && !dragging && !document.hidden) {
-        offsetRef.current = wrapOffset(offsetRef.current + SPEED * dt);
-        setOffset(offsetRef.current);
-      }
-
-      rafRef.current = requestAnimationFrame(tick);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') prev();
+      if (e.key === 'ArrowRight') next();
     };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [prev, next]);
 
-    rafRef.current = requestAnimationFrame(tick);
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, [paused, dragging, wrapOffset]);
-
-  const scheduleResume = () => {
-    if (resumeTimer.current) window.clearTimeout(resumeTimer.current);
-    resumeTimer.current = window.setTimeout(() => setPaused(false), 1800);
-  };
-
-  const onPointerDown = (e: React.PointerEvent) => {
-    dragState.current = {
-      active: true,
-      startX: e.clientX,
-      startOffset: offsetRef.current,
-    };
-    setDragging(true);
-    setPaused(true);
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-  };
-
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!dragState.current.active) return;
-    const dx = e.clientX - dragState.current.startX;
-    offsetRef.current = wrapOffset(dragState.current.startOffset - dx);
-    setOffset(offsetRef.current);
-  };
-
-  const onPointerUp = (e: React.PointerEvent) => {
-    if (!dragState.current.active) return;
-    dragState.current.active = false;
-    setDragging(false);
-    scheduleResume();
-    try {
-      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-    } catch {
-      // ignore
-    }
-  };
-
-  const onWheel = (e: React.WheelEvent) => {
-    if (Math.abs(e.deltaX) < Math.abs(e.deltaY) && Math.abs(e.deltaX) < 2) return;
-    e.preventDefault();
-    setPaused(true);
-    offsetRef.current = wrapOffset(offsetRef.current + e.deltaX + e.deltaY * 0.35);
-    setOffset(offsetRef.current);
-    scheduleResume();
-  };
-
-  const baseIndex = CARDS.length;
+  const cardW = isMobile ? 150 : 210;
+  const cardH = isMobile ? 220 : 310;
 
   return (
     <motion.section
-      initial={{ opacity: 0, y: 32 }}
+      initial={{ opacity: 0, y: 28 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-80px' }}
       transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-      className="relative w-full overflow-hidden bg-black pt-14 md:pt-20 pb-20 md:pb-28"
+      className="relative w-full overflow-hidden bg-black pt-14 md:pt-20 pb-16 md:pb-24"
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(0,0,0,0.75)_100%)]" />
-
-      <div className="relative mx-auto w-full max-w-[1400px] px-6 md:px-10">
-        <div className="mb-10 text-center md:mb-12">
-          <motion.p
-            initial={{ opacity: 0, y: 12 }}
+      <div className="relative mx-auto w-full max-w-[1400px] px-4 md:px-10">
+        {/* Header — centered like reference */}
+        <div className="mb-8 text-center md:mb-10">
+          <motion.span
+            initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mb-3 text-[12px] font-semibold uppercase tracking-[3px] text-[#ff5a3c]"
+            className="mb-5 inline-flex items-center rounded-full bg-[#ff5a3c]/20 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#ff5a3c]"
           >
             Our Productions
-          </motion.p>
+          </motion.span>
           <motion.h2
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 14 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.05 }}
-            className="font-display text-[38px] font-bold leading-tight tracking-tight text-white md:text-[54px] lg:text-[64px]"
+            className="font-display text-[2rem] font-bold leading-tight tracking-tight text-white md:text-5xl lg:text-6xl"
           >
             Stage Gallery
           </motion.h2>
@@ -223,122 +101,116 @@ export default function CoverflowCarousel() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.08 }}
-            className="mt-2 font-serif italic text-[26px] text-[#ff5a3c] md:text-[34px] lg:text-[40px]"
+            className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-white/60 md:text-base"
           >
-            Built for the Big Night.
-          </motion.p>
-          <motion.p
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.12 }}
-            className="mx-auto mt-4 max-w-[700px] text-sm leading-relaxed text-[#b8b8b8] md:text-base"
-          >
-            Drag through real stages featuring LED walls, luxury wedding productions, corporate
-            events, concerts, lighting setups, truss systems, fireworks, and immersive DJ
-            performances crafted by Parth Production.
+            Built for the big night — LED walls, luxury weddings, corporate stages, concerts, and
+            immersive DJ performances from the Parth Production floor.
           </motion.p>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.12, duration: 0.55 }}
-          className="relative mb-16 md:mb-20"
-        >
-          <div
-            ref={viewportRef}
-            className="relative z-10 h-[440px] cursor-grab overflow-visible active:cursor-grabbing md:h-[520px]"
-            style={{ perspective: '1400px', touchAction: 'pan-y' }}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerCancel={onPointerUp}
-            onWheel={onWheel}
-            onMouseEnter={() => setPaused(true)}
-            onMouseLeave={() => {
-              if (!dragState.current.active) setPaused(false);
-            }}
-            role="region"
-            aria-label="Stage gallery infinite carousel"
-          >
-            <div className="absolute inset-0" style={{ transformStyle: 'preserve-3d' }}>
-              {loopCards.map((card, i) => {
-                const logical = i - baseIndex;
-                const cardCenter = logical * STEP + CARD_W / 2 - offset + viewportW / 2;
-                const rel = cardCenter - viewportW / 2;
-                const normalized = rel / STEP;
-                const style = styleForOffset(normalized);
+        {/* Curved gallery stage */}
+        <div className="relative mx-auto mb-6 h-[340px] md:h-[460px] lg:h-[500px]">
+          <div className="absolute inset-0 flex items-start justify-center pt-2 md:pt-4">
+            {CARDS.map((card, index) => {
+              let offset = index - active;
+              // shortest path wrapping for continuous feel when clicking buttons
+              if (offset > total / 2) offset -= total;
+              if (offset < -total / 2) offset += total;
 
-                if (Math.abs(normalized) > 4.2) return null;
+              if (Math.abs(offset) > VISIBLE_RADIUS) return null;
 
-                const left = cardCenter - CARD_W / 2;
+              const t = cardTransform(offset, isMobile);
+              const isCenter = offset === 0;
 
-                return (
-                  <article
-                    key={`${card.id}-${i}`}
-                    className="absolute top-1/2 will-change-transform"
-                    style={{
-                      width: CARD_W,
-                      height: CARD_H,
-                      left,
-                      marginTop: -CARD_H / 2,
-                      zIndex: style.zIndex,
-                      opacity: style.opacity,
-                      transform: `translate3d(0, 0, ${style.translateZ}px) rotateY(${style.rotateY}deg) scale(${style.scale})`,
-                      transformStyle: 'preserve-3d',
-                    }}
+              return (
+                <motion.button
+                  key={card.id}
+                  type="button"
+                  onClick={() => setActive(index)}
+                  initial={false}
+                  animate={{
+                    x: t.x,
+                    y: t.y,
+                    rotate: t.rotateZ,
+                    scale: t.scale,
+                    opacity: t.opacity,
+                    zIndex: t.zIndex,
+                  }}
+                  transition={{ type: 'spring', stiffness: 260, damping: 28 }}
+                  className="absolute top-0"
+                  style={{
+                    width: cardW,
+                    height: cardH,
+                    marginLeft: -cardW / 2,
+                  }}
+                  aria-label={card.label}
+                  aria-current={isCenter ? 'true' : undefined}
+                >
+                  <div
+                    className={`relative h-full w-full overflow-hidden rounded-2xl border shadow-[0_20px_50px_rgba(0,0,0,0.55)] ${
+                      isCenter ? 'border-white/30' : 'border-white/10'
+                    }`}
                   >
-                    <div
-                      className={`relative h-full w-full overflow-hidden rounded-[24px] border bg-[#111111] shadow-[0_24px_60px_rgba(0,0,0,0.65)] ${
-                        style.isCenter ? 'border-white/25' : 'border-white/[0.08]'
-                      }`}
-                    >
-                      <Image
-                        src={card.src}
-                        alt={card.label}
-                        fill
-                        loading="lazy"
-                        sizes="280px"
-                        className="object-cover"
-                        draggable={false}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
-                      <span className="absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/10 bg-black/45 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white backdrop-blur-[16px]">
+                    <Image
+                      src={card.src}
+                      alt={card.label}
+                      fill
+                      sizes="220px"
+                      className="object-cover"
+                      draggable={false}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+                    {isCenter && (
+                      <span className="absolute bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/15 bg-black/50 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white backdrop-blur">
                         {card.label}
                       </span>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
+                    )}
+                  </div>
+                </motion.button>
+              );
+            })}
           </div>
-        </motion.div>
-
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-2 text-center md:grid-cols-3 md:gap-8">
-          {FEATURES.map((feature, i) => (
-            <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, y: 18 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.08 * i, duration: 0.45 }}
-            >
-              <h3 className="mb-3 text-xl font-semibold text-white">{feature.title}</h3>
-              <p className="mx-auto max-w-sm text-sm leading-relaxed text-white/60">
-                {feature.description}
-              </p>
-            </motion.div>
-          ))}
         </div>
 
-        <div className="mt-12 text-center">
+        {/* Nav buttons — no infinite auto scroll */}
+        <div className="mb-10 flex items-center justify-center gap-4 md:mb-12">
+          <button
+            type="button"
+            onClick={prev}
+            aria-label="Previous stage"
+            className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white transition-colors hover:border-white/40 hover:bg-white/10"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <div className="flex items-center gap-1.5">
+            {CARDS.map((card, i) => (
+              <button
+                key={card.id}
+                type="button"
+                aria-label={`Go to ${card.label}`}
+                onClick={() => setActive(i)}
+                className={`h-1.5 rounded-full transition-all ${
+                  i === active ? 'w-6 bg-[#ff5a3c]' : 'w-1.5 bg-white/25 hover:bg-white/45'
+                }`}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={next}
+            aria-label="Next stage"
+            className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white transition-colors hover:border-white/40 hover:bg-white/10"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="text-center">
           <Link
             href="/gallery"
-            className="inline-flex items-center gap-2 rounded-full border-2 border-white/20 px-8 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-white transition-colors duration-300 hover:border-white/40 hover:bg-white/5"
+            className="inline-flex items-center justify-center rounded-full bg-[#ff5a3c] px-8 py-3.5 text-sm font-bold uppercase tracking-[0.12em] text-white transition-transform hover:scale-[1.03] hover:shadow-[0_0_28px_rgba(255,90,60,0.35)]"
           >
-            View All Projects →
+            View All Projects
           </Link>
         </div>
       </div>

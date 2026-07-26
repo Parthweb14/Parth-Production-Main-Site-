@@ -176,7 +176,7 @@ export default function ServicesPage() {
           image={STAGE_IMAGES[7].src}
         />
 
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 md:px-10 py-12 md:py-16">
+        <div className="relative max-w-[1400px] mx-auto px-4 sm:px-6 md:px-10 py-12 md:py-16">
           {/* Jump chips above services — not in hero */}
           <div className="mb-10 md:mb-12 flex flex-wrap justify-center gap-2">
             {services.map((s) => {
