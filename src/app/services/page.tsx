@@ -198,7 +198,7 @@ export default function ServicesPage() {
             })}
           </div>
 
-          <div className="space-y-10 md:space-y-14">
+          <div className="space-y-16 md:space-y-28">
             {services.map((service, index) => {
               const bookHref = `${whatsappUrl}?text=${encodeURIComponent(
                 `Hi Parth Production, I want to book a ${service.bookLabel} event`

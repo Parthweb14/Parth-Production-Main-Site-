@@ -19,30 +19,37 @@ const CARDS = [
   { id: 9, label: 'Mainstage Array', src: STAGE_IMAGES[7].src },
 ];
 
-const VISIBLE_RADIUS = 3;
-const AUTO_MS = 3200;
+const VISIBLE_RADIUS = 3.4;
+/** Cards per second — continuous circular motion */
+const SPEED = 0.28;
+
+function wrapOffset(offset: number, total: number) {
+  let o = ((offset % total) + total) % total;
+  if (o > total / 2) o -= total;
+  return o;
+}
 
 function cardTransform(offset: number, isMobile: boolean) {
   const abs = Math.abs(offset);
-  const spacing = isMobile ? 128 : 182;
+  const spacing = isMobile ? 132 : 188;
   const curve = isMobile ? 14 : 22;
   const x = offset * spacing;
   const y = abs * abs * curve;
   const rotateZ = offset * (isMobile ? 7 : 9);
-  const scale = abs === 0 ? (isMobile ? 1.22 : 1.28) : Math.max(0.68, 0.98 - abs * 0.1);
-  const opacity = abs === 0 ? 1 : Math.max(0.42, 0.88 - abs * 0.14);
-  const blur = abs === 0 ? 0 : Math.min(3.2, 1.1 + abs * 0.55);
-  const zIndex = 40 - abs;
+  const scale = Math.max(0.7, 1.26 - abs * 0.16);
+  const opacity = Math.max(0.5, 1 - abs * 0.12);
+  const zIndex = Math.round(50 - abs * 10);
 
-  return { x, y, rotateZ, scale, opacity, blur, zIndex };
+  return { x, y, rotateZ, scale, opacity, zIndex };
 }
 
 export default function CoverflowCarousel() {
-  const [active, setActive] = useState(2);
+  const [progress, setProgress] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
-  const [paused, setPaused] = useState(false);
+  const progressRef = useRef(0);
+  const rafRef = useRef<number | null>(null);
+  const lastTs = useRef<number | null>(null);
   const total = CARDS.length;
-  const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const update = () => setIsMobile(window.innerWidth < 768);
@@ -51,52 +58,48 @@ export default function CoverflowCarousel() {
     return () => window.removeEventListener('resize', update);
   }, []);
 
-  const prev = useCallback(() => {
-    setActive((i) => (i - 1 + total) % total);
-  }, [total]);
-
-  const next = useCallback(() => {
-    setActive((i) => (i + 1) % total);
-  }, [total]);
-
-  // Infinite auto-loop
   useEffect(() => {
-    if (paused) return;
-    const id = window.setInterval(() => {
-      setActive((i) => (i + 1) % total);
-    }, AUTO_MS);
-    return () => window.clearInterval(id);
-  }, [paused, total]);
+    const tick = (ts: number) => {
+      if (lastTs.current == null) lastTs.current = ts;
+      const dt = Math.min(0.05, (ts - lastTs.current) / 1000);
+      lastTs.current = ts;
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (!sectionRef.current) return;
-      const rect = sectionRef.current.getBoundingClientRect();
-      const inView = rect.top < window.innerHeight && rect.bottom > 0;
-      if (!inView) return;
-      if (e.key === 'ArrowLeft') prev();
-      if (e.key === 'ArrowRight') next();
+      if (!document.hidden) {
+        progressRef.current = (progressRef.current + SPEED * dt) % total;
+        setProgress(progressRef.current);
+      }
+
+      rafRef.current = requestAnimationFrame(tick);
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [prev, next]);
 
-  const cardW = isMobile ? 158 : 230;
-  const cardH = isMobile ? 232 : 340;
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [total]);
+
+  const nudge = useCallback(
+    (dir: -1 | 1) => {
+      progressRef.current = (progressRef.current + dir + total) % total;
+      setProgress(progressRef.current);
+    },
+    [total]
+  );
+
+  const cardW = isMobile ? 168 : 240;
+  const cardH = isMobile ? 246 : 352;
+  const nearest = Math.round(progress) % total;
 
   return (
     <motion.section
-      ref={sectionRef}
       initial={{ opacity: 0, y: 28 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-80px' }}
       transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
       className="relative w-full overflow-hidden bg-black pt-14 md:pt-20 pb-16 md:pb-24"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
     >
       <div className="relative mx-auto w-full max-w-[1400px] px-4 md:px-10">
-        <div className="mb-12 text-center md:mb-16">
+        <div className="mb-16 text-center md:mb-24">
           <motion.span
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -126,42 +129,28 @@ export default function CoverflowCarousel() {
           </motion.p>
         </div>
 
-        <div className="relative mx-auto mb-6 h-[380px] md:h-[500px] lg:h-[540px]">
-          <div className="absolute inset-0 flex items-start justify-center pt-2 md:pt-4">
+        {/* Perfectly centered continuous curve carousel */}
+        <div className="relative mx-auto mb-8 flex h-[400px] items-start justify-center md:h-[520px] lg:h-[560px]">
+          <div className="relative h-full w-full max-w-5xl">
             {CARDS.map((card, index) => {
-              let offset = index - active;
-              if (offset > total / 2) offset -= total;
-              if (offset < -total / 2) offset += total;
-
+              const offset = wrapOffset(index - progress, total);
               if (Math.abs(offset) > VISIBLE_RADIUS) return null;
 
               const t = cardTransform(offset, isMobile);
-              const isCenter = offset === 0;
+              const isCenter = Math.abs(offset) < 0.35;
 
               return (
-                <motion.button
+                <div
                   key={card.id}
-                  type="button"
-                  onClick={() => setActive(index)}
-                  initial={false}
-                  animate={{
-                    x: t.x,
-                    y: t.y,
-                    rotate: t.rotateZ,
-                    scale: t.scale,
-                    opacity: t.opacity,
-                    zIndex: t.zIndex,
-                    filter: t.blur > 0 ? `blur(${t.blur}px)` : 'blur(0px)',
-                  }}
-                  transition={{ type: 'spring', stiffness: 260, damping: 28 }}
-                  className="absolute top-0"
+                  className="absolute left-1/2 top-0 will-change-transform"
                   style={{
                     width: cardW,
                     height: cardH,
                     marginLeft: -cardW / 2,
+                    zIndex: t.zIndex,
+                    opacity: t.opacity,
+                    transform: `translate3d(${t.x}px, ${t.y}px, 0) rotate(${t.rotateZ}deg) scale(${t.scale})`,
                   }}
-                  aria-label={card.label}
-                  aria-current={isCenter ? 'true' : undefined}
                 >
                   <div
                     className={`relative h-full w-full overflow-hidden rounded-2xl border shadow-[0_20px_50px_rgba(0,0,0,0.55)] ${
@@ -183,7 +172,7 @@ export default function CoverflowCarousel() {
                       </span>
                     )}
                   </div>
-                </motion.button>
+                </div>
               );
             })}
           </div>
@@ -192,11 +181,7 @@ export default function CoverflowCarousel() {
         <div className="mb-10 flex items-center justify-center gap-4 md:mb-12">
           <button
             type="button"
-            onClick={() => {
-              setPaused(true);
-              prev();
-              window.setTimeout(() => setPaused(false), 2500);
-            }}
+            onClick={() => nudge(-1)}
             aria-label="Previous stage"
             className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white transition-colors hover:border-white/40 hover:bg-white/10"
           >
@@ -209,23 +194,18 @@ export default function CoverflowCarousel() {
                 type="button"
                 aria-label={`Go to ${card.label}`}
                 onClick={() => {
-                  setPaused(true);
-                  setActive(i);
-                  window.setTimeout(() => setPaused(false), 2500);
+                  progressRef.current = i;
+                  setProgress(i);
                 }}
                 className={`h-1.5 rounded-full transition-all ${
-                  i === active ? 'w-6 bg-[#ff5a3c]' : 'w-1.5 bg-white/25 hover:bg-white/45'
+                  i === nearest ? 'w-6 bg-[#ff5a3c]' : 'w-1.5 bg-white/25 hover:bg-white/45'
                 }`}
               />
             ))}
           </div>
           <button
             type="button"
-            onClick={() => {
-              setPaused(true);
-              next();
-              window.setTimeout(() => setPaused(false), 2500);
-            }}
+            onClick={() => nudge(1)}
             aria-label="Next stage"
             className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white transition-colors hover:border-white/40 hover:bg-white/10"
           >
