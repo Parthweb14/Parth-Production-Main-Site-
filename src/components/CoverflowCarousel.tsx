@@ -19,14 +19,32 @@ const CARDS = [
   { id: 9, label: 'Mainstage Array', src: STAGE_IMAGES[7].src },
 ];
 
-const VISIBLE_RADIUS = 3.4;
-/** Cards per second — continuous circular motion */
-const SPEED = 0.28;
+/** Soft fade band at left/right edges (no hard cut) */
+const FADE_START = 2.35;
+const FADE_END = 3.55;
+/** Cards per second — continuous circular motion (opposite direction) */
+const SPEED = 0.26;
+const EASE_TO_TARGET = 5.5;
 
 function wrapOffset(offset: number, total: number) {
   let o = ((offset % total) + total) % total;
   if (o > total / 2) o -= total;
   return o;
+}
+
+function shortestDiff(from: number, to: number, total: number) {
+  let diff = to - from;
+  if (diff > total / 2) diff -= total;
+  if (diff < -total / 2) diff += total;
+  return diff;
+}
+
+function edgeFade(abs: number) {
+  if (abs <= FADE_START) return 1;
+  if (abs >= FADE_END) return 0;
+  // Smoothstep for softer fade in/out
+  const t = (abs - FADE_START) / (FADE_END - FADE_START);
+  return 1 - t * t * (3 - 2 * t);
 }
 
 function cardTransform(offset: number, isMobile: boolean) {
@@ -36,17 +54,21 @@ function cardTransform(offset: number, isMobile: boolean) {
   const x = offset * spacing;
   const y = abs * abs * curve;
   const rotateZ = offset * (isMobile ? 7 : 9);
-  const scale = Math.max(0.7, 1.26 - abs * 0.16);
-  const opacity = Math.max(0.5, 1 - abs * 0.12);
+  // Smooth center emphasis (no hard snap)
+  const centerMix = Math.max(0, 1 - abs / 0.85);
+  const scale = 0.72 + centerMix * 0.54;
+  const baseOpacity = 0.55 + centerMix * 0.45;
+  const opacity = baseOpacity * edgeFade(abs);
   const zIndex = Math.round(50 - abs * 10);
 
-  return { x, y, rotateZ, scale, opacity, zIndex };
+  return { x, y, rotateZ, scale, opacity, zIndex, centerMix };
 }
 
 export default function CoverflowCarousel() {
   const [progress, setProgress] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const progressRef = useRef(0);
+  const targetRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
   const lastTs = useRef<number | null>(null);
   const total = CARDS.length;
@@ -65,7 +87,21 @@ export default function CoverflowCarousel() {
       lastTs.current = ts;
 
       if (!document.hidden) {
-        progressRef.current = (progressRef.current + SPEED * dt) % total;
+        if (targetRef.current != null) {
+          const current = progressRef.current;
+          const target = targetRef.current;
+          const diff = shortestDiff(current, target, total);
+          if (Math.abs(diff) < 0.008) {
+            progressRef.current = ((target % total) + total) % total;
+            targetRef.current = null;
+          } else {
+            const step = diff * Math.min(1, EASE_TO_TARGET * dt);
+            progressRef.current = (current + step + total) % total;
+          }
+        } else {
+          // Opposite direction: scroll the other way continuously
+          progressRef.current = (progressRef.current - SPEED * dt + total) % total;
+        }
         setProgress(progressRef.current);
       }
 
@@ -78,17 +114,24 @@ export default function CoverflowCarousel() {
     };
   }, [total]);
 
-  const nudge = useCallback(
-    (dir: -1 | 1) => {
-      progressRef.current = (progressRef.current + dir + total) % total;
-      setProgress(progressRef.current);
+  const goTo = useCallback(
+    (index: number) => {
+      targetRef.current = ((index % total) + total) % total;
     },
     [total]
   );
 
+  const nudge = useCallback(
+    (dir: -1 | 1) => {
+      const nearest = Math.round(progressRef.current);
+      goTo(nearest + dir);
+    },
+    [goTo]
+  );
+
   const cardW = isMobile ? 168 : 240;
   const cardH = isMobile ? 246 : 352;
-  const nearest = Math.round(progress) % total;
+  const nearest = ((Math.round(progress) % total) + total) % total;
 
   return (
     <motion.section
@@ -129,15 +172,16 @@ export default function CoverflowCarousel() {
           </motion.p>
         </div>
 
-        {/* Perfectly centered continuous curve carousel */}
         <div className="relative mx-auto mb-8 flex h-[400px] items-start justify-center md:h-[520px] lg:h-[560px]">
           <div className="relative h-full w-full max-w-5xl">
             {CARDS.map((card, index) => {
               const offset = wrapOffset(index - progress, total);
-              if (Math.abs(offset) > VISIBLE_RADIUS) return null;
+              const abs = Math.abs(offset);
+              // Keep mounted through full fade range — no hard disappear
+              if (abs > FADE_END) return null;
 
               const t = cardTransform(offset, isMobile);
-              const isCenter = Math.abs(offset) < 0.35;
+              const labelOpacity = Math.max(0, Math.min(1, t.centerMix * 1.35 - 0.2));
 
               return (
                 <div
@@ -153,9 +197,13 @@ export default function CoverflowCarousel() {
                   }}
                 >
                   <div
-                    className={`relative h-full w-full overflow-hidden rounded-2xl border shadow-[0_20px_50px_rgba(0,0,0,0.55)] ${
-                      isCenter ? 'border-white/30' : 'border-white/10'
-                    }`}
+                    className="relative h-full w-full overflow-hidden rounded-2xl border shadow-[0_20px_50px_rgba(0,0,0,0.55)]"
+                    style={{
+                      borderColor:
+                        t.centerMix > 0.55
+                          ? `rgba(255,255,255,${0.12 + t.centerMix * 0.2})`
+                          : 'rgba(255,255,255,0.1)',
+                    }}
                   >
                     <Image
                       src={card.src}
@@ -166,11 +214,12 @@ export default function CoverflowCarousel() {
                       draggable={false}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
-                    {isCenter && (
-                      <span className="absolute bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/15 bg-black/50 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white backdrop-blur">
-                        {card.label}
-                      </span>
-                    )}
+                    <span
+                      className="absolute bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/15 bg-black/50 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white backdrop-blur pointer-events-none"
+                      style={{ opacity: labelOpacity }}
+                    >
+                      {card.label}
+                    </span>
                   </div>
                 </div>
               );
@@ -193,11 +242,8 @@ export default function CoverflowCarousel() {
                 key={card.id}
                 type="button"
                 aria-label={`Go to ${card.label}`}
-                onClick={() => {
-                  progressRef.current = i;
-                  setProgress(i);
-                }}
-                className={`h-1.5 rounded-full transition-all ${
+                onClick={() => goTo(i)}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
                   i === nearest ? 'w-6 bg-[#ff5a3c]' : 'w-1.5 bg-white/25 hover:bg-white/45'
                 }`}
               />
