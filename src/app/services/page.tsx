@@ -144,7 +144,7 @@ export default function ServicesPage() {
                 className="relative border-t border-white/10 py-10 md:py-14"
               >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10">
-                  {/* Always: image left → text right after image */}
+                  {/* Always: text left → image right (same for every service) */}
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
@@ -152,16 +152,7 @@ export default function ServicesPage() {
                     transition={{ duration: 0.45 }}
                     className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14 items-center"
                   >
-                    <div className="relative min-h-[260px] md:min-h-[340px] rounded-3xl overflow-hidden border border-white/10 group">
-                      <MediaImage
-                        src={service.hero}
-                        alt={service.title}
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-                    </div>
-
-                    <div className="flex flex-col justify-center items-start text-left py-1 lg:py-2 lg:pl-4">
+                    <div className="flex flex-col justify-center items-start text-left py-1 lg:py-2 order-2 lg:order-1">
                       <span className="inline-flex self-start items-center min-h-[28px] px-3 py-1 rounded-full border border-accent/40 bg-accent/10 text-[10px] uppercase tracking-[0.22em] text-accent font-semibold mb-3">
                         {service.badge}
                       </span>
@@ -182,6 +173,15 @@ export default function ServicesPage() {
                       >
                         Explore Service →
                       </a>
+                    </div>
+
+                    <div className="relative min-h-[260px] md:min-h-[340px] rounded-3xl overflow-hidden border border-white/10 group order-1 lg:order-2">
+                      <MediaImage
+                        src={service.hero}
+                        alt={service.title}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
                     </div>
                   </motion.div>
 
