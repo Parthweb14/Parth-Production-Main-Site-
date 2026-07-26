@@ -1,222 +1,178 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Maximize2, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import SpotlightNavbar from '@/components/SpotlightNavbar';
 import Footer from '@/components/Footer';
-import Image from 'next/image';
+import MediaImage from '@/components/MediaImage';
+import { STAGE_IMAGES, resolveGallerySrc } from '@/utils/media';
 
-const defaultGalleryImages = [
-  { id: 1, category: 'Weddings', title: 'Premium Varmala Stage', event: 'Wedding Ceremony', src: 'https://assets.parthproduction.in/Image%206%20Weddings.png' },
-  { id: 2, category: 'Festivals', title: 'Cultural Garba Arena', event: 'Navratri Dandiya', src: 'https://assets.parthproduction.in/Image%203%20Festivals.png' },
-  { id: 3, category: 'Concerts', title: 'Live Rock concert audio', event: 'Sunburn Arena', src: 'https://assets.parthproduction.in/Image%201%20Concert%20.png' },
-  { id: 4, category: 'Corporate', title: 'Interactive Truss rig', event: 'Launch Production', src: 'https://assets.parthproduction.in/Image%202%20Corporate%20events.png' },
-  { id: 5, category: 'Road Shows', title: 'Mobile LED Truss', event: 'Gujarat Promotion', src: 'https://assets.parthproduction.in/Image%204%20Road%20show.png' },
-  { id: 6, category: 'Weddings', title: 'Royal Reception Stage', event: 'Elite reception setup', src: 'https://assets.parthproduction.in/Image%207%20Weddings.png' },
-  { id: 7, category: 'Festivals', title: 'Neon Laser EDM show', event: 'Music Festival live', src: 'https://assets.parthproduction.in/image%2010%20.png' },
-  { id: 8, category: 'Concerts', title: 'Mainstage LED wall', event: 'Ahmedabad Concert Live', src: 'https://assets.parthproduction.in/Image%208%20Concert.png' },
-  { id: 9, category: 'Road Shows', title: 'National Roadshow Rig', event: 'Statewide Campaign', src: 'https://assets.parthproduction.in/Image%205%20Road%20show.png' }
-];
+type GalleryItem = {
+  id: string | number;
+  category: string;
+  title: string;
+  src: string;
+};
 
-const categories = ['All Events', 'Weddings', 'Festivals', 'Concerts', 'Corporate', 'Road Shows'];
+const defaults: GalleryItem[] = STAGE_IMAGES.map((img, i) => ({
+  id: i + 1,
+  category: img.title,
+  title: img.tag,
+  src: img.src,
+}));
+
+const filters = ['All', 'Weddings', 'Festivals', 'Concerts', 'Corporate', 'Road Shows'];
 
 export default function GalleryPage() {
-  const [galleryImages, setGalleryImages] = useState<any[]>(defaultGalleryImages);
-  const [selectedCategory, setSelectedCategory] = useState('All Events');
-  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [items, setItems] = useState<GalleryItem[]>(defaults);
+  const [filter, setFilter] = useState('All');
+  const [active, setActive] = useState<number | null>(null);
 
-  // Fetch gallery images dynamically on mount
   useEffect(() => {
-    async function loadKVImages() {
+    async function load() {
       try {
-        const res = await fetch(`/api/public/data?t=${Date.now()}`);
-        if (!res.ok) throw new Error('API request failed');
+        const res = await fetch('/api/public/data');
+        if (!res.ok) return;
         const data = await res.json();
-        if (data.images && data.images.length > 0) {
-          const mapped = data.images.map((item: any, idx: number) => ({
-            id: item.id || idx,
-            category: item.category,
-            title: item.category === 'Weddings' ? 'Premium Varmala Stage' : item.category === 'Festivals' ? 'Cultural Garba Arena' : item.category === 'Concerts' ? 'Live Rock concert audio' : item.category === 'Corporate' ? 'Interactive Truss rig' : 'Mobile LED Truss',
-            event: item.category === 'Weddings' ? 'Wedding Ceremony' : item.category === 'Festivals' ? 'Navratri Dandiya' : item.category === 'Concerts' ? 'Sunburn Arena' : item.category === 'Corporate' ? 'Launch Production' : 'Gujarat Promotion',
-            src: item.image_url.startsWith('/') ? `https://assets.parthproduction.in${item.image_url}` : item.image_url
-          }));
-          setGalleryImages(mapped);
-        }
-      } catch (err) {
-        console.error('Failed to load gallery images:', err);
+        if (!data.images?.length) return;
+        const mapped: GalleryItem[] = data.images.map(
+          (item: { id: string; category: string; image_url: string }, idx: number) => {
+            const fallback = defaults[idx % defaults.length].src;
+            return {
+              id: item.id || idx,
+              category: item.category || 'Events',
+              title: item.category || 'Live stage',
+              src: resolveGallerySrc(item.image_url, fallback),
+            };
+          }
+        );
+        // Keep only items that still resolve to a usable src
+        setItems(mapped.length ? mapped : defaults);
+      } catch {
+        // keep defaults
       }
     }
-    loadKVImages();
+    load();
   }, []);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (lightboxIndex === null) return;
-      if (e.key === 'Escape') setLightboxIndex(null);
-      if (e.key === 'ArrowRight') handleNext();
-      if (e.key === 'ArrowLeft') handlePrev();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [lightboxIndex]);
-
-  const filteredImages = galleryImages.filter((img) => 
-    selectedCategory === 'All Events' || img.category === selectedCategory
-  );
-
-  const handleNext = () => {
-    setLightboxIndex((prev) => {
-      if (prev === null) return null;
-      return (prev + 1) % filteredImages.length;
-    });
-  };
-
-  const handlePrev = () => {
-    setLightboxIndex((prev) => {
-      if (prev === null) return null;
-      return (prev - 1 + filteredImages.length) % filteredImages.length;
-    });
-  };
+  const filtered =
+    filter === 'All'
+      ? items
+      : items.filter((item) => {
+          const cat = item.category.toLowerCase();
+          const f = filter.toLowerCase();
+          return cat === f || cat.includes(f.replace(/s$/, '')) || f.includes(cat.replace(/s$/, ''));
+        });
 
   return (
     <>
       <SpotlightNavbar />
       <div className="film-grain" />
-
-      <div className="relative min-h-screen bg-black text-white select-none pb-20 pt-20">
-        
-        <section className="relative border-b border-white/10 px-6 md:px-12 py-14 md:py-20">
-          <div className="max-w-7xl mx-auto w-full space-y-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-accent">Gallery</p>
-            <h1 className="font-display text-4xl md:text-6xl tracking-tight text-white leading-[0.95] max-w-3xl">
-              Stages we have built
-            </h1>
-            <p className="text-white/55 text-sm md:text-base leading-relaxed max-w-lg">
-              Selected stills from weddings, festivals, concerts, and road shows.
+      <main className="pt-20">
+        <section className="px-6 md:px-10 py-16 md:py-22 border-b border-white/10">
+          <div className="max-w-7xl mx-auto">
+            <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-xs uppercase tracking-[0.22em] text-accent mb-4">
+              Gallery
+            </motion.p>
+            <motion.h1
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="font-display text-4xl md:text-6xl tracking-tight max-w-3xl"
+            >
+              Frames from the floor
+            </motion.h1>
+            <p className="mt-5 text-white/55 max-w-xl">
+              Weddings, festivals, concerts, corporate stages, and road shows — captured under Parth Production systems.
             </p>
           </div>
         </section>
 
-        <section className="border-b border-white/10 py-4 px-6 md:px-12">
-          <div className="max-w-7xl mx-auto flex flex-wrap gap-x-8 gap-y-3 text-[11px] tracking-[0.14em] uppercase items-center">
-            <span className="text-white/35 mr-2 text-[9px]">Filter</span>
-            {categories.map((cat) => {
-              const isActive = selectedCategory === cat;
-              return (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`hover:text-accent cursor-pointer transition-colors relative py-1 ${
-                    isActive ? 'text-accent font-bold' : 'text-gray-400'
-                  }`}
-                >
-                  {cat}
-                  {isActive && (
-                    <motion.div 
-                      layoutId="activeFilterUnderline"
-                      className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-accent"
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* GALLERY GRID */}
-        <section className="max-w-7xl mx-auto px-6 md:px-12 py-16">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
-            {filteredImages.map((image, idx) => (
-              <motion.div
-                layout
-                key={image.id}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.4 }}
-                className="flex flex-col justify-between group cursor-pointer"
-                onClick={() => setLightboxIndex(idx)}
+        <section className="sticky top-20 z-30 border-b border-white/10 bg-black/70 backdrop-blur-xl">
+          <div className="max-w-7xl mx-auto px-6 md:px-10 py-4 flex gap-5 overflow-x-auto scrollbar-none text-[11px] uppercase tracking-[0.18em]">
+            {filters.map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`whitespace-nowrap pb-1 border-b transition-colors ${
+                  filter === f ? 'text-accent border-accent' : 'text-white/45 border-transparent hover:text-white'
+                }`}
               >
-                <div className="relative w-full aspect-[4/3] overflow-hidden border border-white/10">
-                  <Image 
-                    src={image.src} 
-                    alt={image.title}
-                    fill
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
-                    className="object-cover transition-all duration-700 brightness-[0.8] group-hover:scale-105"
-                  />
-                  
-                  {/* Hover indicator */}
-                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
-                    <div className="w-10 h-10 rounded-full bg-black/80 border border-gray-800 flex items-center justify-center text-white backdrop-blur-sm">
-                      <Maximize2 className="w-4 h-4" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-4 space-y-1">
-                  <span className="text-[9px] uppercase tracking-widest text-accent font-semibold block">
-                    {image.category} // {image.event}
-                  </span>
-                  <h3 className="text-lg font-bold text-white uppercase tracking-tight">
-                    {image.title}
-                  </h3>
-                </div>
-              </motion.div>
+                {f}
+              </button>
             ))}
           </div>
         </section>
 
-        {/* LIGHTBOX */}
-        <AnimatePresence>
-          {lightboxIndex !== null && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[10000] bg-black/98 flex flex-col justify-center items-center px-4"
+        <section className="max-w-7xl mx-auto px-6 md:px-10 py-12 md:py-16">
+          <motion.div layout className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
+            <AnimatePresence mode="popLayout">
+              {filtered.map((image, idx) => (
+                <motion.button
+                  layout
+                  key={`${image.id}-${image.src}`}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={{ duration: 0.35 }}
+                  onClick={() => setActive(idx)}
+                  className="relative break-inside-avoid w-full overflow-hidden border border-white/10 group text-left"
+                >
+                  <div className="relative aspect-[4/5] overflow-hidden">
+                    <MediaImage
+                      src={image.src}
+                      alt={image.title}
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-accent">{image.category}</p>
+                      <p className="font-display text-lg mt-1">{image.title}</p>
+                    </div>
+                  </div>
+                </motion.button>
+              ))}
+            </AnimatePresence>
+          </motion.div>
+        </section>
+      </main>
+
+      <AnimatePresence>
+        {active !== null && filtered[active] && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[10000] bg-black/95 flex items-center justify-center px-4"
+          >
+            <button onClick={() => setActive(null)} className="absolute top-6 right-6 p-2 border border-white/15 hover:border-white">
+              <X className="w-6 h-6" />
+            </button>
+            <button
+              onClick={() => setActive((i) => (i === null ? i : (i - 1 + filtered.length) % filtered.length))}
+              className="absolute left-4 md:left-8 p-3 border border-white/15 hover:border-accent"
             >
-              <button 
-                onClick={() => setLightboxIndex(null)}
-                className="absolute top-6 right-6 p-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white cursor-pointer"
-              >
-                <X className="w-6 h-6" />
-              </button>
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <motion.img
+              key={filtered[active].src}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              src={filtered[active].src}
+              alt={filtered[active].title}
+              className="max-w-full max-h-[82vh] object-contain"
+            />
+            <button
+              onClick={() => setActive((i) => (i === null ? i : (i + 1) % filtered.length))}
+              className="absolute right-4 md:right-8 p-3 border border-white/15 hover:border-accent"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-              <button 
-                onClick={handlePrev}
-                className="absolute left-6 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white cursor-pointer"
-              >
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-
-              <div className="max-w-4xl max-h-[85vh] flex flex-col items-center">
-                <motion.img 
-                  key={filteredImages[lightboxIndex].id}
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  transition={{ duration: 0.3 }}
-                  src={filteredImages[lightboxIndex].src} 
-                  alt={filteredImages[lightboxIndex].title}
-                  className="max-w-full max-h-[80vh] object-contain rounded-xl border border-gray-800 shadow-2xl"
-                />
-              </div>
-
-              <button 
-                onClick={handleNext}
-                className="absolute right-6 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white cursor-pointer"
-              >
-                <ChevronRight className="w-6 h-6" />
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* FOOTER */}
-        <Footer />
-      </div>
+      <Footer />
     </>
   );
 }

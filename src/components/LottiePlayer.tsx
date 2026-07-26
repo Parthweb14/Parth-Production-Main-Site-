@@ -25,7 +25,7 @@ export default function LottiePlayer({ src, className }: LottiePlayerProps) {
         renderer: 'svg',
         loop: true,
         autoplay: true,
-        path: src,
+        path: encodeURI(src),
       });
     });
 

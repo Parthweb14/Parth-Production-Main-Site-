@@ -1,5 +1,6 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import SpotlightNavbar from '@/components/SpotlightNavbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/context/AuthContext';
@@ -12,77 +13,125 @@ export default function ContactPage() {
     <>
       <SpotlightNavbar />
       <div className="film-grain" />
-
-      <main className="relative min-h-screen bg-black text-white pt-20 pb-20">
-        <section className="relative px-6 md:px-12 py-20 max-w-7xl mx-auto">
-          <p className="text-xs uppercase tracking-[0.2em] text-accent mb-4">Contact</p>
-          <h1 className="font-display text-4xl sm:text-6xl md:text-7xl tracking-tight leading-[0.95] max-w-3xl">
-            Commission a stage
-          </h1>
-          <p className="mt-6 text-white/55 text-base max-w-lg leading-relaxed">
-            Share your date, venue, and scale — we will outline sound, light, and staging options.
-          </p>
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex mt-8 px-7 py-3.5 bg-accent text-black text-sm font-semibold tracking-wide uppercase hover:bg-accent/90 transition-colors"
-          >
-            WhatsApp us
-          </a>
-        </section>
-
-        <section className="max-w-7xl mx-auto px-6 md:px-12 py-12 border-t border-white/10 grid grid-cols-1 md:grid-cols-3 gap-12">
-          <div className="space-y-2">
-            <h4 className="text-xs uppercase tracking-[0.16em] text-white/40">Phone</h4>
-            <a href={`tel:+91${siteSettings.phone_1}`} className="font-display text-2xl text-white hover:text-accent block transition-colors">
-              +91 {siteSettings.phone_1}
-            </a>
-            <a href={`tel:+91${siteSettings.phone_2}`} className="text-sm text-white/50 hover:text-accent block transition-colors">
-              +91 {siteSettings.phone_2}
-            </a>
-          </div>
-
-          <div className="space-y-2">
-            <h4 className="text-xs uppercase tracking-[0.16em] text-white/40">Digital</h4>
-            <a
-              href="https://www.instagram.com/parthproduction"
+      <main className="pt-20">
+        <section className="relative px-6 md:px-10 py-16 md:py-24 border-b border-white/10 overflow-hidden">
+          <motion.div
+            aria-hidden
+            className="absolute left-1/2 top-0 -translate-x-1/2 w-[520px] h-[520px] rounded-full bg-accent/15 blur-3xl"
+            animate={{ opacity: [0.25, 0.5, 0.25] }}
+            transition={{ duration: 5, repeat: Infinity }}
+          />
+          <div className="max-w-7xl mx-auto relative">
+            <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-xs uppercase tracking-[0.22em] text-accent mb-4">
+              Contact
+            </motion.p>
+            <motion.h1
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="font-display text-4xl md:text-6xl lg:text-7xl tracking-tight max-w-4xl leading-[0.95]"
+            >
+              Tell us the date.
+              <br />
+              We’ll build the night.
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="mt-6 text-white/60 max-w-xl text-base md:text-lg"
+            >
+              Share venue, guest count, and vibe — sound, light, SFX, truss, fireworks, DJ. One crew.
+            </motion.p>
+            <motion.a
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.16 }}
+              href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-display text-2xl text-white hover:text-accent block transition-colors"
+              className="inline-flex mt-9 px-8 py-3.5 bg-accent text-black text-sm font-semibold tracking-wide uppercase hover:bg-accent/90"
             >
-              @parthproduction
-            </a>
-            <a href={`mailto:${siteSettings.email}`} className="text-sm text-white/50 hover:text-accent block transition-colors break-all">
-              {siteSettings.email}
-            </a>
-          </div>
-
-          <div className="space-y-2">
-            <h4 className="text-xs uppercase tracking-[0.16em] text-white/40">Studio</h4>
-            <p className="font-display text-xl text-white leading-snug">
-              {siteSettings.address || 'Gaurav Path Road, Palanpur, Surat, Gujarat'}
-            </p>
+              WhatsApp Parth Production
+            </motion.a>
           </div>
         </section>
 
-        <section className="max-w-7xl mx-auto px-6 md:px-12 py-12">
-          <div className="relative overflow-hidden border border-white/10 bg-[#0c0c0d]">
+        <section className="max-w-7xl mx-auto px-6 md:px-10 py-14 md:py-20 grid grid-cols-1 md:grid-cols-3 gap-10 border-b border-white/10">
+          {[
+            {
+              label: 'Phone',
+              body: (
+                <>
+                  <a href={`tel:+91${siteSettings.phone_1}`} className="font-display text-2xl hover:text-accent block">
+                    +91 {siteSettings.phone_1}
+                  </a>
+                  <a href={`tel:+91${siteSettings.phone_2}`} className="text-sm text-white/50 hover:text-accent block mt-1">
+                    +91 {siteSettings.phone_2}
+                  </a>
+                </>
+              ),
+            },
+            {
+              label: 'Digital',
+              body: (
+                <>
+                  <a
+                    href="https://www.instagram.com/parthproduction"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-display text-2xl hover:text-accent block"
+                  >
+                    @parthproduction
+                  </a>
+                  <a href={`mailto:${siteSettings.email}`} className="text-sm text-white/50 hover:text-accent block mt-1 break-all">
+                    {siteSettings.email}
+                  </a>
+                </>
+              ),
+            },
+            {
+              label: 'Studio',
+              body: (
+                <p className="font-display text-xl leading-snug">
+                  {siteSettings.address || 'Gaurav Path Road, Palanpur, Surat, Gujarat'}
+                </p>
+              ),
+            },
+          ].map((block, i) => (
+            <motion.div
+              key={block.label}
+              initial={{ opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.08 }}
+            >
+              <p className="text-[11px] uppercase tracking-[0.2em] text-white/40 mb-3">{block.label}</p>
+              {block.body}
+            </motion.div>
+          ))}
+        </section>
+
+        <section className="max-w-7xl mx-auto px-6 md:px-10 py-12 md:py-16">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="relative overflow-hidden border border-white/10"
+          >
             <iframe
-              src={`https://maps.google.com/maps?q=${encodeURIComponent(siteSettings.address || 'Parth Production, Gaurav Path Road, Surat')}&t=&z=16&ie=UTF8&iwloc=&output=embed`}
+              src={`https://maps.google.com/maps?q=${encodeURIComponent(siteSettings.address || 'Parth Production, Surat')}&t=&z=16&ie=UTF8&iwloc=&output=embed`}
               width="100%"
               height="420"
               style={{ border: 0 }}
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              className="w-full grayscale invert opacity-50 contrast-125 hover:opacity-75 transition-opacity duration-500"
               title="Parth Production location"
+              className="w-full grayscale invert opacity-55 contrast-125 hover:opacity-80 transition-opacity duration-500"
             />
-          </div>
+          </motion.div>
         </section>
       </main>
-
       <Footer />
     </>
   );

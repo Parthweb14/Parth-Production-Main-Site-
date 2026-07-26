@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { LOGO_PNG } from '@/utils/media';
 
 const navItems = [
   { label: 'Services', href: '/services' },
@@ -19,36 +20,52 @@ export default function SpotlightNavbar() {
   const { siteSettings } = useAuth();
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 h-20 z-50 flex items-center justify-between px-6 md:px-12 bg-black/55 backdrop-blur-md border-b border-white/10">
-        <Link href="/" className="flex items-center gap-3 min-w-0">
+      <motion.header
+        initial={{ y: -24, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.6 }}
+        className={`fixed top-0 left-0 right-0 h-20 z-50 flex items-center justify-between px-5 md:px-10 transition-colors duration-300 ${
+          scrolled ? 'bg-black/75 backdrop-blur-xl border-b border-white/10' : 'bg-transparent'
+        }`}
+      >
+        <Link href="/" className="flex items-center gap-3 min-w-0 group">
           <img
-            src="https://assets.parthproduction.in/Parth%20logo%20bg%20.png"
+            src={LOGO_PNG}
             alt="Parth Production"
-            className="h-12 md:h-14 w-auto object-contain"
-            onError={(e) => {
-              e.currentTarget.src = '/logo.png';
-            }}
+            className="h-12 md:h-14 w-auto object-contain transition-transform duration-500 group-hover:scale-105"
           />
-          <span className="hidden sm:block font-display text-lg tracking-tight text-white truncate">
-            Parth Production
-          </span>
+          <span className="hidden sm:block font-display text-lg tracking-tight">Parth Production</span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-7">
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
+            const active = pathname === item.href;
             return (
               <Link
                 key={item.label}
                 href={item.href}
-                className={`text-xs tracking-[0.16em] uppercase transition-colors ${
-                  isActive ? 'text-white' : 'text-white/55 hover:text-white'
+                className={`relative text-xs tracking-[0.18em] uppercase transition-colors ${
+                  active ? 'text-white' : 'text-white/55 hover:text-white'
                 }`}
               >
                 {item.label}
+                {active && (
+                  <motion.span
+                    layoutId="nav-underline"
+                    className="absolute -bottom-2 left-0 right-0 h-px bg-accent"
+                  />
+                )}
               </Link>
             );
           })}
@@ -56,41 +73,45 @@ export default function SpotlightNavbar() {
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="ml-2 px-4 py-2 bg-accent text-black text-xs font-semibold tracking-[0.14em] uppercase hover:bg-accent/90 transition-colors"
+            className="ml-1 px-4 py-2 bg-accent text-black text-xs font-semibold tracking-[0.14em] uppercase hover:bg-accent/90 transition-colors"
           >
-            Book
+            Book now
           </a>
         </nav>
 
         <button
-          onClick={() => setMobileOpen(!mobileOpen)}
+          onClick={() => setMobileOpen((v) => !v)}
           className="md:hidden p-2 text-white"
-          aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+          aria-label="Menu"
         >
           {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
-      </header>
+      </motion.header>
 
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -12 }}
+            initial={{ opacity: 0, y: -16 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            className="fixed inset-0 bg-black z-40 md:hidden flex flex-col pt-24 px-6 pb-8"
+            exit={{ opacity: 0, y: -16 }}
+            className="fixed inset-0 bg-[#050505] z-40 md:hidden flex flex-col pt-24 px-6 pb-8"
           >
-            <div className="flex flex-col gap-5 text-lg">
-              {navItems.map((item) => (
-                <Link
+            <div className="flex flex-col gap-5 text-2xl font-display">
+              {navItems.map((item, i) => (
+                <motion.div
                   key={item.label}
-                  href={item.href}
-                  onClick={() => setMobileOpen(false)}
-                  className={`pb-4 border-b border-white/10 ${
-                    pathname === item.href ? 'text-white' : 'text-white/55'
-                  }`}
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.05 * i }}
                 >
-                  {item.label}
-                </Link>
+                  <Link
+                    href={item.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={pathname === item.href ? 'text-accent' : 'text-white'}
+                  >
+                    {item.label}
+                  </Link>
+                </motion.div>
               ))}
             </div>
             <a

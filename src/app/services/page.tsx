@@ -1,238 +1,203 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import SpotlightNavbar from '@/components/SpotlightNavbar';
 import Footer from '@/components/Footer';
+import MediaImage from '@/components/MediaImage';
 import { useAuth } from '@/context/AuthContext';
+import { CRAFT, STAGE_IMAGES, resolveGallerySrc } from '@/utils/media';
 
-const servicesData = [
+type ServiceItem = {
+  id: number;
+  title: string;
+  subtitle: string;
+  description: string;
+  image: string;
+  points: string[];
+};
+
+const DEFAULT_SERVICES: ServiceItem[] = [
   {
     id: 1,
-    title: 'WEDDINGS',
-    subtitle: 'Premium DJ & Stage Audio',
-    description: 'Make your big day unforgettable with the perfect soundtrack. From romantic melodies during the vows to high-energy beats at the reception, we create the right mood for every moment of your wedding.',
-    features: [
-      'Custom Bridal Entry Music',
-      'Intelligent Lighting Programs',
-      'High-Definition sound systems',
-      'SFX Sparklers & Dry-Ice Low Fog'
-    ],
-    image: 'https://assets.parthproduction.in/Image%206%20Weddings.png',
+    title: 'Weddings',
+    subtitle: 'Ceremony to reception',
+    description: 'Varmala cues, bridal entries, dance floors, and romantic lighting looks that feel cinematic without losing the moment.',
+    image: STAGE_IMAGES[0].src,
+    points: ['Custom entry mixes', 'Intelligent lighting', 'Sparklers & fog', 'Full dance floor audio'],
   },
   {
     id: 2,
-    title: 'CONCERTS',
-    subtitle: 'Stadium Live Production',
-    description: 'From intimate live performances to massive stadium gigs, our expert DJs and technical team provide world-class sound and lights to amplify the impact of every performance.',
-    features: [
-      'Line Array Riggings',
-      'High decibel bass layouts',
-      'Digital Audio Mixers',
-      'Heavy Duty Truss frames'
-    ],
-    image: 'https://assets.parthproduction.in/Image%201%20Concert%20.png',
+    title: 'Concerts',
+    subtitle: 'Arena-ready systems',
+    description: 'Line arrays, heavy truss, and light programming built for bands, DJs, and festival-scale energy.',
+    image: STAGE_IMAGES[1].src,
+    points: ['Line array rigging', 'Digital consoles', 'Heavy-duty truss', 'Stage monitoring'],
   },
   {
     id: 3,
-    title: 'FESTIVALS',
-    subtitle: 'Vibrant Arena Mixes',
-    description: 'Turn up the energy at any festival with Parth Production! We bring powerful sound systems, vibrant lights, and electrifying mixes that keep the crowd moving.',
-    features: [
-      'Vast outdoor system coverage',
-      'Dandiya & Garba specialist mixes',
-      'Strobe & Laser sky projection',
-      'High voltage generator backups'
-    ],
-    image: 'https://assets.parthproduction.in/Image%203%20Festivals.png',
+    title: 'Festivals',
+    subtitle: 'Garba to EDM',
+    description: 'Wide coverage sound fields, laser skies, and generator-backed nights that never drop the pulse.',
+    image: STAGE_IMAGES[2].src,
+    points: ['Outdoor coverage', 'Lasers & strobes', 'Generator grids', 'Crowd-first mixes'],
   },
   {
     id: 4,
-    title: 'CORPORATE EVENTS',
-    subtitle: 'Sleek Corporate Meets',
-    description: 'Rigging crystal clear presentation audios, moving head visual beams, and sleek stage production structures for summits and product launches.',
-    features: [
-      'UHF Wireless Lapel Mics',
-      'High-contrast backdrop LED screens',
-      'Silent Generators setup',
-      'Corporate Podium & Stage layout'
-    ],
-    image: 'https://assets.parthproduction.in/Image%202%20Corporate%20events.png',
+    title: 'Corporate',
+    subtitle: 'Keynotes & launches',
+    description: 'Clean speech, LED canvases, and polished stage looks for product drops and leadership stages.',
+    image: STAGE_IMAGES[3].src,
+    points: ['Wireless mics', 'LED walls', 'Silent power', 'Podium staging'],
   },
   {
     id: 5,
-    title: 'ROAD SHOWS',
-    subtitle: 'High-Impact Mobile Visuals',
-    description: 'Custom engineered truck-mounted LED displays, silent generator rigs, and concert truss line arrays bringing high impact mobile audio visuals.',
-    features: [
-      'Truck mounted truss gates',
-      'Shockproof audio brackets',
-      'Ultra bright daylight LED walls',
-      'Mobile power generators fleet'
-    ],
-    image: 'https://assets.parthproduction.in/Image%204%20Road%20show.png',
-  }
+    title: 'Road Shows',
+    subtitle: 'Mobile spectacle',
+    description: 'Truck-mounted visuals, shock-ready audio, and daylight LED that travels with the campaign.',
+    image: STAGE_IMAGES[4].src,
+    points: ['Mobile LED', 'Touring audio', 'Quick deploy truss', 'Power fleet'],
+  },
+  {
+    id: 6,
+    title: 'SFX & Pyro',
+    subtitle: 'Finale moments',
+    description: 'Timed SFX, cold pyro, and firework-ready finales for the beat drop everyone waits for.',
+    image: STAGE_IMAGES[6].src,
+    points: ['Cold sparklers', 'CO₂ & fog', 'Cue sync', 'Firework coordination'],
+  },
 ];
-
-// Fallback client image rendering boundary
-function SafeImage({ src, alt, className }: { src: string; alt: string; className?: string }) {
-  const [imgSrc, setImgSrc] = useState(src);
-
-  useEffect(() => {
-    setImgSrc(src);
-  }, [src]);
-
-  const handleError = () => {
-    if (imgSrc.includes('assets.parthproduction.in')) {
-      setImgSrc(imgSrc.replace('assets.parthproduction.in', 'pub-f7e582206f9d4cf49fa1d710c6c8b5e9.r2.dev'));
-    }
-  };
-
-  return (
-    <img
-      src={imgSrc}
-      alt={alt}
-      onError={handleError}
-      className={className}
-      loading="lazy"
-    />
-  );
-}
 
 export default function ServicesPage() {
   const { siteSettings } = useAuth();
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
-
-  const [images, setImages] = useState<Record<number, string>>({
-    1: 'https://assets.parthproduction.in/Image%206%20Weddings.png',
-    2: 'https://assets.parthproduction.in/Image%201%20Concert%20.png',
-    3: 'https://assets.parthproduction.in/Image%203%20Festivals.png',
-    4: 'https://assets.parthproduction.in/Image%202%20Corporate%20events.png',
-    5: 'https://assets.parthproduction.in/Image%204%20Road%20show.png'
-  });
+  const [services, setServices] = useState(DEFAULT_SERVICES);
 
   useEffect(() => {
-    async function loadKVServices() {
+    async function load() {
       try {
-        const res = await fetch(`/api/public/data?t=${Date.now()}`);
-        if (!res.ok) throw new Error('API request failed');
+        const res = await fetch('/api/public/data');
+        if (!res.ok) return;
         const data = await res.json();
-        if (data.services && data.services.length > 0) {
-          const mapped: Record<number, string> = {};
-          data.services.forEach((item: any) => {
-            mapped[item.id] = item.image_url.startsWith('/') ? `https://assets.parthproduction.in${item.image_url}` : item.image_url;
-          });
-          setImages(prev => ({ ...prev, ...mapped }));
-        }
-      } catch (err) {
-        console.error('Failed to load service cover images:', err);
+        if (!data.services?.length) return;
+        setServices((prev) =>
+          prev.map((service) => {
+            const match = data.services.find((s: { id: number; image_url: string; service_title?: string }) => s.id === service.id);
+            if (!match) return service;
+            return {
+              ...service,
+              image: resolveGallerySrc(match.image_url, service.image),
+              title: match.service_title || service.title,
+            };
+          })
+        );
+      } catch {
+        // keep defaults
       }
     }
-    loadKVServices();
+    load();
   }, []);
 
   return (
     <>
       <SpotlightNavbar />
       <div className="film-grain" />
-
-      <div className="relative min-h-screen bg-black text-white select-none overflow-x-hidden pb-20 pt-20">
-        
-        <section className="relative border-b border-white/10 px-6 md:px-12 py-14 md:py-20">
-          <div className="max-w-7xl mx-auto w-full space-y-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-accent">Services</p>
-            <h1 className="font-display text-4xl md:text-6xl tracking-tight text-white leading-[0.95] max-w-3xl">
-              Production systems for every stage
-            </h1>
-            <p className="text-white/55 text-sm md:text-base leading-relaxed max-w-lg">
-              Sound, lighting, staging, and power packages for weddings, festivals, concerts, and road shows.
-            </p>
+      <main className="pt-20">
+        <section className="relative px-6 md:px-10 py-16 md:py-24 overflow-hidden border-b border-white/10">
+          <motion.div
+            aria-hidden
+            animate={{ opacity: [0.2, 0.45, 0.2], scale: [1, 1.08, 1] }}
+            transition={{ duration: 8, repeat: Infinity }}
+            className="absolute -right-20 top-10 w-72 h-72 rounded-full bg-accent/20 blur-3xl"
+          />
+          <div className="max-w-7xl mx-auto relative">
+            <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-xs uppercase tracking-[0.22em] text-accent mb-4">
+              Services
+            </motion.p>
+            <motion.h1
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="font-display text-4xl md:text-6xl lg:text-7xl tracking-tight max-w-4xl leading-[0.95]"
+            >
+              Full-stack live production
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.12 }}
+              className="mt-6 text-white/60 max-w-2xl text-base md:text-lg"
+            >
+              From first mic check to final firework — sound, light, SFX, truss, and DJ artistry under one crew.
+            </motion.p>
           </div>
         </section>
 
-        {/* SERVICES FLEX/GRID SHOWCASE (Aligned at the top) */}
-        <section className="max-w-7xl mx-auto px-6 md:px-12 py-16">
-          <div className="flex flex-wrap gap-8 items-start">
-            {servicesData.map((service, idx) => {
-              // Service 1, 2, 4 are Portrait (aspect-[3/4])
-              // Service 3, 5 are Landscape (aspect-[16/9])
-              const isPortrait = service.id === 1 || service.id === 2 || service.id === 4;
-              
-              return (
-                <motion.div
-                  key={service.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.08 }}
-                  className={`flex flex-col justify-between group ${
-                    isPortrait 
-                      ? 'w-full sm:w-[calc(50%-16px)] lg:w-[calc(33.333%-22px)]' 
-                      : 'w-full lg:w-[calc(66.666%-12px)]'
-                  }`}
-                >
-                  <div className="mb-4 space-y-1">
-                    <h3 className="font-display text-2xl text-white tracking-tight leading-tight">
-                      {service.title}
-                    </h3>
-                    <p className="text-xs uppercase tracking-[0.16em] text-accent">
-                      {service.subtitle}
-                    </p>
-                  </div>
+        <section className="border-b border-white/10 py-8 overflow-hidden">
+          <div className="marquee-track flex w-max gap-8 text-xs uppercase tracking-[0.24em] text-white/50">
+            {[...Array(2)].map((_, loop) => (
+              <div key={loop} className="flex gap-8 px-4">
+                {CRAFT.map((c) => (
+                  <span key={`${loop}-${c.title}`} className="flex items-center gap-8">
+                    {c.title}
+                    <span className="text-accent">/</span>
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
+        </section>
 
-                  <div 
-                    className={`relative w-full overflow-hidden border border-white/10 bg-black/60 ${
-                      isPortrait ? 'aspect-[3/4]' : 'aspect-[16/9]'
-                    }`}
+        <section className="max-w-7xl mx-auto px-6 md:px-10 py-16 md:py-24 space-y-20 md:space-y-28">
+          {services.map((service, idx) => {
+            const reverse = idx % 2 === 1;
+            return (
+              <motion.article
+                key={service.id}
+                initial={{ opacity: 0, y: 32 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-80px' }}
+                transition={{ duration: 0.65 }}
+                className={`grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14 items-center ${reverse ? 'lg:[&>*:first-child]:order-2' : ''}`}
+              >
+                <div className="relative aspect-[4/5] overflow-hidden border border-white/10 group">
+                  <MediaImage
+                    src={service.image}
+                    alt={service.title}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                  <span className="absolute top-5 left-5 text-[10px] uppercase tracking-[0.2em] text-accent">
+                    0{idx + 1}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-accent mb-3">{service.subtitle}</p>
+                  <h2 className="font-display text-3xl md:text-5xl tracking-tight mb-4">{service.title}</h2>
+                  <p className="text-white/60 leading-relaxed mb-6">{service.description}</p>
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
+                    {service.points.map((point) => (
+                      <li key={point} className="text-sm text-white/80 border-l border-accent/70 pl-3">
+                        {point}
+                      </li>
+                    ))}
+                  </ul>
+                  <a
+                    href={`${whatsappUrl}?text=${encodeURIComponent(`Hi Parth Production, I want to book ${service.title}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-black text-xs font-semibold tracking-[0.16em] uppercase hover:bg-accent/90 transition-colors"
                   >
-                    <SafeImage
-                      src={images[service.id] || service.image}
-                      alt={service.title}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                    
-                    {/* Dark gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10" />
-
-                    {/* Features checklist inside the card layout overlay */}
-                    <div className="absolute bottom-6 left-6 right-6 z-20 space-y-3">
-                      <p className="text-gray-300 text-xs font-light leading-relaxed line-clamp-2 md:line-clamp-none">
-                        {service.description}
-                      </p>
-                      
-                      <ul className="hidden sm:block space-y-1 text-[11px] text-gray-400 font-sans">
-                        {service.features.slice(0, 3).map((feature, fIdx) => (
-                          <li key={fIdx} className="flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-                            <span>{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-
-                  {/* 4. Book Now Button under the images */}
-                  <div className="pt-6">
-                    <a 
-                      href={whatsappUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full py-3.5 bg-accent text-black hover:bg-accent/90 text-xs font-semibold tracking-wider uppercase flex items-center justify-center gap-2 transition-colors"
-                    >
-                      Book Now
-                      <ArrowRight className="w-4 h-4 text-black" />
-                    </a>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
+                    Book {service.title} <ArrowUpRight className="w-4 h-4" />
+                  </a>
+                </div>
+              </motion.article>
+            );
+          })}
         </section>
-
-        {/* FOOTER */}
-        <Footer />
-      </div>
+      </main>
+      <Footer />
     </>
   );
 }

@@ -3,51 +3,46 @@
 @theme {
   --font-sans: var(--font-sans), "DM Sans", system-ui, sans-serif;
   --font-display: var(--font-display), "Syne", system-ui, sans-serif;
-  --color-primary: #000000;
-  --color-secondary: #111111;
+  --color-primary: #050505;
+  --color-secondary: #101010;
   --color-accent: #FF5F1F;
-  --color-gray-100: #FFFFFF;
-  --color-gray-300: #A1A1A1;
-  --color-gray-400: #737373;
-  --color-gray-800: #262626;
-
-  --animate-fade-in-up: fadeInUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  --animate-scale-in: scaleIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  --color-glow: #FFB347;
+  --animate-marquee: marquee 28s linear infinite;
+  --animate-pulse-soft: pulseSoft 3.2s ease-in-out infinite;
+  --animate-float-y: floatY 5s ease-in-out infinite;
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+@keyframes pulseSoft {
+  0%, 100% { opacity: 0.45; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.04); }
+}
+
+@keyframes floatY {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% center; }
+  100% { background-position: -200% center; }
 }
 
 :root {
-  --background: #000000;
+  --background: #050505;
   --foreground: #FFFFFF;
 }
 
 body {
   font-family: var(--font-sans);
   background:
-    radial-gradient(1200px 600px at 80% -10%, rgba(255, 95, 31, 0.12), transparent 55%),
-    radial-gradient(900px 500px at 0% 20%, rgba(255, 255, 255, 0.04), transparent 50%),
-    #000000;
+    radial-gradient(900px 480px at 85% -5%, rgba(255, 95, 31, 0.16), transparent 55%),
+    radial-gradient(700px 420px at 5% 30%, rgba(255, 179, 71, 0.06), transparent 50%),
+    #050505;
   color: #FFFFFF;
   overflow-x: hidden;
   scroll-behavior: smooth;
@@ -57,30 +52,28 @@ body {
   font-family: var(--font-display);
 }
 
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #000000;
-}
-::-webkit-scrollbar-thumb {
-  background: #262626;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #737373;
+.text-shimmer {
+  background: linear-gradient(90deg, #fff 0%, #FF5F1F 40%, #FFB347 60%, #fff 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 4.5s linear infinite;
 }
 
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
+.marquee-track {
+  animation: var(--animate-marquee);
 }
+
+.scrollbar-none::-webkit-scrollbar { display: none; }
 .scrollbar-none {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
 ::selection {
-  background: rgba(255, 95, 31, 0.25);
-  color: #FFFFFF;
+  background: rgba(255, 95, 31, 0.28);
+  color: #fff;
 }
 
 .film-grain {
@@ -88,8 +81,15 @@ body {
   inset: 0;
   width: 100vw;
   height: 100vh;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.02;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.025;
   pointer-events: none;
   z-index: 9999;
+}
+
+.snap-x-mandatory {
+  scroll-snap-type: x mandatory;
+}
+.snap-start {
+  scroll-snap-align: start;
 }

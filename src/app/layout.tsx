@@ -21,24 +21,27 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'Parth Production | Sound, Light & Stage',
+  title: 'Parth Production | One Stop Solution For Unforgettable Moments',
   description:
-    'Premium soundscapes, event lighting, and modular stage systems for weddings, festivals, and concerts across India.',
+    'Sound, light, SFX, truss, fireworks, and DJ production for weddings, festivals, concerts, and corporate events across India.',
   keywords: [
     'Parth Production',
-    'event management',
-    'wedding production',
+    'event production',
     'sound system',
-    'lighting design',
-    'Gujarat events',
+    'stage lighting',
+    'SFX',
+    'truss',
+    'fireworks',
+    'DJ',
+    'Gujarat',
   ],
   icons: {
     icon: [
-      { url: '/favicon-96x96.png?v=4', sizes: '96x96', type: 'image/png' },
-      { url: '/favicon.svg?v=4', type: 'image/svg+xml' },
+      { url: '/favicon-96x96.png?v=5', sizes: '96x96', type: 'image/png' },
+      { url: '/Parth logo .png?v=5', type: 'image/png' },
     ],
-    shortcut: '/favicon.ico?v=4',
-    apple: [{ url: '/apple-touch-icon.png?v=4', sizes: '180x180', type: 'image/png' }],
+    shortcut: '/favicon.ico?v=5',
+    apple: [{ url: '/apple-touch-icon.png?v=5', sizes: '180x180', type: 'image/png' }],
   },
   manifest: '/site.webmanifest',
 };
@@ -51,10 +54,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${syne.variable} ${dmSans.variable} dark h-full antialiased`}>
       <head>
-        <link rel="preload" href="/Logo.json" as="fetch" crossOrigin="anonymous" />
-        <link rel="preload" href="/logo.png" as="image" />
+        <link rel="preload" href="/Parth Logo .json" as="fetch" crossOrigin="anonymous" />
+        <link rel="preload" href="/Parth logo .png" as="image" />
+        <link rel="icon" href="/Parth logo .png?v=5" type="image/png" />
       </head>
-      <body className="min-h-full bg-black text-white flex flex-col font-sans overflow-x-hidden">
+      <body className="min-h-full bg-[#050505] text-white flex flex-col font-sans overflow-x-hidden">
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
