@@ -10,71 +10,83 @@ import LiquidGlassBackdrop from '@/components/LiquidGlassBackdrop';
 import { useAuth } from '@/context/AuthContext';
 import { STAGE_IMAGES, resolveGallerySrc } from '@/utils/media';
 
-type ServiceItem = {
+type ServiceBlock = {
   id: number;
   title: string;
+  badge: string;
   subtitle: string;
-  description: string;
-  image: string;
-  tag: string;
-  featured?: boolean;
+  summary: string;
+  detail: string;
+  hero: string;
+  gallery: string[];
+  bookLabel: string;
 };
 
-const DEFAULT_SERVICES: ServiceItem[] = [
+const DEFAULT_SERVICES: ServiceBlock[] = [
   {
     id: 2,
     title: 'Concerts',
-    subtitle: 'Arena-ready systems',
-    description:
+    badge: 'FLAGSHIP SERVICE',
+    subtitle: 'Arena-Ready Systems',
+    summary:
       'Line arrays, heavy truss, and light programming built for bands, DJs, and festival-scale energy that fills every seat.',
-    image: STAGE_IMAGES[1].src,
-    tag: 'Flagship Service',
-    featured: true,
+    detail:
+      'From load-in to final cue, our concert systems are engineered for clarity under pressure. We deploy line arrays, digital consoles, heavy-duty truss, and stage monitoring so artists hear themselves cleanly and crowds feel every drop. Lighting looks are programmed to the set — not improvised at the last minute — so the night reads as one continuous production.',
+    hero: STAGE_IMAGES[1].src,
+    gallery: [STAGE_IMAGES[7].src, STAGE_IMAGES[1].src, STAGE_IMAGES[6].src],
+    bookLabel: 'Concert',
   },
   {
     id: 1,
     title: 'Weddings',
-    subtitle: 'Ceremony to reception',
-    description:
-      'Varmala cues, bridal entries, and dance-floor lighting that feels cinematic without losing the moment.',
-    image: STAGE_IMAGES[0].src,
-    tag: 'Weddings',
+    badge: 'WEDDINGS',
+    subtitle: 'Ceremony to Reception',
+    summary:
+      'Varmala cues, bridal entries, and dance-floor lighting that feels cinematic without losing the intimacy of the moment.',
+    detail:
+      'A wedding is a sequence of emotional beats — and we build sound, light, and SFX around each one. Bridal entries, varmala cues, family performances, and the open dance floor all get their own mix and look. Sparklers, fog, and intelligent lighting stay tasteful and timed so photos stay clean and guests stay in the feeling.',
+    hero: STAGE_IMAGES[0].src,
+    gallery: [STAGE_IMAGES[0].src, STAGE_IMAGES[5].src, STAGE_IMAGES[6].src],
+    bookLabel: 'Wedding',
   },
   {
     id: 3,
     title: 'Festivals',
+    badge: 'FESTIVALS',
     subtitle: 'Garba to EDM',
-    description:
-      'Wide coverage sound, laser skies, and generator-backed nights that never drop the pulse.',
-    image: STAGE_IMAGES[2].src,
-    tag: 'Festivals',
+    summary:
+      'Wide coverage sound fields, laser skies, and generator-backed nights that never drop the pulse.',
+    detail:
+      'Outdoor festivals demand coverage, power, and stamina. We design wide-field audio, laser and strobe skies, and generator grids that hold through long sets. Whether it is garba season or an EDM mainstage, the system is built for crowds that move — and for nights that do not end early.',
+    hero: STAGE_IMAGES[2].src,
+    gallery: [STAGE_IMAGES[2].src, STAGE_IMAGES[6].src, STAGE_IMAGES[8].src],
+    bookLabel: 'Festival',
   },
   {
     id: 4,
     title: 'Corporate',
-    subtitle: 'Keynotes & launches',
-    description:
+    badge: 'CORPORATE',
+    subtitle: 'Keynotes & Launches',
+    summary:
       'Clean speech, LED canvases, and polished stage looks for product drops and leadership stages.',
-    image: STAGE_IMAGES[3].src,
-    tag: 'Corporate',
+    detail:
+      'Corporate stages need clarity first — then impact. We deliver wireless mics that stay intelligible, LED walls that support the brand story, and silent power that keeps the room focused. From product launches to annual keynotes, the production stays sharp, on-brand, and rehearsal-ready.',
+    hero: STAGE_IMAGES[3].src,
+    gallery: [STAGE_IMAGES[3].src, STAGE_IMAGES[7].src, STAGE_IMAGES[4].src],
+    bookLabel: 'Corporate',
   },
   {
     id: 5,
     title: 'Road Shows',
-    subtitle: 'Mobile spectacle',
-    description:
-      'Truck-mounted visuals, touring audio, and daylight LED that travels with the campaign.',
-    image: STAGE_IMAGES[4].src,
-    tag: 'Roadshows',
-  },
-  {
-    id: 6,
-    title: 'SFX & Pyro',
-    subtitle: 'Finale moments',
-    description:
-      'Timed SFX, cold pyro, and firework-ready finales for the beat drop everyone waits for.',
-    image: STAGE_IMAGES[6].src,
-    tag: 'SFX',
+    badge: 'ROAD SHOWS',
+    subtitle: 'Mobile Spectacle',
+    summary:
+      'Truck-mounted visuals, shock-ready audio, and daylight LED that travels with the campaign.',
+    detail:
+      'Road shows move fast and the gear has to move faster. We build mobile LED, touring audio, quick-deploy truss, and a power fleet that survives daylight stages and night finales. Every stop looks intentional — not like a compromise for the road.',
+    hero: STAGE_IMAGES[4].src,
+    gallery: [STAGE_IMAGES[4].src, STAGE_IMAGES[8].src, STAGE_IMAGES[2].src],
+    bookLabel: 'Road Show',
   },
 ];
 
@@ -97,10 +109,12 @@ export default function ServicesPage() {
                 s.id === service.id
             );
             if (!match) return service;
+            const nextHero = resolveGallerySrc(match.image_url, service.hero);
             return {
               ...service,
-              image: resolveGallerySrc(match.image_url, service.image),
+              hero: nextHero,
               title: match.service_title || service.title,
+              gallery: [nextHero, service.gallery[1], service.gallery[2]],
             };
           })
         );
@@ -111,24 +125,19 @@ export default function ServicesPage() {
     load();
   }, []);
 
-  const featured = services.find((s) => s.featured) ?? services[0];
-  const gridServices = services.filter((s) => s.id !== featured.id);
-
   return (
     <>
       <SpotlightNavbar />
       <div className="film-grain" />
 
       <main className="relative overflow-x-hidden bg-black">
-        {/* 1. HERO — liquid glass */}
-        <section className="relative min-h-[100svh] flex items-center justify-center px-6 md:px-10 py-32 overflow-hidden">
+        {/* Page hero */}
+        <section className="relative min-h-[70svh] md:min-h-[100svh] flex items-center justify-center px-6 md:px-10 py-28 md:py-32 overflow-hidden">
           <LiquidGlassBackdrop />
-
           <div className="relative z-10 max-w-4xl mx-auto text-center">
             <motion.p
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
               className="text-[11px] md:text-xs uppercase tracking-[0.35em] text-accent font-semibold mb-5"
             >
               Parth Production
@@ -136,7 +145,7 @@ export default function ServicesPage() {
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.05 }}
+              transition={{ delay: 0.05 }}
               className="font-display text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold uppercase tracking-tight leading-[0.95] glass-heading"
             >
               Our Services
@@ -144,7 +153,7 @@ export default function ServicesPage() {
             <motion.p
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.12 }}
+              transition={{ delay: 0.12 }}
               className="mt-6 md:mt-8 text-white/65 text-base md:text-lg leading-relaxed max-w-2xl mx-auto"
             >
               Full-stack live production. From first mic check to final firework — sound, light,
@@ -153,90 +162,108 @@ export default function ServicesPage() {
           </div>
         </section>
 
-        {/* 2–3. Featured + grid */}
-        <section className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-16 md:py-24">
-          {/* Featured wider card */}
-          <motion.article
-            initial={{ opacity: 0, y: 28 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.6 }}
-            className="glass-card group grid grid-cols-1 md:grid-cols-2 overflow-hidden rounded-3xl mb-6 md:mb-8"
-          >
-            <div className="relative aspect-[4/3] md:aspect-auto md:min-h-[420px] overflow-hidden">
-              <MediaImage
-                src={featured.image}
-                alt={featured.title}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-black/50 via-transparent to-transparent" />
-            </div>
-            <div className="relative flex flex-col justify-center p-6 sm:p-8 md:p-10 lg:p-12 bg-black/35">
-              <span className="inline-flex self-start items-center min-h-[32px] px-3 py-1 rounded-full border border-white/20 bg-white/5 text-[10px] uppercase tracking-[0.22em] text-accent font-semibold mb-4">
-                {featured.tag}
-              </span>
-              <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold uppercase tracking-tight text-white leading-tight">
-                {featured.title}
-              </h2>
-              <p className="mt-3 text-xs uppercase tracking-[0.18em] text-white/45">
-                {featured.subtitle}
-              </p>
-              <p className="mt-4 text-white/65 text-sm md:text-base leading-relaxed max-w-md">
-                {featured.description}
-              </p>
-              <a
-                href={`${whatsappUrl}?text=${encodeURIComponent(`Hi Parth Production, I want to book ${featured.title}`)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-8 inline-flex items-center min-h-[44px] text-sm font-semibold uppercase tracking-[0.14em] text-white hover:text-accent transition-colors"
-              >
-                Explore Service →
-              </a>
-            </div>
-          </motion.article>
+        {/* Dedicated section per service */}
+        {services.map((service, index) => {
+          const reverse = index % 2 === 1;
+          const bookHref = `${whatsappUrl}?text=${encodeURIComponent(
+            `Hi Parth Production, I want to book a ${service.bookLabel} event`
+          )}`;
 
-          {/* Remaining services grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
-            {gridServices.map((service, i) => (
-              <motion.article
-                key={service.id}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-40px' }}
-                transition={{ delay: i * 0.06, duration: 0.45 }}
-                className="glass-card group flex flex-col overflow-hidden rounded-3xl transition-transform duration-300 ease-out hover:-translate-y-2"
-              >
-                <div className="relative aspect-[16/11] overflow-hidden rounded-t-3xl">
-                  <MediaImage
-                    src={service.image}
-                    alt={service.title}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+          return (
+            <section
+              key={service.id}
+              id={service.title.toLowerCase().replace(/\s+/g, '-')}
+              className="border-t border-white/10 py-16 md:py-24"
+            >
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10">
+                {/* 1. Split hero */}
+                <motion.div
+                  initial={{ opacity: 0, y: 28 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-60px' }}
+                  transition={{ duration: 0.55 }}
+                  className={`grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-stretch ${
+                    reverse ? 'lg:[&>*:first-child]:order-2' : ''
+                  }`}
+                >
+                  <div className="relative min-h-[320px] md:min-h-[420px] lg:min-h-[520px] rounded-3xl overflow-hidden border border-white/10 group">
+                    <MediaImage
+                      src={service.hero}
+                      alt={service.title}
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                  </div>
+
+                  <div className="flex flex-col justify-center py-2 lg:py-6">
+                    <span className="inline-flex self-start items-center min-h-[32px] px-3 py-1 rounded-full border border-accent/40 bg-accent/10 text-[10px] uppercase tracking-[0.22em] text-accent font-semibold mb-5">
+                      {service.badge}
+                    </span>
+                    <h2 className="font-display text-4xl md:text-5xl font-bold uppercase tracking-tight text-white leading-tight">
+                      {service.title}
+                    </h2>
+                    <p className="mt-3 text-sm md:text-base uppercase tracking-[0.18em] text-white/50">
+                      {service.subtitle}
+                    </p>
+                    <p className="mt-5 text-white/70 text-base md:text-lg leading-relaxed max-w-xl">
+                      {service.summary}
+                    </p>
+                    <a
+                      href={bookHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-8 inline-flex items-center min-h-[44px] text-sm font-semibold uppercase tracking-[0.14em] text-white hover:text-accent transition-colors"
+                    >
+                      Explore Service →
+                    </a>
+                  </div>
+                </motion.div>
+
+                {/* 2. Gallery — 3 images */}
+                <div className="mt-10 md:mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                  {service.gallery.map((src, gi) => (
+                    <motion.div
+                      key={`${service.id}-g-${gi}`}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, margin: '-40px' }}
+                      transition={{ delay: gi * 0.08, duration: 0.45 }}
+                      className="relative aspect-video w-full rounded-2xl overflow-hidden border border-white/15 bg-black transition-all duration-300 hover:scale-[1.02] hover:border-accent/60 hover:shadow-[0_0_28px_rgba(255,95,31,0.25)]"
+                    >
+                      <MediaImage
+                        src={src}
+                        alt={`${service.title} showcase ${gi + 1}`}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    </motion.div>
+                  ))}
                 </div>
-                <div className="flex flex-col flex-1 p-5 md:p-6 bg-black/40">
-                  <span className="inline-flex self-start items-center min-h-[28px] px-2.5 py-0.5 rounded-full border border-white/15 bg-white/5 text-[10px] uppercase tracking-[0.2em] text-accent font-semibold mb-3">
-                    {service.tag}
-                  </span>
-                  <h3 className="font-display text-xl md:text-2xl font-bold uppercase tracking-tight text-white">
-                    {service.title}
-                  </h3>
-                  <p className="mt-2 text-white/60 text-sm leading-relaxed flex-1">
-                    {service.description}
-                  </p>
+
+                {/* 3. Description */}
+                <motion.div
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  className="max-w-3xl mx-auto text-center py-12"
+                >
+                  <p className="text-lg leading-relaxed text-white/80">{service.detail}</p>
+                </motion.div>
+
+                {/* 4. CTA */}
+                <div className="flex justify-center pb-4">
                   <a
-                    href={`${whatsappUrl}?text=${encodeURIComponent(`Hi Parth Production, I want to book ${service.title}`)}`}
+                    href={bookHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-5 inline-flex items-center min-h-[44px] text-xs font-semibold uppercase tracking-[0.14em] text-white/80 hover:text-accent transition-colors"
+                    className="inline-flex items-center justify-center min-h-[44px] px-8 py-4 rounded-full bg-accent text-white font-semibold text-sm md:text-base tracking-wide transition-transform duration-300 hover:scale-105 hover:shadow-[0_0_32px_rgba(255,95,31,0.55)]"
                   >
-                    Explore Service →
+                    Book your {service.bookLabel} Event
                   </a>
                 </div>
-              </motion.article>
-            ))}
-          </div>
-        </section>
+              </div>
+            </section>
+          );
+        })}
 
         <QuoteCta />
       </main>

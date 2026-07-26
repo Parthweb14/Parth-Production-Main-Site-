@@ -3,7 +3,17 @@
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 
-export default function QuoteCta() {
+type QuoteCtaProps = {
+  title?: string;
+  subtitle?: string;
+  buttonLabel?: string;
+};
+
+export default function QuoteCta({
+  title = 'Your date. Our system. One crew?',
+  subtitle = 'Tell us the venue and vibe — we lock sound, light, SFX, truss, and DJ into one production plan.',
+  buttonLabel = 'Book your event',
+}: QuoteCtaProps) {
   const { siteSettings } = useAuth();
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
 
@@ -20,18 +30,18 @@ export default function QuoteCta() {
         }}
       >
         <h2 className="relative font-display text-3xl md:text-5xl font-bold text-white text-center leading-tight">
-          Your date. Our system. One crew?
+          {title}
         </h2>
         <p className="relative mt-4 text-sm md:text-base text-white/60 text-center max-w-md mx-auto leading-relaxed">
-          Tell us the venue and vibe — we lock sound, light, SFX, truss, and DJ into one production plan.
+          {subtitle}
         </p>
         <a
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="cta-book-btn relative inline-flex mt-8 items-center justify-center px-8 py-3 rounded-full bg-white text-black font-semibold transition-transform duration-300 hover:scale-105"
+          className="cta-book-btn relative inline-flex mt-8 items-center justify-center min-h-[44px] px-8 py-3 rounded-full bg-white text-black font-semibold transition-transform duration-300 hover:scale-105"
         >
-          Book your event
+          {buttonLabel}
         </a>
       </motion.div>
     </section>

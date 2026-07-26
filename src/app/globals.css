@@ -3,6 +3,7 @@
 @theme {
   --font-sans: var(--font-sans), "Manrope", system-ui, sans-serif;
   --font-display: var(--font-display), "Space Grotesk", system-ui, sans-serif;
+  --font-serif: var(--font-serif), "Instrument Serif", Georgia, serif;
   --color-primary: #000000;
   --color-secondary: #0a0a0a;
   --color-accent: #FF5F1F;
@@ -44,6 +45,10 @@ body {
 
 .font-display {
   font-family: var(--font-display);
+}
+
+.font-serif {
+  font-family: var(--font-serif);
 }
 
 .btn-primary {
