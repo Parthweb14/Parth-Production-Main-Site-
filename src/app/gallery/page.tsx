@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, X, Sparkles } from 'lucide-react';
 import SpotlightNavbar from '@/components/SpotlightNavbar';
 import Footer from '@/components/Footer';
+import QuoteCta from '@/components/QuoteCta';
 import MediaImage from '@/components/MediaImage';
 import CinematicPageHero from '@/components/CinematicPageHero';
 import { STAGE_IMAGES, resolveGallerySrc } from '@/utils/media';
@@ -197,6 +198,8 @@ export default function GalleryPage() {
             </div>
           </div>
         </section>
+
+        <QuoteCta />
       </main>
 
       <AnimatePresence>

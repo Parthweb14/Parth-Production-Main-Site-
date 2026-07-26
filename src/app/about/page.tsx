@@ -260,11 +260,7 @@ export default function AboutPage() {
           </div>
         </section>
 
-        <QuoteCta
-          title="Ready to take your event to the next level?"
-          subtitle="Get professional DJ, lighting, and sound for your next event."
-          buttonLabel="Book your event"
-        />
+        <QuoteCta />
       </main>
 
       <Footer />

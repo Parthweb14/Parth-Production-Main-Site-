@@ -4,6 +4,7 @@ import { motion, useScroll, useSpring } from 'framer-motion';
 import { Phone, Mail, MapPin, MessageCircle, ArrowUpRight, Clock3, Navigation } from 'lucide-react';
 import SpotlightNavbar from '@/components/SpotlightNavbar';
 import Footer from '@/components/Footer';
+import QuoteCta from '@/components/QuoteCta';
 import CinematicPageHero from '@/components/CinematicPageHero';
 import { useAuth } from '@/context/AuthContext';
 import { STAGE_IMAGES } from '@/utils/media';
@@ -197,6 +198,7 @@ export default function ContactPage() {
             </motion.div>
           </div>
         </section>
+        <QuoteCta />
       </main>
       <Footer />
     </>
