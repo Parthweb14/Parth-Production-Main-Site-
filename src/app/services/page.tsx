@@ -272,23 +272,25 @@ export default function ServicesPage() {
                       </div>
                     </div>
 
-                    <div className="relative grid grid-cols-3 gap-px border-t border-white/10 bg-white/10">
-                      {service.gallery.map((src, gi) => (
-                        <motion.div
-                          key={`${service.id}-g-${gi}`}
-                          initial={{ opacity: 0, y: 12 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          viewport={{ once: true }}
-                          transition={{ delay: gi * 0.08, duration: 0.4 }}
-                          className="relative aspect-[4/3] overflow-hidden bg-black group"
-                        >
-                          <MediaImage
-                            src={src}
-                            alt={`${service.title} ${gi + 1}`}
-                            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
-                        </motion.div>
-                      ))}
+                    <div className="border-t border-white/10 px-3 pb-3 pt-3 md:px-4 md:pb-4 md:pt-4">
+                      <div className="relative grid grid-cols-3 gap-px overflow-hidden rounded-xl bg-white/10">
+                        {service.gallery.map((src, gi) => (
+                          <motion.div
+                            key={`${service.id}-g-${gi}`}
+                            initial={{ opacity: 0, y: 12 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: gi * 0.08, duration: 0.4 }}
+                            className="relative aspect-[4/3] overflow-hidden bg-black group"
+                          >
+                            <MediaImage
+                              src={src}
+                              alt={`${service.title} ${gi + 1}`}
+                              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                          </motion.div>
+                        ))}
+                      </div>
                     </div>
                   </article>
                 </motion.section>
