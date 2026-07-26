@@ -156,7 +156,7 @@ export default function QuoteCta({
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.4, delay: 0.35, ease }}
-          className="mx-auto mt-8 grid max-w-xl grid-cols-3 gap-0 border-t border-white/10 pt-5 divide-x divide-white/10"
+          className="mx-auto mt-6 grid max-w-md grid-cols-3 gap-0 border-t border-white/10 pt-4 divide-x divide-white/10"
         >
           {[
             { n: '01', label: 'Date locked' },
