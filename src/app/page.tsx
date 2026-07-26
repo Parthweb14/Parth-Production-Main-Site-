@@ -85,7 +85,7 @@ export default function HomePage() {
               variants={fadeUp}
               initial="hidden"
               animate="visible"
-              className="font-display text-[clamp(2.4rem,7.2vw,5.8rem)] leading-[0.95] tracking-[-0.03em] max-w-5xl"
+              className="font-display text-[clamp(2.4rem,7.2vw,5.8rem)] leading-[0.95] tracking-tight uppercase font-bold max-w-5xl"
             >
               One stop solution
               <br />
@@ -96,7 +96,7 @@ export default function HomePage() {
               variants={fadeUp}
               initial="hidden"
               animate="visible"
-              className="mt-6 max-w-xl text-white/70 text-base md:text-lg"
+              className="mt-6 max-w-xl text-white/70 text-base md:text-lg leading-relaxed"
             >
               Sound, light, SFX, truss, fireworks, and DJ artistry — built for weddings, festivals, concerts, and nights that stay loud in memory.
             </motion.p>
@@ -164,7 +164,7 @@ export default function HomePage() {
           <div className="max-w-7xl mx-auto px-4 md:px-8 mb-10 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
             <div>
               <p className="text-xs uppercase tracking-[0.28em] text-accent mb-3 font-bold">Still Frames</p>
-              <h2 className="font-display text-3xl md:text-5xl lg:text-6xl tracking-tight uppercase font-bold">
+              <h2 className="font-display text-2xl md:text-4xl tracking-tight uppercase font-bold">
                 Where Every Event Comes Alive
               </h2>
             </div>
@@ -196,6 +196,16 @@ export default function HomePage() {
                 </figcaption>
               </motion.figure>
             ))}
+          </div>
+          <div className="flex justify-center mt-10 md:mt-12">
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary"
+            >
+              Book your event
+            </a>
           </div>
         </section>
 

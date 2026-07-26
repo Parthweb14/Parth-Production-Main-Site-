@@ -1,136 +1,143 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import MediaImage from '@/components/MediaImage';
-import { STAGE_IMAGES } from '@/utils/media';
-
-const items = STAGE_IMAGES.slice(0, 7);
+import { useState } from "react";
+import Image from "next/image";
+import { motion } from "framer-motion";
+import { STAGE_IMAGES } from "@/utils/media";
+import { useAuth } from "@/context/AuthContext";
 
 export default function CoverflowCarousel() {
+  const { siteSettings } = useAuth();
+  const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
   const [active, setActive] = useState(0);
+  const total = STAGE_IMAGES.length;
 
-  useEffect(() => {
-    const id = setInterval(() => setActive((i) => (i + 1) % items.length), 4200);
-    return () => clearInterval(id);
-  }, []);
-
-  const prev = () => setActive((i) => (i - 1 + items.length) % items.length);
-  const next = () => setActive((i) => (i + 1) % items.length);
+  const prev = () => setActive((i) => (i - 1 + total) % total);
+  const next = () => setActive((i) => (i + 1) % total);
 
   return (
     <section className="relative py-16 md:py-24 bg-black overflow-hidden border-b border-white/10">
-      <div className="max-w-7xl mx-auto px-4 md:px-8 mb-10 md:mb-14 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-        <div>
-          <p className="text-xs uppercase tracking-[0.22em] text-accent font-semibold mb-3">Stage deck</p>
-          <h2 className="font-display text-3xl md:text-5xl font-bold tracking-tight uppercase">
-            3D Fan Coverflow
-          </h2>
-          <p className="mt-3 text-white/55 max-w-xl text-sm md:text-base leading-relaxed">
-            Center card stays flat and large — side cards fan back in depth.
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={prev}
-            aria-label="Previous"
-            className="w-11 h-11 rounded-full border border-white/20 flex items-center justify-center hover:border-accent hover:text-accent transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <button
-            type="button"
-            onClick={next}
-            aria-label="Next"
-            className="w-11 h-11 rounded-full border border-white/20 flex items-center justify-center hover:border-accent hover:text-accent transition-colors"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-        </div>
+      <div className="max-w-7xl mx-auto px-4 md:px-8 mb-10 md:mb-14 text-center">
+        <p className="text-[11px] tracking-[0.35em] uppercase text-accent font-bold mb-3">
+          Stage gallery
+        </p>
+        <h2 className="font-display text-3xl md:text-5xl font-bold text-white uppercase tracking-tight">
+          Built for the big night
+        </h2>
+        <p className="mt-4 text-white/55 text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
+          Drag through real stages — LED walls, corporate sets, and wedding
+          builds from the Parth Production floor.
+        </p>
       </div>
 
-      {/* Wider stage for PC — larger cards */}
-      <div
-        className="relative h-[420px] sm:h-[500px] md:h-[620px] lg:h-[680px] max-w-[1400px] mx-auto px-2 md:px-4"
-        style={{ perspective: '1600px' }}
-      >
-        <div className="absolute inset-0 flex items-center justify-center" style={{ transformStyle: 'preserve-3d' }}>
-          {items.map((item, index) => {
-            let offset = index - active;
-            const half = Math.floor(items.length / 2);
-            if (offset > half) offset -= items.length;
-            if (offset < -half) offset += items.length;
+      <div className="relative max-w-[1400px] mx-auto px-2 md:px-4">
+        <div className="relative rounded-3xl border border-white/70 p-3 md:p-5 bg-black/40">
+          <div className="relative h-[420px] sm:h-[500px] md:h-[620px] lg:h-[680px]">
+            <div
+              className="absolute inset-0"
+              style={{ perspective: "1400px", perspectiveOrigin: "50% 45%" }}
+            >
+              {STAGE_IMAGES.map((item, i) => {
+                let offset = i - active;
+                if (offset > total / 2) offset -= total;
+                if (offset < -total / 2) offset += total;
 
-            const abs = Math.abs(offset);
-            const rotateY = offset * -28;
-            const translateX = offset * 210;
-            const translateZ = -abs * 110;
-            const scale = Math.max(0.78, 1 - abs * 0.08);
-            const opacity = abs > 2 ? 0 : 1 - abs * 0.18;
-            const zIndex = 50 - abs;
+                const absOff = Math.abs(offset);
+                if (absOff > 3) return null;
 
-            return (
-              <button
-                key={item.src}
-                type="button"
-                onClick={() => setActive(index)}
-                className="absolute w-[240px] sm:w-[300px] md:w-[380px] lg:w-[440px] aspect-[3/4] rounded-[28px] overflow-hidden border border-white/15 cursor-pointer transition-[transform,opacity,box-shadow] duration-500 ease-out"
-                style={{
-                  zIndex,
-                  opacity,
-                  transform: `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`,
-                  boxShadow:
-                    abs === 0
-                      ? '0 28px 80px rgba(255,95,31,0.28), 0 18px 48px rgba(0,0,0,0.75)'
-                      : '0 16px 40px rgba(0,0,0,0.55)',
-                  filter: abs === 0 ? 'brightness(1)' : 'brightness(0.55)',
-                }}
-              >
-                <MediaImage src={item.src} alt={item.title} className="absolute inset-0 w-full h-full object-cover" />
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background:
-                      abs === 0
-                        ? 'linear-gradient(to top, rgba(0,0,0,0.72), transparent 50%)'
-                        : 'rgba(0,0,0,0.38)',
-                  }}
-                />
-                <AnimatePresence>
-                  {abs === 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      className="absolute bottom-6 left-6 right-6 text-left"
-                    >
-                      <p className="text-[10px] uppercase tracking-[0.18em] text-accent mb-1 font-semibold">
-                        {item.tag}
-                      </p>
-                      <p className="font-display text-2xl md:text-3xl font-bold uppercase">{item.title}</p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </button>
-            );
-          })}
+                const rotateY = offset * -42;
+                const translateX = offset * 38;
+                const translateZ = -absOff * 180;
+                const scale = 1 - absOff * 0.12;
+                const opacity =
+                  absOff === 0 ? 1 : absOff === 1 ? 0.75 : absOff === 2 ? 0.4 : 0.15;
+                const zIndex = 20 - absOff;
+
+                return (
+                  <motion.div
+                    key={item.src}
+                    className="absolute left-1/2 top-1/2 w-[58%] sm:w-[48%] md:w-[42%] lg:w-[38%] aspect-[4/5] cursor-pointer"
+                    style={{
+                      transformStyle: "preserve-3d",
+                      zIndex,
+                    }}
+                    animate={{
+                      x: `calc(-50% + ${translateX}%)`,
+                      y: "-50%",
+                      rotateY,
+                      z: translateZ,
+                      scale,
+                      opacity,
+                    }}
+                    transition={{ type: "spring", stiffness: 260, damping: 28 }}
+                    onClick={() => setActive(i)}
+                  >
+                    <div className="relative w-full h-full rounded-2xl overflow-hidden border border-white/15 bg-black shadow-[0_30px_80px_rgba(0,0,0,0.7)]">
+                      <Image
+                        src={item.src}
+                        alt={item.title}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width:768px) 70vw, 40vw"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">
+                        <p className="text-[10px] tracking-[0.3em] uppercase text-accent font-bold mb-1">
+                          {item.tag}
+                        </p>
+                        <h3 className="font-display text-lg md:text-2xl font-bold text-white uppercase tracking-tight">
+                          {item.title}
+                        </h3>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={prev}
+              aria-label="Previous"
+              className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 md:w-14 md:h-14 rounded-full border border-white/25 bg-black/70 text-white text-xl hover:border-accent hover:text-accent transition-colors"
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              onClick={next}
+              aria-label="Next"
+              className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 md:w-14 md:h-14 rounded-full border border-white/25 bg-black/70 text-white text-xl hover:border-accent hover:text-accent transition-colors"
+            >
+              ›
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div className="flex justify-center gap-2 mt-8">
-        {items.map((_, i) => (
-          <button
-            key={i}
-            type="button"
-            aria-label={`Go to slide ${i + 1}`}
-            onClick={() => setActive(i)}
-            className={`h-2 rounded-full transition-all ${
-              i === active ? 'w-7 bg-accent' : 'w-2 bg-white/25 hover:bg-white/45'
-            }`}
-          />
-        ))}
+        <div className="flex justify-center gap-2 mt-6">
+          {STAGE_IMAGES.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              aria-label={`Go to slide ${i + 1}`}
+              onClick={() => setActive(i)}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                i === active ? "w-8 bg-accent" : "w-2 bg-white/25 hover:bg-white/50"
+              }`}
+            />
+          ))}
+        </div>
+
+        <div className="flex justify-center mt-8">
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-primary"
+          >
+            Book your event
+          </a>
+        </div>
       </div>
     </section>
   );

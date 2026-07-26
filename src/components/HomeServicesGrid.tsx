@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ArrowUpRight } from 'lucide-react';
 import MediaImage from '@/components/MediaImage';
 import { CRAFT } from '@/utils/media';
 
@@ -39,7 +38,6 @@ export default function HomeServicesGrid() {
               transition={{ delay: i * 0.08, duration: 0.4 }}
               className="relative group rounded-3xl overflow-hidden border border-white/15 bg-black transition-all duration-300 ease-out hover:-translate-y-2 hover:border-accent/50"
             >
-              {/* Image-first card — larger visual area */}
               <div className="relative aspect-[4/5] overflow-hidden">
                 <MediaImage
                   src={service.image}
@@ -47,9 +45,6 @@ export default function HomeServicesGrid() {
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
-                <span className="absolute top-4 right-4 inline-flex p-2 rounded-full bg-accent text-black">
-                  <ArrowUpRight className="w-4 h-4" />
-                </span>
                 <div className="absolute bottom-0 left-0 right-0 p-5 md:p-6">
                   <h3 className="font-display text-2xl md:text-3xl font-bold uppercase tracking-tight text-white mb-1">
                     {service.title}

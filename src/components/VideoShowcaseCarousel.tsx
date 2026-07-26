@@ -95,7 +95,7 @@ export default function VideoShowcaseCarousel() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-40px' }}
             transition={{ delay: i * 0.08, duration: 0.45 }}
-            className="relative flex-shrink-0 w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-22px)] aspect-[9/16] snap-center rounded-3xl overflow-hidden bg-black border border-accent transition-transform duration-300 ease-out hover:scale-[1.02]"
+            className="relative flex-shrink-0 w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-22px)] aspect-[9/16] snap-center rounded-3xl overflow-hidden bg-black transition-transform duration-300 ease-out hover:scale-[1.02]"
           >
             <video
               src={clip.src}
