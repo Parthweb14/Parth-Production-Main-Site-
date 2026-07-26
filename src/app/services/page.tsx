@@ -131,33 +131,10 @@ export default function ServicesPage() {
           description="Full-stack live production — sound, light, SFX, truss, and DJ artistry under one crew."
         />
 
-        {/* Services with a very subtle connecting rope */}
-        <div className="relative">
-          <svg
-            className="pointer-events-none absolute inset-y-8 left-1/2 -translate-x-1/2 w-px h-[calc(100%-4rem)] hidden lg:block z-0 opacity-[0.12]"
-            viewBox="0 0 4 1000"
-            preserveAspectRatio="none"
-            aria-hidden
-          >
-            <path
-              d="M2 0 C 2 120, 2 200, 2 1000"
-              fill="none"
-              stroke="#FF5F1F"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          </svg>
-          <div
-            className="lg:hidden pointer-events-none absolute top-0 bottom-0 left-5 w-px z-0 opacity-[0.12]"
-            style={{
-              background:
-                'linear-gradient(180deg, transparent, rgba(255,95,31,0.9), transparent)',
-            }}
-            aria-hidden
-          />
-
+        <div>
           {services.map((service, index) => {
             const imageRight = index % 2 === 1;
+            const imageLeft = !imageRight;
             const bookHref = `${whatsappUrl}?text=${encodeURIComponent(
               `Hi Parth Production, I want to book a ${service.bookLabel} event`
             )}`;
@@ -166,20 +143,17 @@ export default function ServicesPage() {
               <section
                 key={service.id}
                 id={service.title.toLowerCase().replace(/\s+/g, '-')}
-                className="relative z-10 border-t border-white/10 py-10 md:py-14"
+                className="relative border-t border-white/10 py-10 md:py-14"
               >
-                <span
-                  className="absolute left-5 lg:left-1/2 top-10 -translate-x-1/2 h-2 w-2 rounded-full bg-accent/40 z-20"
-                  aria-hidden
-                />
-
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10">
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: '-40px' }}
                     transition={{ duration: 0.45 }}
-                    className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 items-stretch"
+                    className={`grid grid-cols-1 lg:grid-cols-2 items-stretch ${
+                      imageLeft ? 'gap-8 lg:gap-16' : 'gap-6 lg:gap-10'
+                    }`}
                   >
                     <div
                       className={`relative min-h-[260px] md:min-h-[340px] rounded-3xl overflow-hidden border border-white/10 group ${
@@ -196,12 +170,14 @@ export default function ServicesPage() {
 
                     <div
                       className={`flex flex-col justify-center py-1 lg:py-2 ${
-                        imageRight ? 'lg:order-1 lg:items-end lg:text-right' : ''
+                        imageRight
+                          ? 'lg:order-1 lg:items-start lg:text-left'
+                          : 'lg:items-end lg:text-right lg:pl-6 xl:pl-12'
                       }`}
                     >
                       <span
                         className={`inline-flex items-center min-h-[28px] px-3 py-1 rounded-full border border-accent/40 bg-accent/10 text-[10px] uppercase tracking-[0.22em] text-accent font-semibold mb-3 ${
-                          imageRight ? 'lg:self-end' : 'self-start'
+                          imageLeft ? 'lg:self-end' : 'self-start'
                         }`}
                       >
                         {service.badge}
@@ -214,7 +190,7 @@ export default function ServicesPage() {
                       </p>
                       <p
                         className={`mt-3 text-white/70 text-sm md:text-base leading-relaxed max-w-xl ${
-                          imageRight ? 'lg:ml-auto' : ''
+                          imageLeft ? 'lg:ml-auto' : ''
                         }`}
                       >
                         {service.summary}
@@ -224,7 +200,7 @@ export default function ServicesPage() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className={`mt-4 inline-flex items-center min-h-[44px] text-sm font-semibold uppercase tracking-[0.14em] text-white hover:text-accent transition-colors ${
-                          imageRight ? 'lg:self-end' : 'self-start'
+                          imageLeft ? 'lg:self-end' : 'self-start'
                         }`}
                       >
                         Explore Service →

@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import { LOGO_PNG } from '@/utils/media';
 
 const navItems = [
+  { label: 'Home', href: '/' },
   { label: 'Services', href: '/services' },
   { label: 'Gallery', href: '/gallery' },
   { label: 'About', href: '/about' },
@@ -96,19 +97,12 @@ export default function SpotlightNavbar() {
             className="fixed inset-0 bg-black z-40 md:hidden flex flex-col pt-28 px-6 pb-10"
           >
             <nav className="flex flex-col gap-5 text-3xl font-display">
-              <Link
-                href="/"
-                onClick={() => setMenuOpen(false)}
-                className={pathname === '/' ? 'text-accent' : 'text-white'}
-              >
-                Home
-              </Link>
               {navItems.map((item, i) => (
                 <motion.div
                   key={item.label}
                   initial={{ opacity: 0, x: -12 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.05 * (i + 1) }}
+                  transition={{ delay: 0.05 * i }}
                 >
                   <Link
                     href={item.href}

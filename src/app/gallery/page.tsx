@@ -76,7 +76,7 @@ export default function GalleryPage() {
         />
 
         <section className="sticky top-[96px] md:top-[104px] z-30 border-b border-white/10 bg-black/70 backdrop-blur-xl">
-          <div className="max-w-7xl mx-auto px-6 md:px-10 py-4 flex flex-wrap justify-center gap-x-6 gap-y-2 text-[11px] uppercase tracking-[0.18em] font-bold">
+          <div className="max-w-7xl mx-auto px-6 md:px-10 py-5 flex flex-wrap justify-center gap-x-7 md:gap-x-10 gap-y-3 font-display text-sm sm:text-base md:text-lg uppercase tracking-[0.14em] font-extrabold">
             {filters.map((f) => (
               <button
                 key={f}
@@ -84,7 +84,7 @@ export default function GalleryPage() {
                 className={`whitespace-nowrap pb-1 border-b-2 transition-colors min-h-[44px] ${
                   filter === f
                     ? 'text-accent border-accent'
-                    : 'text-white/55 border-transparent hover:text-white'
+                    : 'text-white/60 border-transparent hover:text-white'
                 }`}
               >
                 {f}
