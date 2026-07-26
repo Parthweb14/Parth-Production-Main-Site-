@@ -203,7 +203,8 @@ body::-webkit-scrollbar {
     0 0 28px rgba(255, 90, 60, 0.35);
 }
 
-.stage-noise {
+.stage-noise,
+.stage-tunnel-noise {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
@@ -213,6 +214,67 @@ body::-webkit-scrollbar {
     0 28px 54px rgba(0, 0, 0, 0.5),
     0 0 30px rgba(255, 90, 60, 0.35);
   transform: translateY(-10px) scale(1.03) !important;
+}
+
+@keyframes stageGlowPulse {
+  0%, 100% { opacity: 0.55; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.9; transform: translate(-50%, -50%) scale(1.08); }
+}
+
+@keyframes stageParticleDrift {
+  0% { transform: translateY(0) scale(1); opacity: 0.15; }
+  50% { opacity: 0.55; }
+  100% { transform: translateY(-28px) scale(1.2); opacity: 0.1; }
+}
+
+@keyframes stageCardFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.stage-glow-pulse {
+  animation: stageGlowPulse 4.5s ease-in-out infinite;
+}
+
+.stage-particle {
+  animation: stageParticleDrift 5s ease-in-out infinite;
+}
+
+.stage-tunnel-float {
+  animation: stageCardFloat 5.5s ease-in-out infinite;
+}
+
+.stage-tunnel-card {
+  transition:
+    opacity 0.12s linear,
+    filter 0.12s linear;
+}
+
+.stage-tunnel-card-inner {
+  transition:
+    transform 0.5s ease,
+    border-color 0.5s ease,
+    box-shadow 0.5s ease;
+}
+
+.stage-tunnel-card:hover .stage-tunnel-card-inner {
+  transform: translateY(-12px) scale(1.08);
+  border-color: rgba(255, 90, 60, 0.65) !important;
+  box-shadow:
+    0 30px 60px rgba(0, 0, 0, 0.55),
+    0 0 48px rgba(255, 90, 60, 0.4) !important;
+}
+
+.stage-tunnel-card:hover img {
+  transform: scale(1.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage-glow-pulse,
+  .stage-particle,
+  .stage-tunnel-float {
+    animation: none !important;
+  }
 }
 
 @media (max-width: 767px) {
