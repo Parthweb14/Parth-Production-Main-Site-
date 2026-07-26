@@ -1,12 +1,12 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useScroll, useSpring } from 'framer-motion';
 import { Users, Sparkles, Settings2 } from 'lucide-react';
 import SpotlightNavbar from '@/components/SpotlightNavbar';
 import Footer from '@/components/Footer';
 import QuoteCta from '@/components/QuoteCta';
 import MediaImage from '@/components/MediaImage';
-import PageHero from '@/components/PageHero';
+import CinematicPageHero from '@/components/CinematicPageHero';
 import { OWNER_IMAGE, STAGE_IMAGES } from '@/utils/media';
 
 const journey = [
@@ -55,21 +55,35 @@ const values = [
 ];
 
 export default function AboutPage() {
+  const { scrollYProgress } = useScroll();
+  const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 28 });
+
   return (
     <>
       <SpotlightNavbar />
       <div className="film-grain" />
+      <motion.div
+        className="fixed top-0 left-0 right-0 z-[60] h-[2px] origin-left bg-[#ff5a3c]"
+        style={{ scaleX: progress }}
+      />
 
       <main className="relative overflow-x-hidden bg-black">
-        <PageHero
-          title="About Us"
+        <CinematicPageHero
+          eyebrow="The crew story"
+          title="About the brand"
+          italicLine="built for every night."
           description="Full-stack live production. From first mic check to final firework — sound, light, SFX, truss, and DJ artistry under one crew."
+          image={STAGE_IMAGES[2].src}
+          chips={[
+            { label: 'Journey', href: '#journey' },
+            { label: 'Founder', href: '#founder' },
+            { label: 'Why us', href: '#why-us' },
+          ]}
         />
 
-        {/* Philosophy quote */}
         <section className="relative py-14 md:py-20 px-4 sm:px-6 md:px-10 overflow-hidden border-t border-white/10">
           <MediaImage
-            src={STAGE_IMAGES[2].src}
+            src={STAGE_IMAGES[6].src}
             alt=""
             className="absolute inset-0 w-full h-full object-cover opacity-20 brightness-50"
           />
@@ -80,9 +94,11 @@ export default function AboutPage() {
             viewport={{ once: true }}
             className="relative z-10 max-w-4xl mx-auto text-center"
           >
-            <div className="flex items-center justify-center gap-4 mb-6 text-accent">
+            <div className="flex items-center justify-center gap-4 mb-6 text-[#ff5a3c]">
               <Sparkles className="w-5 h-5" />
-              <span className="text-[10px] uppercase tracking-[0.3em] font-semibold">Our philosophy</span>
+              <span className="text-[10px] uppercase tracking-[0.3em] font-semibold">
+                Our philosophy
+              </span>
               <Sparkles className="w-5 h-5" />
             </div>
             <p className="font-serif italic text-2xl md:text-4xl lg:text-5xl text-white leading-snug">
@@ -91,8 +107,10 @@ export default function AboutPage() {
           </motion.div>
         </section>
 
-        {/* Journey timeline — first card RIGHT, then LEFT, RIGHT, LEFT */}
-        <section className="relative border-t border-white/10 py-14 md:py-20 px-4 sm:px-6 md:px-10">
+        <section
+          id="journey"
+          className="relative border-t border-white/10 py-14 md:py-20 px-4 sm:px-6 md:px-10 scroll-mt-28"
+        >
           <div className="max-w-5xl mx-auto">
             <motion.h2
               initial={{ opacity: 0, y: 16 }}
@@ -108,14 +126,12 @@ export default function AboutPage() {
                 className="absolute left-4 md:left-1/2 top-0 bottom-0 w-px md:-translate-x-1/2"
                 style={{
                   background:
-                    'linear-gradient(180deg, transparent, rgba(255,255,255,0.55), rgba(255,255,255,0.25), transparent)',
-                  boxShadow: '0 0 12px rgba(255,255,255,0.25)',
+                    'linear-gradient(180deg, transparent, rgba(255,90,60,0.7), rgba(255,255,255,0.2), transparent)',
                 }}
               />
 
               <div className="space-y-10 md:space-y-14">
                 {journey.map((item, i) => {
-                  // card 0 on right, card 1 on left, etc.
                   const onRight = i % 2 === 0;
                   return (
                     <motion.article
@@ -126,13 +142,15 @@ export default function AboutPage() {
                       transition={{ duration: 0.5 }}
                       className="relative pl-12 md:pl-0 md:grid md:grid-cols-2 md:gap-12"
                     >
-                      <span className="absolute left-[11px] md:left-1/2 top-8 md:top-10 h-3.5 w-3.5 -translate-x-1/2 rounded-full bg-accent shadow-[0_0_16px_rgba(255,95,31,0.85)] z-10" />
+                      <span className="absolute left-[11px] md:left-1/2 top-8 md:top-10 h-3.5 w-3.5 -translate-x-1/2 rounded-full bg-[#ff5a3c] shadow-[0_0_16px_rgba(255,90,60,0.85)] z-10" />
 
                       {onRight ? (
                         <>
                           <div className="hidden md:block" />
                           <div className="glass-card rounded-2xl p-6 md:p-8 transition-transform duration-300 hover:-translate-y-2 md:ml-6">
-                            <p className="font-display text-4xl font-bold text-accent mb-3">{item.year}</p>
+                            <p className="font-display text-4xl font-bold text-[#ff5a3c] mb-3">
+                              {item.year}
+                            </p>
                             <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
                             <p className="text-sm text-white/70 leading-relaxed">{item.description}</p>
                           </div>
@@ -140,7 +158,9 @@ export default function AboutPage() {
                       ) : (
                         <>
                           <div className="glass-card rounded-2xl p-6 md:p-8 transition-transform duration-300 hover:-translate-y-2 md:mr-6 md:text-right">
-                            <p className="font-display text-4xl font-bold text-accent mb-3">{item.year}</p>
+                            <p className="font-display text-4xl font-bold text-[#ff5a3c] mb-3">
+                              {item.year}
+                            </p>
                             <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
                             <p className="text-sm text-white/70 leading-relaxed">{item.description}</p>
                           </div>
@@ -155,8 +175,10 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* Founder — Cloudflare Owner.png */}
-        <section className="relative border-t border-white/10 py-14 md:py-20 px-4 sm:px-6 md:px-10">
+        <section
+          id="founder"
+          className="relative border-t border-white/10 py-14 md:py-20 px-4 sm:px-6 md:px-10 scroll-mt-28"
+        >
           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
@@ -164,7 +186,7 @@ export default function AboutPage() {
               viewport={{ once: true }}
               className="relative mx-auto w-full max-w-md"
             >
-              <div className="relative rounded-3xl overflow-hidden border border-white/25 shadow-[0_0_40px_rgba(255,255,255,0.08)] group">
+              <div className="relative rounded-3xl overflow-hidden border border-white/25 shadow-[0_0_40px_rgba(255,90,60,0.12)] group">
                 <div className="relative aspect-[4/5]">
                   <MediaImage
                     src={OWNER_IMAGE}
@@ -183,7 +205,7 @@ export default function AboutPage() {
               transition={{ delay: 0.08 }}
               className="text-center lg:text-left"
             >
-              <span className="inline-flex items-center min-h-[32px] px-3 py-1 rounded-full bg-accent text-black text-[10px] uppercase tracking-[0.2em] font-bold mb-5">
+              <span className="inline-flex items-center min-h-[32px] px-3 py-1 rounded-full bg-[#ff5a3c] text-black text-[10px] uppercase tracking-[0.2em] font-bold mb-5">
                 Founder & CEO
               </span>
               <h2 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-white">
@@ -196,53 +218,16 @@ export default function AboutPage() {
               </p>
               <p className="mt-6 text-base md:text-lg leading-relaxed text-white/80 max-w-xl mx-auto lg:mx-0">
                 Built from late-night sets and early load-ins in Surat, Parth Production grew from a
-                single DJ desk into a full crew for sound, light, SFX, truss, and finales. The vision
-                stays simple: every date gets a system, a look, and a feeling guests remember on the
-                way home.
+                single DJ desk into a full crew for sound, light, SFX, truss, and finales.
               </p>
-              <div className="mt-8 flex items-center justify-center lg:justify-start gap-4">
-                <a
-                  href="https://www.instagram.com/parthproduction"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Instagram"
-                  className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full border border-white/20 text-accent hover:border-accent hover:shadow-[0_0_20px_rgba(255,95,31,0.45)] transition-all"
-                >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                    <rect x="3" y="3" width="18" height="18" rx="5" />
-                    <circle cx="12" cy="12" r="4" />
-                    <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
-                  </svg>
-                </a>
-                <a
-                  href="https://www.facebook.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Facebook"
-                  className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full border border-white/20 text-accent hover:border-accent hover:shadow-[0_0_20px_rgba(255,95,31,0.45)] transition-all"
-                >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M14 9h3V6h-3c-1.7 0-3 1.3-3 3v2H8v3h3v7h3v-7h3l1-3h-4V9c0-.6.4-1 1-1z" />
-                  </svg>
-                </a>
-                <a
-                  href="https://www.youtube.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="YouTube"
-                  className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full border border-white/20 text-accent hover:border-accent hover:shadow-[0_0_20px_rgba(255,95,31,0.45)] transition-all"
-                >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M22 12.2c0-2-.2-3.4-.5-4.2-.3-.8-.9-1.4-1.7-1.7C18.5 6 12 6 12 6s-6.5 0-7.8.3c-.8.3-1.4.9-1.7 1.7C2.2 8.8 2 10.2 2 12.2s.2 3.4.5 4.2c.3.8.9 1.4 1.7 1.7C5.5 18.4 12 18.4 12 18.4s6.5 0 7.8-.3c.8-.3 1.4-.9 1.7-1.7.3-.8.5-2.2.5-4.2zM10 15.2V9.2l5.2 3-5.2 3z" />
-                  </svg>
-                </a>
-              </div>
             </motion.div>
           </div>
         </section>
 
-        {/* Values */}
-        <section className="relative border-t border-white/10 py-14 md:py-20 px-4 sm:px-6 md:px-10">
+        <section
+          id="why-us"
+          className="relative border-t border-white/10 py-14 md:py-20 px-4 sm:px-6 md:px-10 scroll-mt-28"
+        >
           <div className="max-w-7xl mx-auto">
             <motion.h2
               initial={{ opacity: 0, y: 16 }}
@@ -264,8 +249,8 @@ export default function AboutPage() {
                     transition={{ delay: i * 0.1 }}
                     className="glass-card rounded-3xl p-6 md:p-8 transition-transform duration-300 hover:-translate-y-2"
                   >
-                    <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 border border-white/20">
-                      <Icon className="h-5 w-5 text-white" />
+                    <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#ff5a3c]/15 border border-[#ff5a3c]/30">
+                      <Icon className="h-5 w-5 text-[#ff5a3c]" />
                     </div>
                     <h3 className="font-display text-xl md:text-2xl font-bold text-white mb-2">
                       {value.title}

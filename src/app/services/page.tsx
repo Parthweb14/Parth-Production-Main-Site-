@@ -7,6 +7,7 @@ import SpotlightNavbar from '@/components/SpotlightNavbar';
 import Footer from '@/components/Footer';
 import QuoteCta from '@/components/QuoteCta';
 import MediaImage from '@/components/MediaImage';
+import CinematicPageHero from '@/components/CinematicPageHero';
 import { useAuth } from '@/context/AuthContext';
 import { STAGE_IMAGES, resolveGallerySrc } from '@/utils/media';
 
@@ -167,64 +168,17 @@ export default function ServicesPage() {
       />
 
       <main className="relative overflow-x-hidden bg-black">
-        <section className="relative min-h-[70vh] flex items-end overflow-hidden border-b border-white/10">
-          <div className="absolute inset-0">
-            <MediaImage
-              src={STAGE_IMAGES[7].src}
-              alt=""
-              className="absolute inset-0 h-full w-full object-cover opacity-40"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/40" />
-          </div>
-
-          <div className="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-10 pt-36 pb-16 md:pb-20">
-            <motion.p
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-[11px] uppercase tracking-[0.32em] text-[#ff5a3c] font-semibold mb-4"
-            >
-              Production catalog
-            </motion.p>
-            <motion.h1
-              initial={{ opacity: 0, y: 22 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05, duration: 0.6, ease }}
-              className="font-display text-4xl sm:text-5xl md:text-7xl font-bold uppercase tracking-tight text-white max-w-4xl leading-[0.95]"
-            >
-              Services built
-              <br />
-              <span className="font-serif italic font-normal normal-case text-[#ff5a3c]">
-                for every stage.
-              </span>
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.12, duration: 0.55 }}
-              className="mt-5 max-w-xl text-sm md:text-base text-white/65 leading-relaxed"
-            >
-              Five production systems — concerts, weddings, festivals, corporate, and road shows —
-              engineered as one crew from first cue to final hit.
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.18 }}
-              className="mt-8 flex flex-wrap gap-2"
-            >
-              {services.map((s) => (
-                <a
-                  key={s.id}
-                  href={`#${s.title.toLowerCase().replace(/\s+/g, '-')}`}
-                  className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-[11px] uppercase tracking-[0.16em] text-white/70 transition-all hover:border-[#ff5a3c]/50 hover:text-white"
-                >
-                  {s.title}
-                </a>
-              ))}
-            </motion.div>
-          </div>
-        </section>
+        <CinematicPageHero
+          eyebrow="Production catalog"
+          title="Services built"
+          italicLine="for every stage."
+          description="Five production systems — concerts, weddings, festivals, corporate, and road shows — engineered as one crew from first cue to final hit."
+          image={STAGE_IMAGES[7].src}
+          chips={services.map((s) => ({
+            label: s.title,
+            href: `#${s.title.toLowerCase().replace(/\s+/g, '-')}`,
+          }))}
+        />
 
         {/* Timeline + service panels */}
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-12 md:py-16">
