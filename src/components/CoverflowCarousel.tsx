@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -19,27 +19,30 @@ const CARDS = [
   { id: 9, label: 'Mainstage Array', src: STAGE_IMAGES[7].src },
 ];
 
-const VISIBLE_RADIUS = 3; // show center ± 3
+const VISIBLE_RADIUS = 3;
+const AUTO_MS = 3200;
 
 function cardTransform(offset: number, isMobile: boolean) {
   const abs = Math.abs(offset);
-  const spacing = isMobile ? 118 : 168;
+  const spacing = isMobile ? 128 : 182;
   const curve = isMobile ? 14 : 22;
   const x = offset * spacing;
-  // Downward convex arc (smile curve) like the reference
   const y = abs * abs * curve;
   const rotateZ = offset * (isMobile ? 7 : 9);
-  const scale = Math.max(0.72, 1.08 - abs * 0.1);
-  const opacity = Math.max(0.45, 1 - abs * 0.14);
+  const scale = abs === 0 ? (isMobile ? 1.22 : 1.28) : Math.max(0.68, 0.98 - abs * 0.1);
+  const opacity = abs === 0 ? 1 : Math.max(0.42, 0.88 - abs * 0.14);
+  const blur = abs === 0 ? 0 : Math.min(3.2, 1.1 + abs * 0.55);
   const zIndex = 40 - abs;
 
-  return { x, y, rotateZ, scale, opacity, zIndex };
+  return { x, y, rotateZ, scale, opacity, blur, zIndex };
 }
 
 export default function CoverflowCarousel() {
   const [active, setActive] = useState(2);
   const [isMobile, setIsMobile] = useState(false);
+  const [paused, setPaused] = useState(false);
   const total = CARDS.length;
+  const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const update = () => setIsMobile(window.innerWidth < 768);
@@ -56,8 +59,21 @@ export default function CoverflowCarousel() {
     setActive((i) => (i + 1) % total);
   }, [total]);
 
+  // Infinite auto-loop
+  useEffect(() => {
+    if (paused) return;
+    const id = window.setInterval(() => {
+      setActive((i) => (i + 1) % total);
+    }, AUTO_MS);
+    return () => window.clearInterval(id);
+  }, [paused, total]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (!sectionRef.current) return;
+      const rect = sectionRef.current.getBoundingClientRect();
+      const inView = rect.top < window.innerHeight && rect.bottom > 0;
+      if (!inView) return;
       if (e.key === 'ArrowLeft') prev();
       if (e.key === 'ArrowRight') next();
     };
@@ -65,20 +81,22 @@ export default function CoverflowCarousel() {
     return () => window.removeEventListener('keydown', onKey);
   }, [prev, next]);
 
-  const cardW = isMobile ? 150 : 210;
-  const cardH = isMobile ? 220 : 310;
+  const cardW = isMobile ? 158 : 230;
+  const cardH = isMobile ? 232 : 340;
 
   return (
     <motion.section
+      ref={sectionRef}
       initial={{ opacity: 0, y: 28 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-80px' }}
       transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
       className="relative w-full overflow-hidden bg-black pt-14 md:pt-20 pb-16 md:pb-24"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
     >
       <div className="relative mx-auto w-full max-w-[1400px] px-4 md:px-10">
-        {/* Header — centered like reference */}
-        <div className="mb-8 text-center md:mb-10">
+        <div className="mb-12 text-center md:mb-16">
           <motion.span
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -108,12 +126,10 @@ export default function CoverflowCarousel() {
           </motion.p>
         </div>
 
-        {/* Curved gallery stage */}
-        <div className="relative mx-auto mb-6 h-[340px] md:h-[460px] lg:h-[500px]">
+        <div className="relative mx-auto mb-6 h-[380px] md:h-[500px] lg:h-[540px]">
           <div className="absolute inset-0 flex items-start justify-center pt-2 md:pt-4">
             {CARDS.map((card, index) => {
               let offset = index - active;
-              // shortest path wrapping for continuous feel when clicking buttons
               if (offset > total / 2) offset -= total;
               if (offset < -total / 2) offset += total;
 
@@ -135,6 +151,7 @@ export default function CoverflowCarousel() {
                     scale: t.scale,
                     opacity: t.opacity,
                     zIndex: t.zIndex,
+                    filter: t.blur > 0 ? `blur(${t.blur}px)` : 'blur(0px)',
                   }}
                   transition={{ type: 'spring', stiffness: 260, damping: 28 }}
                   className="absolute top-0"
@@ -155,7 +172,7 @@ export default function CoverflowCarousel() {
                       src={card.src}
                       alt={card.label}
                       fill
-                      sizes="220px"
+                      sizes="240px"
                       className="object-cover"
                       draggable={false}
                     />
@@ -172,11 +189,14 @@ export default function CoverflowCarousel() {
           </div>
         </div>
 
-        {/* Nav buttons — no infinite auto scroll */}
         <div className="mb-10 flex items-center justify-center gap-4 md:mb-12">
           <button
             type="button"
-            onClick={prev}
+            onClick={() => {
+              setPaused(true);
+              prev();
+              window.setTimeout(() => setPaused(false), 2500);
+            }}
             aria-label="Previous stage"
             className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white transition-colors hover:border-white/40 hover:bg-white/10"
           >
@@ -188,7 +208,11 @@ export default function CoverflowCarousel() {
                 key={card.id}
                 type="button"
                 aria-label={`Go to ${card.label}`}
-                onClick={() => setActive(i)}
+                onClick={() => {
+                  setPaused(true);
+                  setActive(i);
+                  window.setTimeout(() => setPaused(false), 2500);
+                }}
                 className={`h-1.5 rounded-full transition-all ${
                   i === active ? 'w-6 bg-[#ff5a3c]' : 'w-1.5 bg-white/25 hover:bg-white/45'
                 }`}
@@ -197,7 +221,11 @@ export default function CoverflowCarousel() {
           </div>
           <button
             type="button"
-            onClick={next}
+            onClick={() => {
+              setPaused(true);
+              next();
+              window.setTimeout(() => setPaused(false), 2500);
+            }}
             aria-label="Next stage"
             className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white transition-colors hover:border-white/40 hover:bg-white/10"
           >

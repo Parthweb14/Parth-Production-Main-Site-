@@ -303,7 +303,7 @@ export default function VisualFeedbackWidget() {
             )}
 
             {/* Collected Notes */}
-            <div className="flex-1 overflow-y-auto mb-4 space-y-3 pr-1 max-h-[220px] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-gray-800">
+            <div className="flex-1 overflow-y-auto mb-4 space-y-3 pr-1 max-h-[220px] scrollbar-none">
               <h4 className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2 flex-shrink-0">Collected Notes ({notesList.length})</h4>
               
               {notesList.length === 0 ? (
