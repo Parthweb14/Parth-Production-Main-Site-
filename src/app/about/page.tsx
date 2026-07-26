@@ -74,11 +74,6 @@ export default function AboutPage() {
           italicLine="built for every night."
           description="Full-stack live production. From first mic check to final firework — sound, light, SFX, truss, and DJ artistry under one crew."
           image={STAGE_IMAGES[2].src}
-          chips={[
-            { label: 'Journey', href: '#journey' },
-            { label: 'Founder', href: '#founder' },
-            { label: 'Why us', href: '#why-us' },
-          ]}
         />
 
         <section className="relative py-14 md:py-20 px-4 sm:px-6 md:px-10 overflow-hidden border-t border-white/10">

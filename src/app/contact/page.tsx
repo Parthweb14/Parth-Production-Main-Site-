@@ -60,11 +60,6 @@ export default function ContactPage() {
           italicLine="date & the vibe."
           description="Share venue, guest count, and energy — sound, light, SFX, truss, fireworks, DJ. One crew. One system."
           image={STAGE_IMAGES[3].src}
-          chips={[
-            { label: 'WhatsApp', href: '#connect' },
-            { label: 'Call', href: `tel:+91${siteSettings.phone_1}` },
-            { label: 'Map', href: '#studio-map' },
-          ]}
         />
 
         {/* Command center */}

@@ -20,10 +20,10 @@ const CARDS = [
 
 const CARD_W = 280;
 const CARD_H = 420;
-const GAP = 32;
+const GAP = 24;
 const STEP = CARD_W + GAP;
-const LOOP_SECONDS = 30;
-const SPEED = (CARDS.length * STEP) / LOOP_SECONDS; // px per second
+const LOOP_SECONDS = 32;
+const SPEED = (CARDS.length * STEP) / LOOP_SECONDS;
 
 const FEATURES = [
   {
@@ -43,55 +43,48 @@ const FEATURES = [
   },
 ];
 
-const PARTICLES = Array.from({ length: 18 }, (_, i) => ({
-  id: i,
-  left: `${8 + ((i * 37) % 84)}%`,
-  top: `${18 + ((i * 53) % 64)}%`,
-  size: 2 + (i % 3),
-  delay: (i % 8) * 0.35,
-  duration: 4 + (i % 5),
-}));
-
 type CardStyle = {
   rotateY: number;
   scale: number;
   opacity: number;
-  blur: number;
+  translateZ: number;
   zIndex: number;
   isCenter: boolean;
 };
 
+/** Stronger tunnel: center pops forward, sides shrink and recede. */
 function styleForOffset(normalized: number): CardStyle {
   const abs = Math.abs(normalized);
-  const rotateY = Math.max(-22, Math.min(22, -normalized * 12));
+  const rotateY = Math.max(-32, Math.min(32, -normalized * 18));
 
-  let scale = 0.82;
-  let opacity = 0.55;
-  let blur = 1;
+  let scale = 0.48;
+  let opacity = 0.28;
+  let translateZ = -280;
 
-  if (abs < 0.35) {
-    scale = 1.15;
-    opacity = 1;
-    blur = 0;
-  } else if (abs < 1.35) {
-    const t = (abs - 0.35) / 1;
-    scale = 1.15 - t * (1.15 - 0.92);
-    opacity = 1 - t * (1 - 0.8);
-    blur = 0;
-  } else if (abs < 2.35) {
-    const t = (abs - 1.35) / 1;
-    scale = 0.92 - t * (0.92 - 0.82);
-    opacity = 0.8 - t * (0.8 - 0.55);
-    blur = t;
+  if (abs < 0.4) {
+    const t = abs / 0.4;
+    scale = 1.22 - t * (1.22 - 0.88);
+    opacity = 1 - t * 0.15;
+    translateZ = 120 - t * 160;
+  } else if (abs < 1.25) {
+    const t = (abs - 0.4) / 0.85;
+    scale = 0.88 - t * (0.88 - 0.62);
+    opacity = 0.85 - t * 0.3;
+    translateZ = -40 - t * 120;
+  } else if (abs < 2.4) {
+    const t = (abs - 1.25) / 1.15;
+    scale = 0.62 - t * (0.62 - 0.48);
+    opacity = 0.55 - t * 0.27;
+    translateZ = -160 - t * 120;
   }
 
   return {
     rotateY,
     scale,
     opacity,
-    blur,
-    zIndex: Math.round(100 - abs * 20),
-    isCenter: abs < 0.45,
+    translateZ,
+    zIndex: Math.round(200 - abs * 40),
+    isCenter: abs < 0.38,
   };
 }
 
@@ -194,29 +187,25 @@ export default function CoverflowCarousel() {
     scheduleResume();
   };
 
-  // Middle segment starts at CARDS.length so we have buffer both sides
   const baseIndex = CARDS.length;
 
   return (
     <motion.section
-      initial={{ opacity: 0, y: 40 }}
+      initial={{ opacity: 0, y: 32 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-80px' }}
-      transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-      className="relative w-full overflow-hidden bg-black py-[120px]"
+      transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+      className="relative w-full overflow-hidden bg-black pt-14 md:pt-20 pb-20 md:pb-28"
     >
-      <div className="pointer-events-none absolute inset-0 stage-tunnel-noise opacity-[0.02]" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,90,60,0.08),transparent_55%)]" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.85)_100%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(0,0,0,0.75)_100%)]" />
 
       <div className="relative mx-auto w-full max-w-[1400px] px-6 md:px-10">
-        {/* HEADER */}
-        <div className="mb-14 text-center md:mb-16">
+        <div className="mb-10 text-center md:mb-12">
           <motion.p
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mb-4 text-[12px] font-semibold uppercase tracking-[3px] text-[#ff5a3c]"
+            className="mb-3 text-[12px] font-semibold uppercase tracking-[3px] text-[#ff5a3c]"
           >
             Our Productions
           </motion.p>
@@ -225,7 +214,7 @@ export default function CoverflowCarousel() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.05 }}
-            className="font-display text-[38px] font-bold leading-tight tracking-tight text-white md:text-[54px] lg:text-[72px]"
+            className="font-display text-[38px] font-bold leading-tight tracking-tight text-white md:text-[54px] lg:text-[64px]"
           >
             Stage Gallery
           </motion.h2>
@@ -234,7 +223,7 @@ export default function CoverflowCarousel() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.08 }}
-            className="mt-2 font-serif italic text-[28px] text-[#ff5a3c] md:text-[36px] lg:text-[44px]"
+            className="mt-2 font-serif italic text-[26px] text-[#ff5a3c] md:text-[34px] lg:text-[40px]"
           >
             Built for the Big Night.
           </motion.p>
@@ -243,7 +232,7 @@ export default function CoverflowCarousel() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.12 }}
-            className="mx-auto mt-5 max-w-[700px] text-sm leading-relaxed text-[#b8b8b8] md:text-base"
+            className="mx-auto mt-4 max-w-[700px] text-sm leading-relaxed text-[#b8b8b8] md:text-base"
           >
             Drag through real stages featuring LED walls, luxury wedding productions, corporate
             events, concerts, lighting setups, truss systems, fireworks, and immersive DJ
@@ -251,38 +240,17 @@ export default function CoverflowCarousel() {
           </motion.p>
         </div>
 
-        {/* CAROUSEL */}
         <motion.div
-          initial={{ opacity: 0, y: 28 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ delay: 0.15, duration: 0.65 }}
-          className="relative mb-20"
+          transition={{ delay: 0.12, duration: 0.55 }}
+          className="relative mb-16 md:mb-20"
         >
-          {/* Center glow + beam */}
-          <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#ff5a3c]/20 blur-[120px] stage-glow-pulse" />
-          <div className="pointer-events-none absolute left-1/2 top-[8%] z-30 h-[84%] w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-[#ff5a3c]/80 to-transparent opacity-70" />
-
-          {PARTICLES.map((p) => (
-            <span
-              key={p.id}
-              className="pointer-events-none absolute z-20 rounded-full bg-[#ff5a3c] stage-particle"
-              style={{
-                left: p.left,
-                top: p.top,
-                width: p.size,
-                height: p.size,
-                animationDelay: `${p.delay}s`,
-                animationDuration: `${p.duration}s`,
-                opacity: 0.35,
-              }}
-            />
-          ))}
-
           <div
             ref={viewportRef}
-            className="relative z-10 h-[460px] cursor-grab overflow-visible active:cursor-grabbing md:h-[500px]"
-            style={{ perspective: '1200px', touchAction: 'pan-y' }}
+            className="relative z-10 h-[440px] cursor-grab overflow-visible active:cursor-grabbing md:h-[520px]"
+            style={{ perspective: '1400px', touchAction: 'pan-y' }}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
@@ -295,27 +263,22 @@ export default function CoverflowCarousel() {
             role="region"
             aria-label="Stage gallery infinite carousel"
           >
-            <div
-              className="absolute inset-0"
-              style={{ transformStyle: 'preserve-3d' }}
-            >
+            <div className="absolute inset-0" style={{ transformStyle: 'preserve-3d' }}>
               {loopCards.map((card, i) => {
                 const logical = i - baseIndex;
-                const cardCenter =
-                  logical * STEP + CARD_W / 2 - offset + viewportW / 2;
+                const cardCenter = logical * STEP + CARD_W / 2 - offset + viewportW / 2;
                 const rel = cardCenter - viewportW / 2;
                 const normalized = rel / STEP;
                 const style = styleForOffset(normalized);
 
-                // Cull far cards for perf
-                if (Math.abs(normalized) > 4.5) return null;
+                if (Math.abs(normalized) > 4.2) return null;
 
                 const left = cardCenter - CARD_W / 2;
 
                 return (
                   <article
                     key={`${card.id}-${i}`}
-                    className="stage-tunnel-card absolute top-1/2 will-change-transform"
+                    className="absolute top-1/2 will-change-transform"
                     style={{
                       width: CARD_W,
                       height: CARD_H,
@@ -323,33 +286,28 @@ export default function CoverflowCarousel() {
                       marginTop: -CARD_H / 2,
                       zIndex: style.zIndex,
                       opacity: style.opacity,
-                      transform: `translate3d(0,0,0) rotateY(${style.rotateY}deg) scale(${style.scale})`,
-                      filter: style.blur > 0.15 ? `blur(${style.blur}px)` : 'none',
+                      transform: `translate3d(0, 0, ${style.translateZ}px) rotateY(${style.rotateY}deg) scale(${style.scale})`,
                       transformStyle: 'preserve-3d',
                     }}
                   >
                     <div
-                      className={`stage-tunnel-card-inner relative h-full w-full overflow-hidden rounded-[24px] border bg-[#111111] shadow-2xl ${
-                        style.isCenter
-                          ? 'border-[#ff5a3c]/50 shadow-[0_0_60px_rgba(255,90,60,0.35)]'
-                          : 'border-white/[0.08]'
+                      className={`relative h-full w-full overflow-hidden rounded-[24px] border bg-[#111111] shadow-[0_24px_60px_rgba(0,0,0,0.65)] ${
+                        style.isCenter ? 'border-white/25' : 'border-white/[0.08]'
                       }`}
                     >
-                      <div className="stage-tunnel-float relative h-full w-full">
-                        <Image
-                          src={card.src}
-                          alt={card.label}
-                          fill
-                          loading="lazy"
-                          sizes="280px"
-                          className="object-cover transition-transform duration-500 ease-out"
-                          draggable={false}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                        <span className="absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/10 bg-white/[0.08] px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white backdrop-blur-[20px]">
-                          {card.label}
-                        </span>
-                      </div>
+                      <Image
+                        src={card.src}
+                        alt={card.label}
+                        fill
+                        loading="lazy"
+                        sizes="280px"
+                        className="object-cover"
+                        draggable={false}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
+                      <span className="absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/10 bg-black/45 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white backdrop-blur-[16px]">
+                        {card.label}
+                      </span>
                     </div>
                   </article>
                 );
@@ -358,7 +316,6 @@ export default function CoverflowCarousel() {
           </div>
         </motion.div>
 
-        {/* Feature grid — clean Apple-like columns */}
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-2 text-center md:grid-cols-3 md:gap-8">
           {FEATURES.map((feature, i) => (
             <motion.div
@@ -379,7 +336,7 @@ export default function CoverflowCarousel() {
         <div className="mt-12 text-center">
           <Link
             href="/gallery"
-            className="inline-flex items-center gap-2 rounded-full border-2 border-white/20 px-8 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-white transition-all duration-300 hover:border-[#ff5a3c]/60 hover:bg-white/10 hover:shadow-[0_0_28px_rgba(255,90,60,0.3)]"
+            className="inline-flex items-center gap-2 rounded-full border-2 border-white/20 px-8 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-white transition-colors duration-300 hover:border-white/40 hover:bg-white/5"
           >
             View All Projects →
           </Link>
