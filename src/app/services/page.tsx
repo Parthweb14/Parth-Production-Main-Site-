@@ -132,9 +132,7 @@ export default function ServicesPage() {
         />
 
         <div>
-          {services.map((service, index) => {
-            const imageRight = index % 2 === 1;
-            const imageLeft = !imageRight;
+          {services.map((service) => {
             const bookHref = `${whatsappUrl}?text=${encodeURIComponent(
               `Hi Parth Production, I want to book a ${service.bookLabel} event`
             )}`;
@@ -146,20 +144,15 @@ export default function ServicesPage() {
                 className="relative border-t border-white/10 py-10 md:py-14"
               >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10">
+                  {/* Always: image left → text right after image */}
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: '-40px' }}
                     transition={{ duration: 0.45 }}
-                    className={`grid grid-cols-1 lg:grid-cols-2 items-stretch ${
-                      imageLeft ? 'gap-8 lg:gap-16' : 'gap-6 lg:gap-10'
-                    }`}
+                    className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14 items-center"
                   >
-                    <div
-                      className={`relative min-h-[260px] md:min-h-[340px] rounded-3xl overflow-hidden border border-white/10 group ${
-                        imageRight ? 'lg:order-2' : ''
-                      }`}
-                    >
+                    <div className="relative min-h-[260px] md:min-h-[340px] rounded-3xl overflow-hidden border border-white/10 group">
                       <MediaImage
                         src={service.hero}
                         alt={service.title}
@@ -168,18 +161,8 @@ export default function ServicesPage() {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
                     </div>
 
-                    <div
-                      className={`flex flex-col justify-center py-1 lg:py-2 ${
-                        imageRight
-                          ? 'lg:order-1 lg:items-start lg:text-left'
-                          : 'lg:items-end lg:text-right lg:pl-6 xl:pl-12'
-                      }`}
-                    >
-                      <span
-                        className={`inline-flex items-center min-h-[28px] px-3 py-1 rounded-full border border-accent/40 bg-accent/10 text-[10px] uppercase tracking-[0.22em] text-accent font-semibold mb-3 ${
-                          imageLeft ? 'lg:self-end' : 'self-start'
-                        }`}
-                      >
+                    <div className="flex flex-col justify-center items-start text-left py-1 lg:py-2 lg:pl-4">
+                      <span className="inline-flex self-start items-center min-h-[28px] px-3 py-1 rounded-full border border-accent/40 bg-accent/10 text-[10px] uppercase tracking-[0.22em] text-accent font-semibold mb-3">
                         {service.badge}
                       </span>
                       <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold uppercase tracking-tight text-white leading-tight">
@@ -188,20 +171,14 @@ export default function ServicesPage() {
                       <p className="mt-2 text-xs md:text-sm uppercase tracking-[0.18em] text-white/50">
                         {service.subtitle}
                       </p>
-                      <p
-                        className={`mt-3 text-white/70 text-sm md:text-base leading-relaxed max-w-xl ${
-                          imageLeft ? 'lg:ml-auto' : ''
-                        }`}
-                      >
+                      <p className="mt-3 text-white/70 text-sm md:text-base leading-relaxed max-w-xl">
                         {service.summary}
                       </p>
                       <a
                         href={bookHref}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`mt-4 inline-flex items-center min-h-[44px] text-sm font-semibold uppercase tracking-[0.14em] text-white hover:text-accent transition-colors ${
-                          imageLeft ? 'lg:self-end' : 'self-start'
-                        }`}
+                        className="mt-4 inline-flex self-start items-center min-h-[44px] text-sm font-semibold uppercase tracking-[0.14em] text-white hover:text-accent transition-colors"
                       >
                         Explore Service →
                       </a>
