@@ -1,16 +1,16 @@
 import type { Metadata, Viewport } from 'next';
-import { Outfit, Plus_Jakarta_Sans, Instrument_Serif } from 'next/font/google';
+import { Space_Grotesk, Manrope, Instrument_Serif } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import VisualFeedbackWidget from '@/components/VisualFeedbackWidget';
 
-const outfit = Outfit({
+const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
   variable: '--font-display',
   display: 'swap',
 });
 
-const jakarta = Plus_Jakarta_Sans({
+const manrope = Manrope({
   subsets: ['latin'],
   variable: '--font-sans',
   display: 'swap',
@@ -63,14 +63,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${outfit.variable} ${jakarta.variable} ${instrumentSerif.variable} dark h-full antialiased`}
+      className={`${spaceGrotesk.variable} ${manrope.variable} ${instrumentSerif.variable} dark h-full antialiased`}
     >
       <head>
         <link rel="preload" href="/Parth Logo .json" as="fetch" crossOrigin="anonymous" />
         <link rel="preload" href="/Parth logo .png" as="image" />
         <link rel="icon" href="/Parth logo .png?v=5" type="image/png" />
       </head>
-      <body className="min-h-full bg-[#0A0E27] text-slate-100 flex flex-col font-sans overflow-x-hidden">
+      <body className="min-h-full bg-black text-white flex flex-col font-sans overflow-x-hidden">
         <AuthProvider>
           {children}
           <VisualFeedbackWidget />

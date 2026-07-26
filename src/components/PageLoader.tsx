@@ -35,13 +35,13 @@ export default function PageLoader({ onComplete, isReady }: PageLoaderProps) {
             initial={{ x: 0 }}
             animate={isReady ? { x: '-100%' } : { x: 0 }}
             transition={{ duration: 0.85, ease: [0.77, 0, 0.175, 1] }}
-            className="w-1/2 h-full bg-[#0A0E27] pointer-events-auto"
+            className="w-1/2 h-full bg-[#050505] pointer-events-auto"
           />
           <motion.div
             initial={{ x: 0 }}
             animate={isReady ? { x: '100%' } : { x: 0 }}
             transition={{ duration: 0.85, ease: [0.77, 0, 0.175, 1] }}
-            className="w-1/2 h-full bg-[#0A0E27] pointer-events-auto"
+            className="w-1/2 h-full bg-[#050505] pointer-events-auto"
           />
           <div className="absolute inset-0 flex items-center justify-center z-10">
             <AnimatePresence>

@@ -20,6 +20,7 @@ export default function ContactPage() {
       icon: Phone,
       primary: `+91 ${siteSettings.phone_1}`,
       secondary: siteSettings.phone_2 ? `+91 ${siteSettings.phone_2}` : null,
+      secondaryHref: siteSettings.phone_2 ? `tel:+91${siteSettings.phone_2}` : undefined,
       external: false,
     },
     {
@@ -36,6 +37,7 @@ export default function ContactPage() {
       icon: MapPin,
       primary: address,
       secondary: 'Open in Maps',
+      secondaryHref: mapsUrl,
       external: true,
     },
   ];
@@ -44,7 +46,7 @@ export default function ContactPage() {
     <>
       <SpotlightNavbar />
       <div className="film-grain" />
-      <main className="relative overflow-x-hidden bg-[#0A0E27]">
+      <main className="relative overflow-x-hidden bg-black">
         <PageHero
           title="Tell us the date"
           description="Share venue, guest count, and vibe — sound, light, SFX, truss, fireworks, DJ. One crew."
@@ -63,19 +65,19 @@ export default function ContactPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.08 }}
-                className="saas-card group p-6 md:p-8"
+                className="group rounded-2xl border border-white/15 bg-white/[0.03] p-6 md:p-8 transition-all duration-300 hover:border-accent/50 hover:-translate-y-1"
               >
-                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-400/10 border border-cyan-400/25 text-cyan-300 group-hover:bg-cyan-400 group-hover:text-[#0A0E27] transition-colors">
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/15 border border-accent/30 text-accent group-hover:bg-accent group-hover:text-black transition-colors">
                   <Icon className="h-5 w-5" />
                 </div>
-                <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500 font-semibold mb-3">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/45 font-semibold mb-3">
                   {card.label}
                 </p>
-                <p className="text-lg md:text-xl font-semibold text-white group-hover:text-cyan-300 transition-colors break-words">
+                <p className="text-lg md:text-xl font-semibold text-white group-hover:text-accent transition-colors break-words">
                   {card.primary}
                 </p>
                 {card.secondary && (
-                  <p className="mt-2 text-sm text-slate-500 group-hover:text-slate-300 transition-colors">
+                  <p className="mt-2 text-sm text-white/55 group-hover:text-white/80 transition-colors">
                     {card.secondary}
                   </p>
                 )}
@@ -89,7 +91,7 @@ export default function ContactPage() {
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="relative overflow-hidden border border-white/10 rounded-2xl saas-card !p-0"
+            className="relative overflow-hidden border border-white/10 rounded-2xl"
           >
             <iframe
               src={`https://maps.google.com/maps?q=${encodeURIComponent(address)}&t=&z=16&ie=UTF8&iwloc=&output=embed`}
@@ -100,7 +102,7 @@ export default function ContactPage() {
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               title="Parth Production location"
-              className="w-full grayscale invert opacity-50 contrast-125 hover:opacity-75 transition-opacity duration-500"
+              className="w-full grayscale invert opacity-55 contrast-125 hover:opacity-80 transition-opacity duration-500"
             />
           </motion.div>
 
