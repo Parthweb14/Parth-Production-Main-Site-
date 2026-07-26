@@ -106,7 +106,7 @@ export default function AboutPage() {
             viewport={{ once: true }}
             className="relative z-10 max-w-4xl mx-auto text-center"
           >
-            <div className="flex items-center justify-center gap-4 mb-6 text-white/70">
+            <div className="flex items-center justify-center gap-4 mb-6 text-accent">
               <Sparkles className="w-5 h-5" />
               <span className="text-[10px] uppercase tracking-[0.3em] font-semibold">Our philosophy</span>
               <Sparkles className="w-5 h-5" />
@@ -152,7 +152,7 @@ export default function AboutPage() {
                       transition={{ duration: 0.5 }}
                       className="relative pl-12 md:pl-0 md:grid md:grid-cols-2 md:gap-12"
                     >
-                      <span className="absolute left-[11px] md:left-1/2 top-8 md:top-10 h-3.5 w-3.5 -translate-x-1/2 rounded-full bg-white shadow-[0_0_16px_rgba(255,255,255,0.7)] z-10" />
+                      <span className="absolute left-[11px] md:left-1/2 top-8 md:top-10 h-3.5 w-3.5 -translate-x-1/2 rounded-full bg-accent shadow-[0_0_16px_rgba(255,95,31,0.85)] z-10" />
 
                       {onRight ? (
                         <>

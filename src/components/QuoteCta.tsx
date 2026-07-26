@@ -39,7 +39,7 @@ export default function QuoteCta({
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="cta-book-btn relative inline-flex mt-8 items-center justify-center min-h-[44px] px-8 py-3 rounded-full bg-white text-black font-semibold transition-transform duration-300 hover:scale-105"
+          className="cta-book-btn relative inline-flex mt-8 items-center justify-center min-h-[44px] px-8 py-3 rounded-full bg-accent text-white font-semibold transition-transform duration-300 hover:scale-105"
         >
           {buttonLabel}
         </a>
