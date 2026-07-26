@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Space_Grotesk, Manrope, Instrument_Serif } from 'next/font/google';
+import { Space_Grotesk, Inter, Playfair_Display } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import VisualFeedbackWidget from '@/components/VisualFeedbackWidget';
@@ -10,15 +10,15 @@ const spaceGrotesk = Space_Grotesk({
   display: 'swap',
 });
 
-const manrope = Manrope({
+const inter = Inter({
   subsets: ['latin'],
   variable: '--font-sans',
   display: 'swap',
 });
 
-const instrumentSerif = Instrument_Serif({
+const playfair = Playfair_Display({
   subsets: ['latin'],
-  weight: '400',
+  weight: ['400', '500', '600'],
   style: ['normal', 'italic'],
   variable: '--font-serif',
   display: 'swap',
@@ -63,7 +63,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${spaceGrotesk.variable} ${manrope.variable} ${instrumentSerif.variable} dark h-full antialiased`}
+      className={`${spaceGrotesk.variable} ${inter.variable} ${playfair.variable} dark h-full antialiased`}
     >
       <head>
         <link rel="preload" href="/Parth Logo .json" as="fetch" crossOrigin="anonymous" />

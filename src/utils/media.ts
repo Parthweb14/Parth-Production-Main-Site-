@@ -44,10 +44,34 @@ export const STAGE_IMAGES = [
 ];
 
 export const CRAFT = [
-  { title: 'Sound', copy: 'Line arrays, monitors, and mixes that cut clean through every crowd.', image: `${ASSET_BASE}/Image%208%20Concert.png` },
-  { title: 'Light', copy: 'Moving heads, washes, and laser looks programmed to the beat.', image: `${ASSET_BASE}/image%2010%20.png` },
-  { title: 'SFX', copy: 'Cold sparklers, fog, CO₂, and cue-timed atmosphere.', image: `${ASSET_BASE}/Image%203%20Festivals.png` },
-  { title: 'Truss', copy: 'Certified structures for LED, audio, and aerial fixtures.', image: `${ASSET_BASE}/Image%201%20Concert%20.png` },
-  { title: 'Firework', copy: 'Pyro and skyline moments for finales that get remembered.', image: `${ASSET_BASE}/Image%205%20Road%20show.png` },
-  { title: 'DJ Artistic', copy: 'Sets and transitions shaped for weddings, festivals, and clubs.', image: `${ASSET_BASE}/Image%206%20Weddings.png` },
+  {
+    title: 'Sound',
+    copy: 'Powerful line arrays, premium speakers, digital mixers, monitors, and crystal-clear sound engineered for every audience.',
+    image: `${ASSET_BASE}/Image%208%20Concert.png`,
+  },
+  {
+    title: 'Lighting',
+    copy: 'Moving heads, beam lights, wash fixtures, lasers, and synchronized lighting programmed to match every beat.',
+    image: `${ASSET_BASE}/image%2010%20.png`,
+  },
+  {
+    title: 'SFX',
+    copy: 'Cold spark fountains, CO₂ cannons, fog machines, confetti, haze, and immersive special effects.',
+    image: `${ASSET_BASE}/Image%203%20Festivals.png`,
+  },
+  {
+    title: 'Truss',
+    copy: 'Certified truss systems supporting LED walls, lighting rigs, sound equipment, and aerial stage installations.',
+    image: `${ASSET_BASE}/Image%201%20Concert%20.png`,
+  },
+  {
+    title: 'Fireworks',
+    copy: 'Indoor and outdoor pyrotechnics creating breathtaking finales and unforgettable celebrations.',
+    image: `${ASSET_BASE}/Image%205%20Road%20show.png`,
+  },
+  {
+    title: 'DJ Artists',
+    copy: 'Experienced DJs delivering energetic performances for weddings, concerts, festivals, clubs, and private events.',
+    image: `${ASSET_BASE}/Image%206%20Weddings.png`,
+  },
 ];
