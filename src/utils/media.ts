@@ -17,6 +17,16 @@ export function resolveGallerySrc(pathOrUrl: string, fallback: string): string {
   return mediaUrl(pathOrUrl, fallback);
 }
 
+/** Resolve admin/DB video URLs to playable absolute URLs. */
+export function resolveVideoSrc(pathOrUrl: string, fallback = ''): string {
+  if (!pathOrUrl) return fallback;
+  if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) return pathOrUrl;
+  if (pathOrUrl.startsWith('/videos/') || pathOrUrl.startsWith('/')) {
+    return `${ASSET_BASE}${pathOrUrl}`;
+  }
+  return mediaUrl(pathOrUrl, fallback);
+}
+
 export const HERO_VIDEO = `${ASSET_BASE}/Hero%20Background%20video%20-%20Trim.mp4`;
 export const LOGO_JSON = '/Parth Logo .json';
 export const LOGO_PNG = '/Parth logo .png';
@@ -42,6 +52,38 @@ export const STAGE_IMAGES = [
   { title: 'Mainstage', src: `${ASSET_BASE}/Image%208%20Concert.png`, tag: 'Live Sound' },
   { title: 'Campaign', src: `${ASSET_BASE}/Image%205%20Road%20show.png`, tag: 'Fireworks Ready' },
 ];
+
+/** Default homepage video rows for admin seed / public fallback */
+export function defaultShowcaseVideos() {
+  return SHOW_VIDEOS.map((v, i) => ({
+    id: `video-${i + 1}`,
+    title: v.title,
+    video_url: v.src,
+    order_index: i,
+  }));
+}
+
+/** Default Stage Gallery rows for admin seed / public fallback */
+export function defaultStageGallery() {
+  const labels = [
+    'Wedding Stage',
+    'Concert Setup',
+    'Festival Lighting',
+    'Corporate Event',
+    'Road Show',
+    'DJ Performance',
+    'LED Wall',
+    'Mainstage Array',
+    'Fireworks Show',
+  ];
+  const order = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+  return order.map((imgIdx, i) => ({
+    id: `stage-${i + 1}`,
+    title: labels[i] || STAGE_IMAGES[imgIdx]?.title || `Stage ${i + 1}`,
+    image_url: STAGE_IMAGES[imgIdx]?.src || '',
+    order_index: i,
+  }));
+}
 
 /** Home celebration showcase — Sound, Lighting, DJ only */
 export const CRAFT = [

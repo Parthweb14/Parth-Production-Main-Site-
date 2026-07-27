@@ -3,6 +3,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import {
+  STAGE_IMAGES,
+  defaultShowcaseVideos,
+  defaultStageGallery,
+} from '@/utils/media';
 
 import { 
   Image as ImageIcon, 
@@ -77,7 +82,15 @@ interface SiteSettings {
   from_email?: string;
 }
 
-const CATEGORIES = ['All Events', 'Weddings', 'Festivals', 'Concerts', 'Road Shows'];
+const CATEGORIES = ['All Events', 'Weddings', 'Festivals', 'Concerts', 'Road Shows', 'Corporate'];
+
+const DEFAULT_SERVICES: DBServiceImage[] = [
+  { id: 2, service_title: 'CONCERTS', image_url: STAGE_IMAGES[1].src },
+  { id: 1, service_title: 'WEDDINGS', image_url: STAGE_IMAGES[0].src },
+  { id: 3, service_title: 'FESTIVALS', image_url: STAGE_IMAGES[2].src },
+  { id: 4, service_title: 'CORPORATE', image_url: STAGE_IMAGES[3].src },
+  { id: 5, service_title: 'ROAD SHOWS', image_url: STAGE_IMAGES[4].src },
+];
 
 export default function AdminPage() {
   const router = useRouter();
@@ -180,8 +193,21 @@ export default function AdminPage() {
       setInitialImages(JSON.stringify(loadedImages));
 
       const loadedVideos = data.videos || [];
-      setVideos(loadedVideos);
-      setInitialVideos(JSON.stringify(loadedVideos));
+      const videosAreUsable =
+        loadedVideos.length > 0 &&
+        loadedVideos.some(
+          (v: DBVideo) =>
+            typeof v.video_url === 'string' &&
+            (v.video_url.startsWith('http') || v.video_url.startsWith('/videos/'))
+        );
+      const usableVideos = videosAreUsable
+        ? [...loadedVideos].sort(
+            (a: DBVideo, b: DBVideo) => (a.order_index ?? 0) - (b.order_index ?? 0)
+          )
+        : defaultShowcaseVideos();
+      setVideos(usableVideos);
+      // If we seeded defaults, leave initial empty so Save prompts a first sync to the live site
+      setInitialVideos(videosAreUsable ? JSON.stringify(usableVideos) : '[]');
 
       if (data.settings) {
         setSettings(data.settings);
@@ -208,12 +234,43 @@ export default function AdminPage() {
       }
 
       const loadedServices = data.services || [];
-      setServiceImages(loadedServices);
-      setInitialServiceImages(JSON.stringify(loadedServices));
+      const mergedServices =
+        loadedServices.length > 0
+          ? DEFAULT_SERVICES.map((def) => {
+              const match = loadedServices.find((s: DBServiceImage) => s.id === def.id);
+              if (!match) return def;
+              const url = match.image_url || '';
+              const broken = !url || url.startsWith('/images/');
+              return {
+                ...def,
+                service_title: match.service_title || def.service_title,
+                image_url: broken ? def.image_url : url,
+              };
+            })
+          : DEFAULT_SERVICES;
+      setServiceImages(mergedServices);
+      setInitialServiceImages(JSON.stringify(mergedServices));
 
-      const loadedVibrants = data.vibrants || [];
-      setVibrants(loadedVibrants);
-      setInitialVibrants(JSON.stringify(loadedVibrants));
+      const loadedVibrants = data.stage_gallery?.length
+        ? data.stage_gallery
+        : data.vibrants || [];
+      const stageSeeded = !(loadedVibrants.length > 0);
+      const stageItems = !stageSeeded
+        ? [...loadedVibrants]
+            .sort((a: DBVibrant, b: DBVibrant) => (a.order_index ?? 0) - (b.order_index ?? 0))
+            .map((v: DBVibrant, i: number) => {
+              const fallback = defaultStageGallery()[i % 9];
+              const broken = !v.image_url || v.image_url.startsWith('/images/');
+              return {
+                ...v,
+                title: v.title || fallback.title,
+                image_url: broken ? fallback.image_url : v.image_url,
+                order_index: i,
+              };
+            })
+        : defaultStageGallery();
+      setVibrants(stageItems);
+      setInitialVibrants(stageSeeded ? '[]' : JSON.stringify(stageItems));
 
       // Reset deletions tracking queue
       setDeletedUrls([]);
@@ -320,26 +377,42 @@ export default function AdminPage() {
 
   // Drag and Drop reordering logic helpers
   const reorderImages = (startIndex: number, endIndex: number) => {
+    if (endIndex < 0) return;
     if (selectedGalleryCat === 'All Events') {
+      if (endIndex >= images.length) return;
       const reordered = Array.from(images);
       const [removed] = reordered.splice(startIndex, 1);
       reordered.splice(endIndex, 0, removed);
       const updated = reordered.map((img, idx) => ({ ...img, order_index: idx }));
       setImages(updated);
-    } else {
-      const categoryImages = images.filter(img => img.category === selectedGalleryCat);
-      const nonCategoryImages = images.filter(img => img.category !== selectedGalleryCat);
-
-      const reorderedCat = Array.from(categoryImages);
-      const [removed] = reorderedCat.splice(startIndex, 1);
-      reorderedCat.splice(endIndex, 0, removed);
-
-      const updatedCat = reorderedCat.map((img, idx) => ({ ...img, order_index: idx }));
-      setImages([...nonCategoryImages, ...updatedCat]);
+      return;
     }
+
+    // Reorder within one category without scrambling other categories' global indices
+    const catSorted = images
+      .filter((img) => img.category === selectedGalleryCat)
+      .sort((a, b) => a.order_index - b.order_index);
+    if (endIndex >= catSorted.length) return;
+
+    const slotIndices = catSorted.map((img) => img.order_index);
+    const reorderedCat = Array.from(catSorted);
+    const [removed] = reorderedCat.splice(startIndex, 1);
+    reorderedCat.splice(endIndex, 0, removed);
+    const updatedCat = reorderedCat.map((img, idx) => ({
+      ...img,
+      order_index: slotIndices[idx],
+    }));
+
+    setImages(
+      images.map((img) => {
+        const next = updatedCat.find((u) => u.id === img.id);
+        return next || img;
+      })
+    );
   };
 
   const reorderVideos = (startIndex: number, endIndex: number) => {
+    if (endIndex < 0 || endIndex >= videos.length) return;
     const reordered = Array.from(videos);
     const [removed] = reordered.splice(startIndex, 1);
     reordered.splice(endIndex, 0, removed);
@@ -348,6 +421,7 @@ export default function AdminPage() {
   };
 
   const reorderVibrants = (startIndex: number, endIndex: number) => {
+    if (endIndex < 0 || endIndex >= vibrants.length) return;
     const reordered = Array.from(vibrants);
     const [removed] = reordered.splice(startIndex, 1);
     reordered.splice(endIndex, 0, removed);
@@ -504,15 +578,16 @@ export default function AdminPage() {
   };
 
   const handleAddVibrantItem = () => {
-    if (vibrants.length >= 6) {
-      alert('Maximum limit of 6 items reached for Vibrants section!');
+    if (vibrants.length >= 9) {
+      alert('Maximum 9 Stage Gallery images.');
       return;
     }
     const tempId = Math.random().toString(36).substring(7);
+    const fallback = defaultStageGallery()[vibrants.length % 9];
     const newVibrant: DBVibrant = {
       id: tempId,
-      title: 'NEW VIBRANT',
-      image_url: '/images/Untitled-design-20_sm7myc.png',
+      title: 'New Stage',
+      image_url: fallback.image_url,
       order_index: vibrants.length
     };
     setVibrants([...vibrants, newVibrant]);
@@ -553,6 +628,9 @@ export default function AdminPage() {
     setErrorMsg(null);
 
     try {
+      // Collect R2 deletes in a local array (avoid stale React state)
+      const urlsToDelete = [...deletedUrls];
+
       // 1. Staged gallery uploads
       const processedImages = [];
       for (const img of images) {
@@ -605,9 +683,11 @@ export default function AdminPage() {
             service_title: s.service_title,
             image_url: publicUrl
           });
-          const oldItem = JSON.parse(initialServiceImages).find((item: any) => item.id === s.id);
-          if (oldItem && oldItem.image_url && !oldItem.image_url.startsWith('/images/')) {
-            setDeletedUrls(prev => [...prev, oldItem.image_url]);
+          const oldItem = JSON.parse(initialServiceImages || '[]').find(
+            (item: { id: number; image_url?: string }) => item.id === s.id
+          );
+          if (oldItem?.image_url && !oldItem.image_url.startsWith('/images/') && oldItem.image_url.startsWith('http')) {
+            urlsToDelete.push(oldItem.image_url);
           }
         } else {
           processedServices.push({
@@ -618,7 +698,7 @@ export default function AdminPage() {
         }
       }
 
-      // 4. Staged vibrants uploads
+      // 4. Staged stage gallery uploads
       const processedVibrants = [];
       for (const v of vibrants) {
         if (v.isLocal && v.localFile) {
@@ -629,9 +709,11 @@ export default function AdminPage() {
             image_url: publicUrl,
             order_index: v.order_index
           });
-          const oldItem = JSON.parse(initialVibrants).find((item: any) => item.id === v.id);
-          if (oldItem && oldItem.image_url && !oldItem.image_url.startsWith('/images/')) {
-            setDeletedUrls(prev => [...prev, oldItem.image_url]);
+          const oldItem = JSON.parse(initialVibrants || '[]').find(
+            (item: { id: string; image_url?: string }) => item.id === v.id
+          );
+          if (oldItem?.image_url && !oldItem.image_url.startsWith('/images/') && oldItem.image_url.startsWith('http')) {
+            urlsToDelete.push(oldItem.image_url);
           }
         } else {
           processedVibrants.push({
@@ -643,18 +725,27 @@ export default function AdminPage() {
         }
       }
 
-      // Save database and trigger cleanups
+      // Save database and trigger cleanups — preserve array order as order_index
       const saveResponse = await fetch('/api/admin/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
           settings,
-          images: processedImages.map((img, idx) => ({ ...img, order_index: idx })),
-          videos: processedVideos.map((vid, idx) => ({ ...vid, order_index: idx })),
+          images: processedImages
+            .slice()
+            .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+            .map((img, idx) => ({ ...img, order_index: idx })),
+          videos: processedVideos
+            .slice()
+            .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+            .map((vid, idx) => ({ ...vid, order_index: idx })),
           serviceImages: processedServices,
-          vibrants: processedVibrants.map((v, idx) => ({ ...v, order_index: idx })),
-          deletedUrls
+          vibrants: processedVibrants
+            .slice()
+            .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+            .map((v, idx) => ({ ...v, order_index: idx })),
+          deletedUrls: urlsToDelete
         })
       });
 
@@ -736,7 +827,7 @@ export default function AdminPage() {
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-4">
-        <Loader2 className="w-10 h-10 text-[#d4af37] animate-spin" />
+        <Loader2 className="w-10 h-10 text-[#3A8FB8] animate-spin" />
         <p className="text-zinc-500 text-sm font-space-grotesk tracking-widest uppercase">Loading Panel Settings...</p>
       </div>
     );
@@ -782,7 +873,7 @@ export default function AdminPage() {
               </button>
               <button
                 onClick={handleSaveAllChanges}
-                className="flex-1 h-12 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#f59e0b] text-white font-bold text-sm hover:shadow-[0_0_15px_rgba(139,92,246,0.35)] transition duration-200 cursor-pointer"
+                className="flex-1 h-12 rounded-xl bg-gradient-to-r from-[#0a1524] to-[#3A8FB8] text-white font-bold text-sm hover:shadow-[0_0_15px_rgba(58,143,184,0.28)] transition duration-200 cursor-pointer"
               >
                 Confirm Save
               </button>
@@ -794,7 +885,7 @@ export default function AdminPage() {
       {/* SAVING STATE OVERLAY SCREEN */}
       {saveLoading && (
         <div className="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center gap-4">
-          <Loader2 className="w-12 h-12 text-[#d4af37] animate-spin" />
+          <Loader2 className="w-12 h-12 text-[#3A8FB8] animate-spin" />
           <h3 className="font-bold text-lg text-white">Saving Changes to Cloud...</h3>
           <p className="text-zinc-550 text-xs tracking-widest uppercase">Syncing media files & database tables</p>
         </div>
@@ -802,7 +893,7 @@ export default function AdminPage() {
 
       {/* MOBILE HEADER BAR */}
       <div className="md:hidden w-full h-16 border-b border-white/10 bg-zinc-950 flex items-center justify-between px-6 z-30">
-        <span className="font-bold text-md tracking-wider">KP ADMIN PANEL</span>
+        <span className="font-bold text-md tracking-wider">PARTH ADMIN</span>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="w-10 h-10 rounded-xl border border-white/10 bg-black/40 flex items-center justify-center hover:bg-zinc-900 transition-colors"
@@ -825,7 +916,7 @@ export default function AdminPage() {
             />
             <div>
               <h2 className="font-bold text-sm tracking-wide text-white leading-none">ADMIN PANEL</h2>
-              <span className="text-[10px] text-[#d4af37] font-bold tracking-widest uppercase mt-1 block">Parth Production</span>
+              <span className="text-[10px] text-[#3A8FB8] font-bold tracking-widest uppercase mt-1 block">Parth Production</span>
             </div>
           </div>
 
@@ -837,13 +928,13 @@ export default function AdminPage() {
               }}
               className={`w-full h-12 px-4 rounded-xl flex items-center gap-3 text-sm font-bold tracking-wide transition duration-200 cursor-pointer
                 ${activeTab === 'gallery' 
-                  ? 'bg-[#d4af37]/10 border border-[#d4af37]/30 text-white' 
+                  ? 'bg-[#3A8FB8]/10 border border-[#3A8FB8]/30 text-white' 
                   : 'text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent'
                 }
               `}
             >
               <ImageIcon className="w-4 h-4" />
-              Gallery Grid
+              Gallery
             </button>
 
             <button
@@ -853,13 +944,13 @@ export default function AdminPage() {
               }}
               className={`w-full h-12 px-4 rounded-xl flex items-center gap-3 text-sm font-bold tracking-wide transition duration-200 cursor-pointer
                 ${activeTab === 'videos' 
-                  ? 'bg-[#d4af37]/10 border border-[#d4af37]/30 text-white' 
+                  ? 'bg-[#3A8FB8]/10 border border-[#3A8FB8]/30 text-white' 
                   : 'text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent'
                 }
               `}
             >
               <VideoIcon className="w-4 h-4" />
-              Simple Videos
+              Videos
             </button>
 
             <button
@@ -869,13 +960,13 @@ export default function AdminPage() {
               }}
               className={`w-full h-12 px-4 rounded-xl flex items-center gap-3 text-sm font-bold tracking-wide transition duration-200 cursor-pointer
                 ${activeTab === 'services' 
-                  ? 'bg-[#d4af37]/10 border border-[#d4af37]/30 text-white' 
+                  ? 'bg-[#3A8FB8]/10 border border-[#3A8FB8]/30 text-white' 
                   : 'text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent'
                 }
               `}
             >
               <FileImage className="w-4 h-4" />
-              Services Images
+              Services
             </button>
 
             <button
@@ -885,13 +976,13 @@ export default function AdminPage() {
               }}
               className={`w-full h-12 px-4 rounded-xl flex items-center gap-3 text-sm font-bold tracking-wide transition duration-200 cursor-pointer
                 ${activeTab === 'vibrants' 
-                  ? 'bg-[#d4af37]/10 border border-[#d4af37]/30 text-white' 
+                  ? 'bg-[#3A8FB8]/10 border border-[#3A8FB8]/30 text-white' 
                   : 'text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent'
                 }
               `}
             >
               <Sparkles className="w-4 h-4" />
-              Home Carousel
+              Stage Gallery
             </button>
 
             <button
@@ -901,7 +992,7 @@ export default function AdminPage() {
               }}
               className={`w-full h-12 px-4 rounded-xl flex items-center gap-3 text-sm font-bold tracking-wide transition duration-200 cursor-pointer
                 ${activeTab === 'settings' 
-                  ? 'bg-[#d4af37]/10 border border-[#d4af37]/30 text-white' 
+                  ? 'bg-[#3A8FB8]/10 border border-[#3A8FB8]/30 text-white' 
                   : 'text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent'
                 }
               `}
@@ -947,14 +1038,14 @@ export default function AdminPage() {
               {activeTab === 'gallery' && 'Gallery'}
               {activeTab === 'videos' && 'Videos'}
               {activeTab === 'services' && 'Services'}
-              {activeTab === 'vibrants' && 'Home Carousel'}
+              {activeTab === 'vibrants' && 'Stage Gallery'}
               {activeTab === 'settings' && 'Settings'}
             </h1>
             <p className="text-[10px] md:text-xs text-zinc-550 tracking-wider mt-1 uppercase">
-              {activeTab === 'gallery' && 'Organize portfolio grid photos'}
-              {activeTab === 'videos' && 'Manage stage video loop reels'}
-              {activeTab === 'services' && 'Customize service cover images'}
-              {activeTab === 'vibrants' && 'Manage vibrations slider'}
+              {activeTab === 'gallery' && 'Change all Gallery page images'}
+              {activeTab === 'videos' && 'Change homepage videos (up to 6) and their order'}
+              {activeTab === 'services' && 'Change Services page cover images'}
+              {activeTab === 'vibrants' && 'Change Stage Gallery images on the homepage'}
               {activeTab === 'settings' && 'Update contact profiles & credentials'}
             </p>
           </div>
@@ -965,7 +1056,7 @@ export default function AdminPage() {
               disabled={!hasChanges()}
               className={`h-12 px-6 rounded-xl font-bold text-sm tracking-wide flex items-center gap-2 shadow-lg transition duration-300 cursor-pointer
                 ${hasChanges() 
-                  ? 'bg-gradient-to-r from-[#d4af37] to-[#f59e0b] text-white hover:shadow-[0_0_20px_rgba(139,92,246,0.35)] active:scale-98' 
+                  ? 'bg-gradient-to-r from-[#0a1524] to-[#3A8FB8] text-white hover:shadow-[0_0_20px_rgba(58,143,184,0.28)] active:scale-98' 
                   : 'bg-zinc-900 border border-white/5 text-zinc-550 cursor-not-allowed'
                 }
               `}
@@ -1007,7 +1098,7 @@ export default function AdminPage() {
               {categoryImages.map((image, idx) => (
                 <div 
                   key={image.id}
-                  className="relative group rounded-3xl overflow-hidden border border-white/10 bg-zinc-950/40 p-3 flex flex-col hover:border-[#d4af37]/30 transition duration-300"
+                  className="relative group rounded-3xl overflow-hidden border border-white/10 bg-zinc-950/40 p-3 flex flex-col hover:border-[#3A8FB8]/30 transition duration-300"
                 >
                   <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-black flex items-center justify-center">
                     <img 
@@ -1016,7 +1107,7 @@ export default function AdminPage() {
                       className="w-full h-full object-cover brightness-[0.75]" 
                     />
                     <div className="absolute top-3 left-3 px-3 py-1 rounded-xl bg-black/60 border border-white/10 text-[10px] font-bold text-zinc-400 tracking-wider flex items-center gap-1.5 backdrop-blur-md">
-                      <span className="text-[#d4af37] font-extrabold uppercase">{image.category}</span>
+                      <span className="text-[#3A8FB8] font-extrabold uppercase">{image.category}</span>
                       <span className="w-1.5 h-1.5 rounded-full bg-zinc-600" />
                       <span>Index: {idx}</span>
                     </div>
@@ -1044,7 +1135,7 @@ export default function AdminPage() {
                           <select
                             value={image.category}
                             onChange={(e) => handleCategoryChange(image, e.target.value)}
-                            className="h-10 px-2 rounded-xl border border-[#d4af37] bg-black text-[10px] font-bold text-white focus:outline-none cursor-pointer"
+                            className="h-10 px-2 rounded-xl border border-[#3A8FB8] bg-black text-[10px] font-bold text-white focus:outline-none cursor-pointer"
                           >
                             {CATEGORIES.filter(c => c !== 'All Events').map(c => (
                               <option key={c} value={c} className="bg-zinc-950 text-white">{c}</option>
@@ -1092,9 +1183,9 @@ export default function AdminPage() {
               {selectedGalleryCat !== 'All Events' && categoryImages.length < 5 && (
                 <div 
                   onClick={() => fileInputRef.current?.click()}
-                  className="rounded-3xl border border-dashed border-white/10 bg-zinc-950/20 hover:bg-zinc-950/40 hover:border-[#d4af37]/30 flex flex-col items-center justify-center gap-3 p-8 text-center transition duration-300 min-h-[220px] cursor-pointer group"
+                  className="rounded-3xl border border-dashed border-white/10 bg-zinc-950/20 hover:bg-zinc-950/40 hover:border-[#3A8FB8]/30 flex flex-col items-center justify-center gap-3 p-8 text-center transition duration-300 min-h-[220px] cursor-pointer group"
                 >
-                  <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-[#d4af37]/30 group-hover:bg-[#d4af37]/5 transition duration-300">
+                  <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-[#3A8FB8]/30 group-hover:bg-[#3A8FB8]/5 transition duration-300">
                     <Plus className="w-5 h-5 text-zinc-400 group-hover:text-white" />
                   </div>
                   <div>
@@ -1139,10 +1230,11 @@ export default function AdminPage() {
         {/* -------------------- VIDEOS TAB CONTENT -------------------- */}
         {activeTab === 'videos' && (
           <div className="space-y-6">
-            <div className="flex items-start gap-3 rounded-2xl border border-[#d4af37]/20 bg-[#d4af37]/5 p-4 text-xs text-zinc-300 leading-normal">
-              <AlertCircle className="w-4 h-4 text-[#d4af37] mt-0.5 flex-shrink-0" />
+            <div className="flex items-start gap-3 rounded-2xl border border-[#3A8FB8]/20 bg-[#3A8FB8]/5 p-4 text-xs text-zinc-300 leading-normal">
+              <AlertCircle className="w-4 h-4 text-[#3A8FB8] mt-0.5 flex-shrink-0" />
               <span>
-                <strong>Disclaimer:</strong> Videos uploaded to this section should be under <strong>25 seconds</strong> and must have a <strong>9:16 aspect ratio</strong> (Instagram Reel / vertical format) for optimal display on mobile devices.
+                <strong>How it works:</strong> Reorder with the arrows, then click <strong>Save Changes</strong>.
+                The homepage video section updates immediately after save. Use vertical MP4s under 25 seconds (9:16).
               </span>
             </div>
 
@@ -1151,7 +1243,7 @@ export default function AdminPage() {
               {videos.map((vid, idx) => (
                 <div 
                   key={vid.id}
-                  className="relative group rounded-3xl overflow-hidden border border-white/10 bg-zinc-950/40 p-3 flex flex-col hover:border-[#d4af37]/30 transition duration-300"
+                  className="relative group rounded-3xl overflow-hidden border border-white/10 bg-zinc-950/40 p-3 flex flex-col hover:border-[#3A8FB8]/30 transition duration-300"
                 >
                   <div className="relative w-full aspect-[9/16] rounded-2xl overflow-hidden bg-black flex items-center justify-center">
                     <video 
@@ -1209,9 +1301,9 @@ export default function AdminPage() {
               {videos.length < 6 ? (
                 <div 
                   onClick={() => videoInputRef.current?.click()}
-                  className="rounded-3xl border border-dashed border-white/10 bg-zinc-950/20 hover:bg-zinc-950/40 hover:border-[#d4af37]/30 flex flex-col items-center justify-center gap-3 p-8 text-center transition duration-300 min-h-[320px] cursor-pointer group"
+                  className="rounded-3xl border border-dashed border-white/10 bg-zinc-950/20 hover:bg-zinc-950/40 hover:border-[#3A8FB8]/30 flex flex-col items-center justify-center gap-3 p-8 text-center transition duration-300 min-h-[320px] cursor-pointer group"
                 >
-                  <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-[#d4af37]/30 group-hover:bg-[#d4af37]/5 transition duration-300">
+                  <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-[#3A8FB8]/30 group-hover:bg-[#3A8FB8]/5 transition duration-300">
                     <Plus className="w-5 h-5 text-zinc-400 group-hover:text-white" />
                   </div>
                   <div>
@@ -1246,11 +1338,18 @@ export default function AdminPage() {
         {/* -------------------- SERVICES TAB CONTENT -------------------- */}
         {activeTab === 'services' && (
           <div className="space-y-6">
+            <div className="flex items-start gap-3 rounded-2xl border border-[#3A8FB8]/20 bg-[#3A8FB8]/5 p-4 text-xs text-zinc-300 leading-normal">
+              <AlertCircle className="w-4 h-4 text-[#3A8FB8] mt-0.5 flex-shrink-0" />
+              <span>
+                Replace cover images for each service on the Services page. Click <strong>Save Changes</strong> after
+                replacing so the live site updates.
+              </span>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               {serviceImages.map((service) => (
                 <div 
                   key={service.id}
-                  className="rounded-3xl border border-white/10 bg-zinc-950/40 p-4 flex flex-col hover:border-[#d4af37]/30 transition duration-300"
+                  className="rounded-3xl border border-white/10 bg-zinc-950/40 p-4 flex flex-col hover:border-[#3A8FB8]/30 transition duration-300"
                 >
                   <div className="relative w-full aspect-[16/11] rounded-2xl overflow-hidden bg-black mb-4">
                     <img 
@@ -1296,22 +1395,29 @@ export default function AdminPage() {
         {/* -------------------- VIBRANTS CAROUSEL TAB CONTENT -------------------- */}
         {activeTab === 'vibrants' && (
           <div className="space-y-6">
+            <div className="flex items-start gap-3 rounded-2xl border border-[#3A8FB8]/20 bg-[#3A8FB8]/5 p-4 text-xs text-zinc-300 leading-normal">
+              <AlertCircle className="w-4 h-4 text-[#3A8FB8] mt-0.5 flex-shrink-0" />
+              <span>
+                These images power the homepage <strong>Stage Gallery</strong> curve. Change order or replace images,
+                then Save Changes to update the live site.
+              </span>
+            </div>
             <div className="flex items-center justify-between border-b border-white/5 pb-4">
               <span className="text-sm font-bold text-zinc-400">
-                Total Slides: <span className="text-white">{vibrants.length}/6</span>
+                Stage images: <span className="text-white">{vibrants.length}/9</span>
               </span>
               <button
                 onClick={handleAddVibrantItem}
-                disabled={vibrants.length >= 6}
+                disabled={vibrants.length >= 9}
                 className={`h-10 px-4 rounded-xl text-xs font-bold tracking-wide flex items-center gap-1.5 transition duration-200 cursor-pointer
-                  ${vibrants.length < 6 
+                  ${vibrants.length < 9 
                     ? 'bg-zinc-800 hover:bg-zinc-700 text-white' 
                     : 'bg-zinc-900 text-zinc-650 cursor-not-allowed'
                   }
                 `}
               >
                 <Plus className="w-4 h-4" />
-                Add New Slide
+                Add Stage Image
               </button>
             </div>
 
@@ -1319,7 +1425,7 @@ export default function AdminPage() {
               {vibrants.map((v, idx) => (
                 <div 
                   key={v.id}
-                  className="rounded-3xl border border-white/10 bg-zinc-950/40 p-4 flex flex-col hover:border-[#d4af37]/30 transition duration-300"
+                  className="rounded-3xl border border-white/10 bg-zinc-950/40 p-4 flex flex-col hover:border-[#3A8FB8]/30 transition duration-300"
                 >
                   <div className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden bg-black mb-4">
                     <img 
@@ -1348,7 +1454,7 @@ export default function AdminPage() {
                           type="text"
                           value={v.title}
                           onChange={(e) => handleVibrantTitleChange(v.id, e.target.value.toUpperCase())}
-                          className="w-full h-10 px-3 rounded-lg border border-white/10 bg-black/40 text-xs font-bold text-white focus:border-[#d4af37] focus:outline-none"
+                          className="w-full h-10 px-3 rounded-lg border border-white/10 bg-black/40 text-xs font-bold text-white focus:border-[#3A8FB8] focus:outline-none"
                         />
                       </div>
                     </div>
@@ -1419,7 +1525,7 @@ export default function AdminPage() {
                   placeholder="contact@parthproduction.in"
                   value={settings.email}
                   onChange={(e) => setSettings({ ...settings, email: e.target.value })}
-                  className="w-full h-12 px-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#d4af37] focus:outline-none transition-colors duration-200"
+                  className="w-full h-12 px-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#3A8FB8] focus:outline-none transition-colors duration-200"
                 />
               </div>
 
@@ -1432,7 +1538,7 @@ export default function AdminPage() {
                   placeholder="9537330003"
                   value={settings.phone_1}
                   onChange={(e) => setSettings({ ...settings, phone_1: e.target.value })}
-                  className="w-full h-12 px-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#d4af37] focus:outline-none transition-colors duration-200"
+                  className="w-full h-12 px-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#3A8FB8] focus:outline-none transition-colors duration-200"
                 />
                 <span className="text-[10px] text-zinc-500 leading-normal block mt-2">
                   * Constructed link: <strong>https://wa.me/91[Number]</strong>. Do not write country code +91.
@@ -1448,7 +1554,7 @@ export default function AdminPage() {
                   placeholder="8866655651"
                   value={settings.phone_2}
                   onChange={(e) => setSettings({ ...settings, phone_2: e.target.value })}
-                  className="w-full h-12 px-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#d4af37] focus:outline-none transition-colors duration-200"
+                  className="w-full h-12 px-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#3A8FB8] focus:outline-none transition-colors duration-200"
                 />
               </div>
 
@@ -1461,7 +1567,7 @@ export default function AdminPage() {
                   placeholder="Gaurav Path Road, Palanpur, Surat, Gujarat"
                   value={settings.address || ''}
                   onChange={(e) => setSettings({ ...settings, address: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#d4af37] focus:outline-none transition-colors duration-200 resize-none"
+                  className="w-full px-4 py-3 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#3A8FB8] focus:outline-none transition-colors duration-200 resize-none"
                 />
               </div>
 
@@ -1617,7 +1723,7 @@ export default function AdminPage() {
                         setConfirmNewPassword('');
                         setShowNewPass(false);
                       }}
-                      className="h-10 px-5 rounded-xl bg-[#d4af37]/10 border border-[#d4af37]/30 text-xs font-bold text-[#d4af37] hover:bg-[#d4af37]/20 transition duration-200 cursor-pointer"
+                      className="h-10 px-5 rounded-xl bg-[#3A8FB8]/10 border border-[#3A8FB8]/30 text-xs font-bold text-[#3A8FB8] hover:bg-[#3A8FB8]/20 transition duration-200 cursor-pointer"
                     >
                       Change Username & Password
                     </button>
@@ -1669,7 +1775,7 @@ export default function AdminPage() {
                     type="button"
                     onClick={handleSendCredsOtp}
                     disabled={credsOtpSending}
-                    className="text-[11px] font-bold text-[#d4af37] hover:text-[#A78BFA] transition cursor-pointer disabled:opacity-40"
+                    className="text-[11px] font-bold text-[#3A8FB8] hover:text-[#A78BFA] transition cursor-pointer disabled:opacity-40"
                   >
                     {credsOtpSending ? 'Sending OTP...' : 'Send OTP to Email'}
                   </button>
@@ -1681,7 +1787,7 @@ export default function AdminPage() {
                   placeholder="123456" 
                   value={credsOtp} 
                   onChange={(e) => setCredsOtp(e.target.value)} 
-                  className="w-full h-12 px-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#d4af37] focus:outline-none tracking-widest text-center font-bold transition duration-200"
+                  className="w-full h-12 px-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#3A8FB8] focus:outline-none tracking-widest text-center font-bold transition duration-200"
                 />
               </div>
 
@@ -1693,7 +1799,7 @@ export default function AdminPage() {
                   placeholder="admin" 
                   value={newUsername} 
                   onChange={(e) => setNewUsername(e.target.value)} 
-                  className="w-full h-12 px-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#d4af37] focus:outline-none transition duration-200"
+                  className="w-full h-12 px-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#3A8FB8] focus:outline-none transition duration-200"
                 />
               </div>
 
@@ -1706,7 +1812,7 @@ export default function AdminPage() {
                     placeholder="••••••••" 
                     value={newPassword} 
                     onChange={(e) => setNewPassword(e.target.value)} 
-                    className="w-full h-12 pl-4 pr-11 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#d4af37] focus:outline-none transition duration-200"
+                    className="w-full h-12 pl-4 pr-11 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#3A8FB8] focus:outline-none transition duration-200"
                   />
                   <button
                     type="button"
@@ -1727,7 +1833,7 @@ export default function AdminPage() {
                     placeholder="••••••••" 
                     value={confirmNewPassword} 
                     onChange={(e) => setConfirmNewPassword(e.target.value)} 
-                    className="w-full h-12 pl-4 pr-11 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#d4af37] focus:outline-none transition duration-200"
+                    className="w-full h-12 pl-4 pr-11 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#3A8FB8] focus:outline-none transition duration-200"
                   />
                   <button
                     type="button"
@@ -1742,7 +1848,7 @@ export default function AdminPage() {
               <button 
                 type="submit" 
                 disabled={credsChangeLoading}
-                className="w-full h-12 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#f59e0b] text-xs font-bold text-white flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] transition duration-250 cursor-pointer disabled:opacity-40"
+                className="w-full h-12 rounded-xl bg-gradient-to-r from-[#0a1524] to-[#3A8FB8] text-xs font-bold text-white flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] transition duration-250 cursor-pointer disabled:opacity-40"
               >
                 {credsChangeLoading ? (
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

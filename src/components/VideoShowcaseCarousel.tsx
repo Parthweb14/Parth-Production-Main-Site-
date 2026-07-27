@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { SHOW_VIDEOS } from '@/utils/media';
+import { SHOW_VIDEOS, resolveVideoSrc } from '@/utils/media';
+
+type Clip = { title: string; src: string };
 
 function useVisibleCount() {
   const [count, setCount] = useState(1);
@@ -26,11 +28,41 @@ function useVisibleCount() {
 export default function VideoShowcaseCarousel() {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [page, setPage] = useState(0);
+  const [clips, setClips] = useState<Clip[]>(SHOW_VIDEOS);
   const visible = useVisibleCount();
-  const pageCount = Math.max(1, Math.ceil(SHOW_VIDEOS.length / visible));
+  const pageCount = Math.max(1, Math.ceil(clips.length / visible));
 
   useEffect(() => {
-    setPage((p) => Math.min(p, pageCount - 1));
+    let cancelled = false;
+    async function load() {
+      try {
+        const res = await fetch(`/api/public/data?t=${Date.now()}`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.videos?.length) return;
+        const mapped: Clip[] = data.videos
+          .map((v: { title?: string; video_url?: string }, i: number) => {
+            const fallback = SHOW_VIDEOS[i % SHOW_VIDEOS.length]?.src || '';
+            const src = resolveVideoSrc(v.video_url || '', fallback);
+            return { title: v.title || SHOW_VIDEOS[i % SHOW_VIDEOS.length]?.title || 'Show', src };
+          })
+          .filter((c: Clip) => Boolean(c.src));
+        if (!cancelled && mapped.length) setClips(mapped);
+      } catch {
+        /* keep static fallback */
+      }
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      setPage((p) => Math.min(p, pageCount - 1));
+    }, 0);
+    return () => window.clearTimeout(id);
   }, [pageCount]);
 
   useEffect(() => {
@@ -54,7 +86,7 @@ export default function VideoShowcaseCarousel() {
 
     videos.forEach((v) => io.observe(v));
     return () => io.disconnect();
-  }, []);
+  }, [clips]);
 
   const goToPage = (next: number) => {
     const el = scrollerRef.current;
@@ -118,9 +150,9 @@ export default function VideoShowcaseCarousel() {
           onScroll={onScroll}
           className={`flex ${gapClass} overflow-x-auto snap-x snap-mandatory scrollbar-none pb-2`}
         >
-          {SHOW_VIDEOS.map((clip, i) => (
+          {clips.map((clip, i) => (
             <motion.article
-              key={clip.src}
+              key={`${clip.src}-${i}`}
               data-video-card
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}

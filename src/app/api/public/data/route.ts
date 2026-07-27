@@ -22,6 +22,7 @@ export async function GET() {
       videos: sortedVideos,
       services,
       vibrants: sortedVibrants,
+      stage_gallery: sortedVibrants,
     });
   } catch (err: unknown) {
     console.error('Public data error:', err);

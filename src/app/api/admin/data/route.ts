@@ -21,6 +21,7 @@ export async function GET(request: Request) {
       videos: [...videos].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)),
       services,
       vibrants: [...vibrants].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)),
+      stage_gallery: [...vibrants].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)),
     });
   } catch (err: unknown) {
     console.error('Admin data error:', err);

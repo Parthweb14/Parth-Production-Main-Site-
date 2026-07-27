@@ -77,14 +77,14 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-[#09090b] text-zinc-100 font-outfit flex items-center justify-center p-4 selection:bg-[#d4af37]/30 overflow-hidden">
+    <div className="relative min-h-screen bg-[#09090b] text-zinc-100 font-outfit flex items-center justify-center p-4 selection:bg-[#3A8FB8]/25 overflow-hidden">
       {/* Background visual neon nodes */}
-      <div className="absolute top-1/4 left-1/4 w-[350px] h-[350px] bg-amber-500/5 rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-[350px] h-[350px] bg-yellow-600/5 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute top-1/4 left-1/4 w-[350px] h-[350px] bg-[#3A8FB8]/10 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-[350px] h-[350px] bg-[#3A8FB8]/8 rounded-full blur-[100px] pointer-events-none" />
 
       <div className="relative w-full max-w-[450px] rounded-3xl border border-white/10 bg-[#121214]/60 p-8 shadow-2xl backdrop-blur-xl md:p-10 z-10 transition-all duration-300">
         <div className="flex flex-col items-center text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#d4af37] to-[#f59e0b] p-0.5 shadow-lg shadow-[#d4af37]/20 mb-4 flex items-center justify-center overflow-hidden">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#0a1524] to-[#3A8FB8] p-0.5 shadow-lg shadow-[#3A8FB8]/20 mb-4 flex items-center justify-center overflow-hidden">
             <div className="w-full h-full bg-[#09090b] rounded-2xl flex items-center justify-center overflow-hidden">
               <img src="/logo.png" alt="Parth Production Logo" className="w-12 h-12 object-contain" />
             </div>
@@ -117,7 +117,7 @@ export default function ResetPasswordPage() {
                   placeholder="admin" 
                   value={newUsername} 
                   onChange={(e) => setNewUsername(e.target.value)} 
-                  className="w-full h-12 pl-11 pr-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-600 focus:border-[#d4af37] focus:outline-none transition-colors duration-200"
+                  className="w-full h-12 pl-11 pr-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-600 focus:border-[#3A8FB8] focus:outline-none transition-colors duration-200"
                 />
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
               </div>
@@ -132,7 +132,7 @@ export default function ResetPasswordPage() {
                   placeholder="••••••••" 
                   value={newPassword} 
                   onChange={(e) => setNewPassword(e.target.value)} 
-                  className="w-full h-12 pl-11 pr-11 rounded-xl border border-white/10 bg-black/40 text-base md:text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#d4af37] focus:outline-none transition-colors duration-200"
+                  className="w-full h-12 pl-11 pr-11 rounded-xl border border-white/10 bg-black/40 text-base md:text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#3A8FB8] focus:outline-none transition-colors duration-200"
                 />
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                 <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition">
@@ -150,13 +150,13 @@ export default function ResetPasswordPage() {
                   placeholder="••••••••" 
                   value={confirmPassword} 
                   onChange={(e) => setConfirmPassword(e.target.value)} 
-                  className="w-full h-12 pl-11 pr-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#d4af37] focus:outline-none transition-colors duration-200"
+                  className="w-full h-12 pl-11 pr-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#3A8FB8] focus:outline-none transition-colors duration-200"
                 />
                 <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
               </div>
             </div>
 
-            <button type="submit" disabled={loading} className="w-full h-12 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#f59e0b] text-sm font-bold text-black flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] transition-all duration-250 cursor-pointer disabled:opacity-40">
+            <button type="submit" disabled={loading} className="w-full h-12 rounded-xl bg-gradient-to-r from-[#0a1524] to-[#3A8FB8] text-sm font-bold text-white flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(58,143,184,0.28)] transition-all duration-250 cursor-pointer disabled:opacity-40">
               {loading ? (
                 <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
               ) : (

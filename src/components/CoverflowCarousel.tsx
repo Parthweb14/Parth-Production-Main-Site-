@@ -5,9 +5,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { STAGE_IMAGES } from '@/utils/media';
+import { STAGE_IMAGES, resolveGallerySrc } from '@/utils/media';
 
-const CARDS = [
+type StageCard = { id: number | string; label: string; src: string };
+
+const DEFAULT_CARDS: StageCard[] = [
   { id: 1, label: 'Wedding Stage', src: STAGE_IMAGES[0].src },
   { id: 2, label: 'Concert Setup', src: STAGE_IMAGES[1].src },
   { id: 3, label: 'Festival Lighting', src: STAGE_IMAGES[2].src },
@@ -66,13 +68,44 @@ function cardTransform(offset: number, isMobile: boolean) {
 }
 
 export default function CoverflowCarousel() {
+  const [cards, setCards] = useState<StageCard[]>(DEFAULT_CARDS);
   const [progress, setProgress] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const progressRef = useRef(0);
   const targetRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
   const lastTs = useRef<number | null>(null);
-  const total = CARDS.length;
+  const total = cards.length;
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const res = await fetch(`/api/public/data?t=${Date.now()}`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const stage = data.stage_gallery?.length ? data.stage_gallery : data.vibrants;
+        if (!stage?.length) return;
+        const mapped: StageCard[] = stage.map(
+          (item: { id: string; title?: string; image_url?: string }, i: number) => {
+            const fallback = DEFAULT_CARDS[i % DEFAULT_CARDS.length];
+            return {
+              id: item.id || `stage-${i + 1}`,
+              label: item.title || fallback.label,
+              src: resolveGallerySrc(item.image_url || '', fallback.src),
+            };
+          }
+        );
+        if (!cancelled && mapped.length) setCards(mapped);
+      } catch {
+        /* keep defaults */
+      }
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const update = () => setIsMobile(window.innerWidth < 768);
@@ -207,7 +240,7 @@ export default function CoverflowCarousel() {
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
             className="relative h-full w-full max-w-6xl"
           >
-            {CARDS.map((card, index) => {
+            {cards.map((card, index) => {
               const offset = wrapOffset(index - progress, total);
               const abs = Math.abs(offset);
               if (abs > FADE_END) return null;
@@ -287,7 +320,7 @@ export default function CoverflowCarousel() {
               visible: { transition: { staggerChildren: 0.04 } },
             }}
           >
-            {CARDS.map((card, i) => (
+            {cards.map((card, i) => (
               <motion.button
                 key={card.id}
                 type="button"
