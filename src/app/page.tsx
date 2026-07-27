@@ -7,7 +7,6 @@ import PageLoader from '@/components/PageLoader';
 import SpotlightNavbar from '@/components/SpotlightNavbar';
 import Footer from '@/components/Footer';
 import CoverflowCarousel from '@/components/CoverflowCarousel';
-import Service3DCarousel from '@/components/Service3DCarousel';
 import VideoShowcaseCarousel from '@/components/VideoShowcaseCarousel';
 import HomeServicesGrid from '@/components/HomeServicesGrid';
 import QuoteCta from '@/components/QuoteCta';
@@ -156,8 +155,6 @@ export default function HomePage() {
 
         {/* Coverflow after Designed For Every Celebration */}
         <CoverflowCarousel />
-
-        <Service3DCarousel />
 
         <QuoteCta />
       </main>
