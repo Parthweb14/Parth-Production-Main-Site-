@@ -34,7 +34,7 @@ export default function CinematicPageHero({
         <MediaImage
           src={image}
           alt=""
-          className="absolute inset-0 h-full w-full object-cover opacity-40"
+          className="absolute inset-0 h-full w-full object-cover opacity-30"
         />
         {/* Flat scrim only — no color/gradient wash */}
         <div className="absolute inset-0 bg-black/40" />
