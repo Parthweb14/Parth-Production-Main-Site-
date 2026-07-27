@@ -1,11 +1,29 @@
 import { NextResponse } from 'next/server';
 import { vercelDb } from '@/utils/vercelDb';
-import { hashPassword, requireAdmin, safeErrorMessage } from '@/utils/auth';
+import {
+  hashPassword,
+  passwordMeetsPolicy,
+  PASSWORD_POLICY_MSG,
+  requireAdmin,
+  safeErrorMessage,
+  verifyOtp,
+} from '@/utils/auth';
+import { enforceRateLimit, rateLimitResponse } from '@/utils/rateLimit';
+
+const GENERIC_FAIL = { error: 'Invalid or expired verification code.' };
 
 export async function POST(request: Request) {
   try {
     const auth = await requireAdmin(request);
     if (!auth.ok) return auth.response;
+
+    const limited = await enforceRateLimit(request, 'change-credentials', {
+      limit: 8,
+      windowMs: 15 * 60 * 1000,
+      lockAfter: 12,
+      identity: auth.username,
+    });
+    if (!limited.ok) return rateLimitResponse(limited);
 
     const { otp, newUsername, newPassword } = await request.json();
 
@@ -14,32 +32,51 @@ export async function POST(request: Request) {
       !newUsername ||
       !newPassword ||
       typeof newUsername !== 'string' ||
-      typeof newPassword !== 'string' ||
-      newPassword.length < 8
+      typeof newPassword !== 'string'
     ) {
-      return NextResponse.json(
-        { error: 'OTP, new username, and new password (min 8 chars) are required.' },
-        { status: 400 }
-      );
+      return NextResponse.json(GENERIC_FAIL, { status: 400 });
+    }
+
+    if (!passwordMeetsPolicy(newPassword)) {
+      return NextResponse.json({ error: PASSWORD_POLICY_MSG }, { status: 400 });
     }
 
     const credentials = await vercelDb.getCredentials();
 
     if (!credentials.otpCode || !credentials.otpExpiry) {
-      return NextResponse.json({ error: 'No OTP requested. Send an OTP first.' }, { status: 400 });
+      return NextResponse.json(GENERIC_FAIL, { status: 400 });
     }
     if (Date.now() > credentials.otpExpiry) {
-      return NextResponse.json({ error: 'OTP has expired. Request a new OTP.' }, { status: 400 });
+      credentials.otpCode = null;
+      credentials.otpExpiry = null;
+      await vercelDb.setCredentials(credentials);
+      return NextResponse.json(GENERIC_FAIL, { status: 400 });
     }
-    if (credentials.otpCode.trim() !== String(otp).trim()) {
-      return NextResponse.json({ error: 'Invalid OTP code.' }, { status: 401 });
+
+    const attempts = credentials.otpAttempts || 0;
+    if (attempts >= 5) {
+      credentials.otpCode = null;
+      credentials.otpExpiry = null;
+      credentials.otpAttempts = 0;
+      await vercelDb.setCredentials(credentials);
+      return NextResponse.json(GENERIC_FAIL, { status: 400 });
+    }
+
+    if (!verifyOtp(String(otp), credentials.otpCode)) {
+      credentials.otpAttempts = attempts + 1;
+      await vercelDb.setCredentials(credentials);
+      return NextResponse.json(GENERIC_FAIL, { status: 401 });
     }
 
     credentials.otpCode = null;
     credentials.otpExpiry = null;
+    credentials.otpAttempts = 0;
     credentials.username = newUsername.trim();
     credentials.passwordHash = hashPassword(newPassword);
     credentials.resetCount = (credentials.resetCount || 0) + 1;
+    credentials.credentialsVersion = (credentials.credentialsVersion || 0) + 1;
+    credentials.emailVerifiedAt = Date.now();
+    credentials.active = true;
 
     await vercelDb.setCredentials(credentials);
 

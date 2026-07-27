@@ -16,7 +16,8 @@ interface SiteSettings {
 
 interface CustomUser {
   id: string;
-  email: string;
+  email?: string;
+  username?: string;
 }
 
 interface AuthContextType {

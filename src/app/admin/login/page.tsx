@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Lock, Mail, AlertTriangle, ArrowRight, CheckCircle, X } from 'lucide-react';
+import TurnstileWidget, { captchaUiEnabled } from '@/components/TurnstileWidget';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -11,11 +12,11 @@ export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   
-  // Auth loading states
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [captchaRequired, setCaptchaRequired] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
-  // Forgot password modal states
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [recoveryKey, setRecoveryKey] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -23,13 +24,21 @@ export default function AdminLoginPage() {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotSuccess, setForgotSuccess] = useState(false);
   const [forgotError, setForgotError] = useState<string | null>(null);
+  const [forgotCaptchaToken, setForgotCaptchaToken] = useState<string | null>(null);
 
-  // If already logged in, redirect to admin immediately
   useEffect(() => {
     if (user) {
       router.push('/admin');
     }
   }, [user, router]);
+
+  const onCaptcha = useCallback((token: string | null) => {
+    setCaptchaToken(token);
+  }, []);
+
+  const onForgotCaptcha = useCallback((token: string | null) => {
+    setForgotCaptchaToken(token);
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,18 +50,26 @@ export default function AdminLoginPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({
+          email,
+          password,
+          captchaToken: captchaToken || undefined,
+        }),
       });
       const data = await res.json();
       
       if (!res.ok) {
+        if (data.captchaRequired || res.status === 429) {
+          setCaptchaRequired(true);
+        }
         throw new Error(data.error || 'Invalid login credentials. Please try again.');
       }
 
       login(null, data.user);
       router.push('/admin');
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Connection error. Please try again.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Connection error. Please try again.';
+      setErrorMsg(message);
     } finally {
       setLoading(false);
     }
@@ -64,6 +81,10 @@ export default function AdminLoginPage() {
       setForgotError('Passwords do not match.');
       return;
     }
+    if (newPassword.length < 12) {
+      setForgotError('Password must be at least 12 characters.');
+      return;
+    }
     setForgotLoading(true);
     setForgotError(null);
     setForgotSuccess(false);
@@ -72,31 +93,35 @@ export default function AdminLoginPage() {
       const res = await fetch('/api/auth/recovery-reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recoveryKey, newPassword })
+        body: JSON.stringify({
+          recoveryKey,
+          newPassword,
+          captchaToken: forgotCaptchaToken || undefined,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to reset password.');
+        throw new Error(data.error || 'Unable to reset password with the provided details.');
       }
       setForgotSuccess(true);
-    } catch (err: any) {
-      setForgotError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Request failed.';
+      setForgotError(message);
     } finally {
       setForgotLoading(false);
     }
   };
 
+  const showCaptcha = captchaUiEnabled() && captchaRequired;
+
   return (
     <div className="relative min-h-screen bg-zinc-950 text-zinc-100 font-outfit flex items-center justify-center p-4 selection:bg-[#3A8FB8]/25 overflow-hidden">
       
-      {/* Background visual neon nodes */}
       <div className="absolute top-1/4 left-1/4 w-[350px] h-[350px] bg-[#3A8FB8]/10 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-[350px] h-[350px] bg-[#3A8FB8]/8 rounded-full blur-[100px] pointer-events-none" />
 
-      {/* Main Glassmorphic card wrapper */}
       <div className="relative w-full max-w-[450px] rounded-3xl border border-white/10 bg-[#121214]/60 p-8 shadow-2xl backdrop-blur-xl md:p-10 z-10 transition-all duration-300">
         
-        {/* Logo and brand name */}
         <div className="flex flex-col items-center text-center mb-8">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#0a1524] to-[#3A8FB8] p-0.5 shadow-lg shadow-[#3A8FB8]/20 mb-4 flex items-center justify-center overflow-hidden">
             <div className="w-full h-full bg-[#09090b] rounded-2xl flex items-center justify-center overflow-hidden">
@@ -111,7 +136,6 @@ export default function AdminLoginPage() {
           </p>
         </div>
 
-        {/* Display Alert banners */}
         {errorMsg && (
           <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">
             <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
@@ -128,6 +152,7 @@ export default function AdminLoginPage() {
               <input 
                 type="text"
                 required
+                autoComplete="username"
                 placeholder="admin@parthproduction.in"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -161,14 +186,19 @@ export default function AdminLoginPage() {
               <input 
                 type="password"
                 required
+                autoComplete="current-password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-12 pl-11 pr-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#3A8FB8] focus:outline-none transition-colors duration-200"
+                className="w-full h-12 pl-11 pr-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-600 focus:border-[#3A8FB8] focus:outline-none transition-colors duration-200"
               />
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
             </div>
           </div>
+
+          {(showCaptcha || captchaUiEnabled()) && (
+            <TurnstileWidget onToken={onCaptcha} className="flex justify-center" />
+          )}
 
           <button
             type="submit"
@@ -176,18 +206,17 @@ export default function AdminLoginPage() {
             className="w-full h-12 rounded-xl bg-gradient-to-r from-[#0a1524] to-[#3A8FB8] text-sm font-bold text-white flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(58,143,184,0.28)] transition-all duration-250 cursor-pointer disabled:opacity-40"
           >
             {loading ? (
-              <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
               <>
                 Sign In to Console
-                <ArrowRight className="w-4 h-4 text-black" />
+                <ArrowRight className="w-4 h-4" />
               </>
             )}
           </button>
         </form>
       </div>
 
-      {/* FORGOT PASSWORD MODAL */}
       {showForgotModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="relative w-full max-w-[420px] rounded-3xl border border-white/10 bg-zinc-950 p-6 md:p-8 shadow-2xl space-y-6">
@@ -200,12 +229,12 @@ export default function AdminLoginPage() {
 
             <div className="space-y-2 pr-8">
               <h3 className="text-lg font-bold text-white uppercase tracking-wider">Reset Console Password</h3>
-              <p className="text-xs text-zinc-400">Enter your Master Recovery Key to instantly configure a new password for the console.</p>
+              <p className="text-xs text-zinc-400">Enter your Master Recovery Key to configure a new password for the console.</p>
             </div>
 
             {forgotError && (
               <div className="flex items-start gap-2.5 rounded-xl border border-red-500/20 bg-red-500/10 p-3.5 text-xs text-red-400">
-                <AlertTriangle className="w-4.5 h-4.5 flex-shrink-0 mt-0.5" />
+                <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                 <p className="leading-relaxed">{forgotError}</p>
               </div>
             )}
@@ -214,10 +243,10 @@ export default function AdminLoginPage() {
               <div className="rounded-xl border border-green-500/20 bg-green-500/10 p-6 text-center space-y-3">
                 <CheckCircle className="w-10 h-10 text-green-500 mx-auto" />
                 <h4 className="font-bold text-sm text-white">Password Reset Successful</h4>
-                <p className="text-xs text-zinc-450 leading-relaxed">Your admin password has been updated. You can now close this modal and log in with your new password.</p>
+                <p className="text-xs text-zinc-400 leading-relaxed">Your admin password has been updated. Close this modal and log in with your new password.</p>
                 <button 
                   onClick={() => setShowForgotModal(false)}
-                  className="mt-4 w-full h-10 rounded-xl bg-zinc-850 text-xs font-bold text-white hover:bg-zinc-700 transition"
+                  className="mt-4 w-full h-10 rounded-xl bg-zinc-800 text-xs font-bold text-white hover:bg-zinc-700 transition"
                 >
                   Close Modal
                 </button>
@@ -228,27 +257,29 @@ export default function AdminLoginPage() {
                   <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">Master Recovery Key</label>
                   <div className="relative">
                     <input 
-                      type="text" 
+                      type="password" 
                       required 
-                      placeholder="" 
+                      autoComplete="off"
                       value={recoveryKey} 
                       onChange={(e) => setRecoveryKey(e.target.value)} 
-                      className="w-full h-12 pl-11 pr-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#3A8FB8] focus:outline-none transition"
+                      className="w-full h-12 pl-11 pr-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white focus:border-[#3A8FB8] focus:outline-none transition"
                     />
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">New Password</label>
+                  <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">New Password (min 12)</label>
                   <div className="relative">
                     <input 
                       type="password" 
                       required 
-                      placeholder="••••••••" 
+                      minLength={12}
+                      autoComplete="new-password"
+                      placeholder="••••••••••••" 
                       value={newPassword} 
                       onChange={(e) => setNewPassword(e.target.value)} 
-                      className="w-full h-12 pl-11 pr-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#3A8FB8] focus:outline-none transition"
+                      className="w-full h-12 pl-11 pr-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-600 focus:border-[#3A8FB8] focus:outline-none transition"
                     />
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                   </div>
@@ -260,14 +291,20 @@ export default function AdminLoginPage() {
                     <input 
                       type="password" 
                       required 
-                      placeholder="••••••••" 
+                      minLength={12}
+                      autoComplete="new-password"
+                      placeholder="••••••••••••" 
                       value={confirmPassword} 
                       onChange={(e) => setConfirmPassword(e.target.value)} 
-                      className="w-full h-12 pl-11 pr-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#3A8FB8] focus:outline-none transition"
+                      className="w-full h-12 pl-11 pr-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-600 focus:border-[#3A8FB8] focus:outline-none transition"
                     />
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                   </div>
                 </div>
+
+                {captchaUiEnabled() && (
+                  <TurnstileWidget onToken={onForgotCaptcha} className="flex justify-center" />
+                )}
 
                 <button 
                   type="submit" 
@@ -275,11 +312,11 @@ export default function AdminLoginPage() {
                   className="w-full h-12 rounded-xl bg-gradient-to-r from-[#0a1524] to-[#3A8FB8] text-xs font-bold text-white flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(58,143,184,0.28)] transition disabled:opacity-40"
                 >
                   {forgotLoading ? (
-                    <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
                     <>
                       Reset Password Now
-                      <ArrowRight className="w-4 h-4 text-black" />
+                      <ArrowRight className="w-4 h-4" />
                     </>
                   )}
                 </button>
