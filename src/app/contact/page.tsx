@@ -50,7 +50,7 @@ export default function ContactPage() {
       <SpotlightNavbar />
       <div className="film-grain" />
       <motion.div
-        className="fixed top-0 left-0 right-0 z-[60] h-[2px] origin-left bg-[#00C2FF]"
+        className="fixed top-0 left-0 right-0 z-[60] h-[2px] origin-left bg-[#3A8FB8]"
         style={{ scaleX: progress }}
       />
 
@@ -65,16 +65,16 @@ export default function ContactPage() {
 
         {/* Command center */}
         <section id="connect" className="relative border-b border-white/10 py-14 md:py-20 scroll-mt-28">
-          <div className="pointer-events-none absolute right-0 top-0 h-72 w-72 rounded-full bg-[#00C2FF]/10 blur-3xl" />
+          <div className="pointer-events-none absolute right-0 top-0 h-72 w-72 rounded-full bg-[#3A8FB8]/10 blur-3xl" />
           <div className="relative max-w-7xl mx-auto px-6 md:px-10 grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="lg:col-span-5 relative overflow-hidden rounded-[28px] border border-[#00C2FF]/35 bg-gradient-to-br from-[#00C2FF]/20 via-black to-black p-7 md:p-9"
+              className="lg:col-span-5 relative overflow-hidden rounded-[28px] border border-[#3A8FB8]/25 bg-gradient-to-br from-[#0a1524]/90 via-[#050a12] to-black p-7 md:p-9 glass-card"
             >
-              <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[#00C2FF]/30 blur-3xl" />
-              <p className="text-[11px] uppercase tracking-[0.28em] text-[#00C2FF] font-semibold mb-3">
+              <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[#3A8FB8]/12 blur-3xl" />
+              <p className="text-[11px] uppercase tracking-[0.28em] text-[#3A8FB8] font-semibold mb-3">
                 Fastest reply
               </p>
               <h2 className="font-display text-3xl md:text-4xl font-bold uppercase tracking-tight text-white leading-tight">
@@ -99,12 +99,12 @@ export default function ContactPage() {
 
               <div className="mt-8 grid grid-cols-2 gap-3">
                 <div className="rounded-2xl border border-white/10 bg-black/40 p-4">
-                  <Clock3 className="h-4 w-4 text-[#00C2FF] mb-2" />
+                  <Clock3 className="h-4 w-4 text-[#3A8FB8] mb-2" />
                   <p className="text-xs uppercase tracking-[0.16em] text-white/45 mb-1">Hours</p>
                   <p className="text-sm text-white font-semibold">Open for bookings</p>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-black/40 p-4">
-                  <Navigation className="h-4 w-4 text-[#00C2FF] mb-2" />
+                  <Navigation className="h-4 w-4 text-[#3A8FB8] mb-2" />
                   <p className="text-xs uppercase tracking-[0.16em] text-white/45 mb-1">Base</p>
                   <p className="text-sm text-white font-semibold">Surat, Gujarat</p>
                 </div>
@@ -124,22 +124,22 @@ export default function ContactPage() {
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.08 }}
-                    className="group relative flex items-center gap-4 md:gap-5 overflow-hidden rounded-[22px] border border-white/10 bg-white/[0.03] p-5 md:p-6 transition-all duration-300 hover:border-[#00C2FF]/45 hover:bg-white/[0.05]"
+                    className="group relative flex items-center gap-4 md:gap-5 overflow-hidden rounded-[22px] border border-white/10 bg-[#050a12]/70 backdrop-blur-md p-5 md:p-6 transition-all duration-300 hover:border-[#3A8FB8]/40 hover:bg-[#0a1524]/80 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_0_24px_rgba(58,143,184,0.12)]"
                   >
-                    <div className="absolute inset-y-0 left-0 w-px bg-gradient-to-b from-transparent via-[#00C2FF]/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl border border-[#00C2FF]/30 bg-[#00C2FF]/10 text-[#00C2FF] transition-colors group-hover:bg-[#00C2FF] group-hover:text-[#001A33]">
+                    <div className="absolute inset-y-0 left-0 w-px bg-gradient-to-b from-transparent via-[#3A8FB8]/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl border border-[#3A8FB8]/30 bg-[#3A8FB8]/10 text-[#3A8FB8] transition-colors group-hover:bg-[#3A8FB8] group-hover:text-[#050a12]">
                       <Icon className="h-5 w-5" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-[11px] uppercase tracking-[0.22em] text-white/45 font-semibold mb-1">
                         {card.label}
                       </p>
-                      <p className="text-lg md:text-xl font-semibold text-white group-hover:text-[#00C2FF] transition-colors break-words">
+                      <p className="text-lg md:text-xl font-semibold text-white group-hover:text-[#3A8FB8] transition-colors break-words">
                         {card.primary}
                       </p>
                       <p className="mt-1 text-sm text-white/50">{card.secondary}</p>
                     </div>
-                    <ArrowUpRight className="h-5 w-5 flex-shrink-0 text-white/30 transition-all group-hover:text-[#00C2FF] group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                    <ArrowUpRight className="h-5 w-5 flex-shrink-0 text-white/30 transition-all group-hover:text-[#3A8FB8] group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                   </motion.a>
                 );
               })}
@@ -152,7 +152,7 @@ export default function ContactPage() {
           <div className="max-w-7xl mx-auto">
             <div className="mb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.28em] text-[#00C2FF] font-semibold mb-2">
+                <p className="text-[11px] uppercase tracking-[0.28em] text-[#3A8FB8] font-semibold mb-2">
                   Studio pin
                 </p>
                 <h2 className="font-display text-3xl md:text-5xl font-bold uppercase tracking-tight text-white">
@@ -163,7 +163,7 @@ export default function ContactPage() {
                 href={mapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.14em] text-white transition-all hover:border-[#00C2FF]/50 hover:bg-white/5"
+                className="inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.14em] text-white transition-all hover:border-[#3A8FB8]/50 hover:bg-white/5"
               >
                 Open directions
                 <ArrowUpRight className="h-4 w-4" />
@@ -189,8 +189,8 @@ export default function ContactPage() {
                   className="absolute inset-0 w-full h-full grayscale invert opacity-55 contrast-125 hover:opacity-80 transition-opacity duration-500"
                 />
                 <div className="absolute top-4 left-4 right-4 flex items-center justify-between gap-3 pointer-events-none">
-                  <span className="inline-flex items-center gap-2 rounded-full border border-[#00C2FF]/35 bg-black/70 backdrop-blur px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-[#00C2FF] font-semibold">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#00C2FF] animate-pulse" />
+                  <span className="inline-flex items-center gap-2 rounded-full border border-[#3A8FB8]/35 bg-black/70 backdrop-blur px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-[#3A8FB8] font-semibold">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#3A8FB8] animate-pulse" />
                     Parth Production Studio
                   </span>
                 </div>

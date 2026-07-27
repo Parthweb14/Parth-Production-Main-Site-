@@ -52,12 +52,12 @@ export default function QuoteCta({
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            'radial-gradient(ellipse 70% 50% at 50% 115%, rgba(0,194,255,0.16) 0%, transparent 55%), linear-gradient(180deg, #050505 0%, #050b14 55%, #000 100%)',
+            'radial-gradient(ellipse 70% 50% at 50% 115%, rgba(58,143,184,0.08) 0%, transparent 55%), linear-gradient(180deg, #03070e 0%, #050a12 55%, #000 100%)',
         }}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#00C2FF]/40 to-transparent"
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#3A8FB8]/40 to-transparent"
       />
 
       <div className="relative border-b border-white/10 bg-black/40 py-2 overflow-hidden">
@@ -67,7 +67,7 @@ export default function QuoteCta({
               {RIBBON.map((item) => (
                 <span key={`${loop}-${item}`} className="inline-flex items-center gap-8">
                   <span>{item}</span>
-                  <span className="text-[#00C2FF]/70">/</span>
+                  <span className="text-[#3A8FB8]/70">/</span>
                 </span>
               ))}
             </div>
@@ -82,7 +82,7 @@ export default function QuoteCta({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-40px' }}
             transition={{ duration: 0.4, ease }}
-            className="mb-2 text-[9px] font-semibold uppercase tracking-[0.28em] text-[#00C2FF]"
+            className="mb-2 text-[9px] font-semibold uppercase tracking-[0.28em] text-[#3A8FB8]"
           >
             Lock the night
           </motion.p>
@@ -97,7 +97,7 @@ export default function QuoteCta({
                   viewport={{ once: true, margin: '-40px' }}
                   transition={{ duration: 0.4, delay: 0.04 + i * 0.06, ease }}
                   className={`block text-lg md:text-xl ${
-                    i === lines.length - 1 ? 'text-[#00C2FF]' : ''
+                    i === lines.length - 1 ? 'text-[#3A8FB8]' : ''
                   }`}
                 >
                   {line}
@@ -164,7 +164,7 @@ export default function QuoteCta({
             { n: '03', label: 'Crew on site' },
           ].map((item) => (
             <div key={item.n} className="text-center px-2">
-              <p className="font-display text-[10px] font-semibold tracking-[0.18em] text-[#00C2FF]">
+              <p className="font-display text-[10px] font-semibold tracking-[0.18em] text-[#3A8FB8]">
                 {item.n}
               </p>
               <p className="mt-1 font-display text-[10px] md:text-xs font-semibold uppercase tracking-[0.1em] text-white/70">

@@ -81,11 +81,11 @@ export default function GalleryPage() {
 
         {/* Motion from the floor — only gallery content section */}
         <section className="relative border-b border-white/10 py-12 md:py-16 overflow-hidden">
-          <div className="pointer-events-none absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#00C2FF]/15 blur-[120px]" />
+          <div className="pointer-events-none absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#3A8FB8]/08 blur-[120px]" />
           <div className="relative max-w-7xl mx-auto px-6 md:px-10">
             <div className="mb-8 flex items-end justify-between gap-4">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.28em] text-[#00C2FF] font-semibold mb-2">
+                <p className="text-[11px] uppercase tracking-[0.28em] text-[#3A8FB8] font-semibold mb-2">
                   Spotlight reel
                 </p>
                 <h2 className="font-display text-2xl md:text-4xl font-bold uppercase tracking-tight text-white">
@@ -120,11 +120,11 @@ export default function GalleryPage() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
                     <div className="absolute left-5 top-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/50 px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-white backdrop-blur">
-                      <Sparkles className="h-3.5 w-3.5 text-[#00C2FF]" />
+                      <Sparkles className="h-3.5 w-3.5 text-[#3A8FB8]" />
                       Now featuring
                     </div>
                     <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-                      <p className="text-[11px] uppercase tracking-[0.22em] text-[#00C2FF] font-semibold">
+                      <p className="text-[11px] uppercase tracking-[0.22em] text-[#3A8FB8] font-semibold">
                         {spotlight.category}
                       </p>
                       <h3 className="mt-2 font-display text-3xl md:text-5xl font-bold uppercase tracking-tight text-white">
@@ -151,7 +151,7 @@ export default function GalleryPage() {
                     }}
                     className={`relative aspect-[16/10] lg:aspect-auto lg:min-h-[92px] overflow-hidden rounded-2xl border text-left transition-all ${
                       featured % Math.max(items.length, 1) === i
-                        ? 'border-[#00C2FF]/60 shadow-[0_0_24px_rgba(0,194,255,0.25)]'
+                        ? 'border-[#3A8FB8]/60 shadow-[0_0_24px_rgba(58,143,184,0.25)]'
                         : 'border-white/10 hover:border-white/30'
                     }`}
                   >
@@ -221,7 +221,7 @@ export default function GalleryPage() {
               onClick={() =>
                 setActive((i) => (i === null ? i : (i - 1 + items.length) % items.length))
               }
-              className="absolute left-4 md:left-8 p-3 border border-white/15 hover:border-[#00C2FF] min-h-[44px] min-w-[44px] rounded-full"
+              className="absolute left-4 md:left-8 p-3 border border-white/15 hover:border-[#3A8FB8] min-h-[44px] min-w-[44px] rounded-full"
               aria-label="Previous"
             >
               <ChevronLeft className="w-5 h-5" />
@@ -238,7 +238,7 @@ export default function GalleryPage() {
                 className="max-w-full max-h-[78vh] mx-auto object-contain rounded-2xl"
               />
               <div className="mt-4 text-center">
-                <p className="text-[11px] uppercase tracking-[0.2em] text-[#00C2FF]">
+                <p className="text-[11px] uppercase tracking-[0.2em] text-[#3A8FB8]">
                   {items[active].category}
                 </p>
                 <p className="font-display text-xl text-white mt-1">{items[active].title}</p>
@@ -246,7 +246,7 @@ export default function GalleryPage() {
             </motion.div>
             <button
               onClick={() => setActive((i) => (i === null ? i : (i + 1) % items.length))}
-              className="absolute right-4 md:right-8 p-3 border border-white/15 hover:border-[#00C2FF] min-h-[44px] min-w-[44px] rounded-full"
+              className="absolute right-4 md:right-8 p-3 border border-white/15 hover:border-[#3A8FB8] min-h-[44px] min-w-[44px] rounded-full"
               aria-label="Next"
             >
               <ChevronRight className="w-5 h-5" />

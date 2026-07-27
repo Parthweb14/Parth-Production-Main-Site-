@@ -34,27 +34,17 @@ export default function CinematicPageHero({
         <MediaImage
           src={image}
           alt=""
-          className="absolute inset-0 h-full w-full object-cover opacity-28"
+          className="absolute inset-0 h-full w-full object-cover opacity-40"
         />
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-t from-black via-black/92 to-black/75"
-          initial={{ opacity: 0.9 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1.2, ease }}
-        />
-        <motion.div
-          className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_85%,rgba(0,0,0,0.65),transparent_55%)]"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1.4, delay: 0.1, ease }}
-        />
+        {/* Flat scrim only — no color/gradient wash */}
+        <div className="absolute inset-0 bg-black/40" />
       </div>
 
       <div className="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-10 pt-36 pb-16 md:pb-20">
         <motion.p
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-[11px] uppercase tracking-[0.32em] text-[#00C2FF] font-semibold mb-4"
+          className="text-[11px] uppercase tracking-[0.32em] text-accent font-semibold mb-4"
         >
           {eyebrow}
         </motion.p>
@@ -66,7 +56,7 @@ export default function CinematicPageHero({
         >
           {title}
           <br />
-          <span className="font-serif italic font-normal normal-case text-[#00C2FF]">
+          <span className="font-serif italic font-normal normal-case text-accent">
             {italicLine}
           </span>
         </motion.h1>
@@ -90,7 +80,7 @@ export default function CinematicPageHero({
               <a
                 key={chip.label}
                 href={chip.href}
-                className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-[11px] uppercase tracking-[0.16em] text-white/70 transition-all hover:border-[#00C2FF]/50 hover:text-white"
+                className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-[11px] uppercase tracking-[0.16em] text-white/70 transition-all hover:border-accent/50 hover:text-white"
               >
                 {chip.label}
               </a>

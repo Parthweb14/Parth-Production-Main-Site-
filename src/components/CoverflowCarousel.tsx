@@ -322,7 +322,7 @@ export default function CoverflowCarousel() {
         >
           <Link
             href="/gallery"
-            className="inline-flex items-center justify-center rounded-full border border-[#00C2FF]/40 bg-[#00C2FF]/10 px-7 py-3 text-xs font-bold uppercase tracking-[0.14em] text-[#00C2FF] transition-all hover:border-[#00C2FF]/70 hover:bg-[#00C2FF]/18 hover:shadow-[0_0_24px_rgba(0,194,255,0.3)]"
+            className="inline-flex items-center justify-center rounded-full border border-[#3A8FB8]/40 bg-[#3A8FB8]/10 px-7 py-3 text-xs font-bold uppercase tracking-[0.14em] text-[#3A8FB8] transition-all hover:border-[#3A8FB8]/70 hover:bg-[#3A8FB8]/18 hover:shadow-[0_0_24px_rgba(58,143,184,0.3)]"
           >
             View All Projects
           </Link>

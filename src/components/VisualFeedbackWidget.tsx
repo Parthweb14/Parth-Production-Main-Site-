@@ -57,7 +57,7 @@ export default function VisualFeedbackWidget() {
         if (target.closest('.feedback-widget-container')) return;
 
         hoveredEl = target;
-        target.style.outline = '2px dashed #00C2FF';
+        target.style.outline = '2px dashed #3A8FB8';
         target.style.outlineOffset = '2px';
         target.style.cursor = 'cell';
       }

@@ -163,7 +163,7 @@ export default function ServicesPage() {
       <SpotlightNavbar />
       <div className="film-grain" />
       <motion.div
-        className="fixed top-0 left-0 right-0 z-[60] h-[2px] origin-left bg-[#00C2FF]"
+        className="fixed top-0 left-0 right-0 z-[60] h-[2px] origin-left bg-[#3A8FB8]"
         style={{ scaleX: progress }}
       />
 
@@ -188,7 +188,7 @@ export default function ServicesPage() {
                   href={`#${slug}`}
                   className={`rounded-full border px-4 py-2 text-[11px] uppercase tracking-[0.16em] font-semibold transition-all ${
                     active
-                      ? 'border-[#00C2FF] bg-[#00C2FF]/15 text-white'
+                      ? 'border-[#3A8FB8] bg-[#3A8FB8]/15 text-white'
                       : 'border-white/15 bg-white/5 text-white/70 hover:border-white/35 hover:text-white'
                   }`}
                 >
@@ -237,7 +237,7 @@ export default function ServicesPage() {
                       </div>
 
                       <div className="flex flex-col justify-center p-6 md:p-8 lg:p-10">
-                        <p className="text-[11px] uppercase tracking-[0.22em] text-[#00C2FF] font-semibold mb-2">
+                        <p className="text-[11px] uppercase tracking-[0.22em] text-[#3A8FB8] font-semibold mb-2">
                           {service.subtitle}
                         </p>
                         <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold uppercase tracking-tight text-white leading-none">
@@ -254,7 +254,7 @@ export default function ServicesPage() {
                               key={item}
                               className="rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-white/70"
                             >
-                              <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-[#00C2FF]" />
+                              <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-[#3A8FB8]" />
                               {item}
                             </li>
                           ))}
