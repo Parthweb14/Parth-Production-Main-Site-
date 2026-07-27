@@ -88,8 +88,8 @@ export default function HomePage() {
             >
               One stop solution
               <br />
-              {/* Task 2: Space Grotesk — distinct from body Inter */}
-              <span className="font-display font-semibold uppercase tracking-tight text-accent">
+              {/* Playfair Display — same accent treatment as services “for every stage.” */}
+              <span className="font-serif italic font-medium normal-case tracking-normal text-accent">
                 For unforgatable moments
               </span>
             </motion.h1>
