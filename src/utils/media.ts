@@ -20,11 +20,19 @@ export function resolveGallerySrc(pathOrUrl: string, fallback: string): string {
 /** Resolve admin/DB video URLs to playable absolute URLs. */
 export function resolveVideoSrc(pathOrUrl: string, fallback = ''): string {
   if (!pathOrUrl) return fallback;
-  if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) return pathOrUrl;
-  if (pathOrUrl.startsWith('/videos/') || pathOrUrl.startsWith('/')) {
-    return `${ASSET_BASE}${pathOrUrl}`;
+  const url = pathOrUrl.trim();
+  if (!url) return fallback;
+
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    // Encode spaces in already-absolute URLs (common admin paste issue)
+    return url.includes(' ') ? url.replace(/ /g, '%20') : url;
   }
-  return mediaUrl(pathOrUrl, fallback);
+  if (url.startsWith('/videos/') || url.startsWith('/')) {
+    const abs = `${ASSET_BASE}${url}`;
+    return abs.includes(' ') ? abs.replace(/ /g, '%20') : abs;
+  }
+  const abs = mediaUrl(url, fallback);
+  return abs.includes(' ') ? abs.replace(/ /g, '%20') : abs;
 }
 
 export const HERO_VIDEO = `${ASSET_BASE}/Hero%20Background%20video%20-%20Trim.mp4`;

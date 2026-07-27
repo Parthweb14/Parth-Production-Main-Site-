@@ -177,10 +177,15 @@ export default function VideoShowcaseCarousel() {
     [goTo, total]
   );
 
-  const openClip = useCallback((clip: Clip, index: number) => {
-    goTo(index);
-    setLightbox({ type: 'video', src: clip.src, title: clip.title });
-  }, [goTo]);
+  const openClip = useCallback(
+    (clip: Clip, index: number) => {
+      const src = resolveVideoSrc(clip.src, clip.src);
+      if (!src) return;
+      goTo(index);
+      setLightbox({ type: 'video', src, title: clip.title });
+    },
+    [goTo]
+  );
 
   const closeLightbox = useCallback(() => setLightbox(null), []);
 
@@ -202,6 +207,9 @@ export default function VideoShowcaseCarousel() {
     if (Math.abs(delta) > 40) {
       didSwipe.current = true;
       nudge(delta < 0 ? 1 : -1);
+      window.setTimeout(() => {
+        didSwipe.current = false;
+      }, 400);
     }
     window.setTimeout(() => setPaused(false), 2200);
   };
