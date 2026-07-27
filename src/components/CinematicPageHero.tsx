@@ -34,10 +34,20 @@ export default function CinematicPageHero({
         <MediaImage
           src={image}
           alt=""
-          className="absolute inset-0 h-full w-full object-cover opacity-40"
+          className="absolute inset-0 h-full w-full object-cover opacity-28"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/40" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(255,90,60,0.18),transparent_50%)]" />
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-t from-black via-black/92 to-black/75"
+          initial={{ opacity: 0.9 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.2, ease }}
+        />
+        <motion.div
+          className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_85%,rgba(0,0,0,0.65),transparent_55%)]"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.4, delay: 0.1, ease }}
+        />
       </div>
 
       <div className="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-10 pt-36 pb-16 md:pb-20">

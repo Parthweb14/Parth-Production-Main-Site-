@@ -19,9 +19,9 @@ const CARDS = [
   { id: 9, label: 'Mainstage Array', src: STAGE_IMAGES[7].src },
 ];
 
-/** Soft fade band at left/right edges (no hard cut) */
-const FADE_START = 2.35;
-const FADE_END = 3.55;
+/** Soft fade at far left/right edges only */
+const FADE_START = 3.1;
+const FADE_END = 4.2;
 /** Cards per second — continuous circular motion */
 const SPEED = 0.4;
 const EASE_TO_TARGET = 4.2;
@@ -42,27 +42,27 @@ function shortestDiff(from: number, to: number, total: number) {
 function edgeFade(abs: number) {
   if (abs <= FADE_START) return 1;
   if (abs >= FADE_END) return 0;
-  // Smoothstep for softer fade in/out
   const t = (abs - FADE_START) / (FADE_END - FADE_START);
   return 1 - t * t * (3 - 2 * t);
 }
 
+/** Equal-size cards on a circular arc — no center scale-up */
 function cardTransform(offset: number, isMobile: boolean) {
   const abs = Math.abs(offset);
-  const spacing = isMobile ? 132 : 188;
-  const curve = isMobile ? 14 : 22;
-  const x = offset * spacing;
-  const y = abs * abs * curve;
-  const rotateZ = offset * (isMobile ? 7 : 9);
-  // Wider, eased center emphasis so the main image eases in smoothly
-  const raw = Math.max(0, 1 - abs / 1.2);
-  const centerMix = raw * raw * (3 - 2 * raw); // smoothstep
-  const scale = 0.72 + centerMix * 0.56;
-  const baseOpacity = 0.55 + centerMix * 0.45;
-  const opacity = baseOpacity * edgeFade(abs);
-  const zIndex = Math.round(50 - abs * 10);
+  const cardW = isMobile ? 148 : 208;
+  const gap = isMobile ? 26 : 36;
+  const radius = isMobile ? 400 : 560;
+  const angleStep = (cardW + gap) / radius;
+  const angle = offset * angleStep;
 
-  return { x, y, rotateZ, scale, opacity, zIndex, centerMix };
+  const x = radius * Math.sin(angle);
+  const y = radius * (1 - Math.cos(angle)) * 0.9;
+  const rotateZ = (angle * 180) / Math.PI * 0.32;
+  const scale = 1;
+  const opacity = 0.92 * edgeFade(abs);
+  const zIndex = Math.round(50 - abs * 8);
+
+  return { x, y, rotateZ, scale, opacity, zIndex };
 }
 
 export default function CoverflowCarousel() {
@@ -100,7 +100,6 @@ export default function CoverflowCarousel() {
             progressRef.current = (current + step + total) % total;
           }
         } else {
-          // Continuous loop (reversed from previous direction)
           progressRef.current = (progressRef.current + SPEED * dt) % total;
         }
         setProgress(progressRef.current);
@@ -130,8 +129,8 @@ export default function CoverflowCarousel() {
     [goTo]
   );
 
-  const cardW = isMobile ? 168 : 240;
-  const cardH = isMobile ? 246 : 352;
+  const cardW = isMobile ? 148 : 208;
+  const cardH = isMobile ? 216 : 304;
   const nearest = ((Math.round(progress) % total) + total) % total;
 
   return (
@@ -142,47 +141,79 @@ export default function CoverflowCarousel() {
       transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
       className="relative w-full overflow-hidden bg-black pt-14 md:pt-20 pb-16 md:pb-24"
     >
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-[58%] h-[320px] w-[320px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/[0.03] blur-[100px] md:h-[480px] md:w-[480px]"
+        animate={{ opacity: [0.4, 0.65, 0.4] }}
+        transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+      />
+
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-[62%] h-[200px] w-[min(100%,720px)] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.06] md:h-[280px] md:w-[min(100%,980px)]"
+        animate={{ opacity: [0.25, 0.45, 0.25] }}
+        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+      />
+
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-[62%] h-[140px] w-[min(92%,560px)] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.04] md:h-[200px] md:w-[min(92%,760px)]"
+        animate={{ opacity: [0.2, 0.35, 0.2] }}
+        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 0.4 }}
+      />
+
       <div className="relative mx-auto w-full max-w-[1400px] px-4 md:px-10">
-        <div className="mb-16 text-center md:mb-24">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          className="mb-12 text-center md:mb-16"
+        >
           <motion.span
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mb-5 inline-flex items-center rounded-full bg-[#ff5a3c]/20 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#ff5a3c]"
+            className="mb-4 inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/70"
           >
             Our Productions
           </motion.span>
           <motion.h2
-            initial={{ opacity: 0, y: 14 }}
+            initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.05 }}
-            className="font-display text-[2rem] font-bold leading-tight tracking-tight text-white md:text-5xl lg:text-6xl"
+            className="font-display text-[1.85rem] font-bold leading-tight tracking-tight text-white md:text-4xl lg:text-5xl"
           >
             Stage Gallery
           </motion.h2>
           <motion.p
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.08 }}
-            className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-white/60 md:text-base"
+            className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-white/50 md:text-[15px]"
           >
             Built for the big night — LED walls, luxury weddings, corporate stages, concerts, and
             immersive DJ performances from the Parth Production floor.
           </motion.p>
-        </div>
+        </motion.div>
 
-        <div className="relative mx-auto mb-8 flex h-[400px] items-start justify-center md:h-[520px] lg:h-[560px]">
-          <div className="relative h-full w-full max-w-5xl">
+        <div className="relative mx-auto mb-8 flex h-[380px] items-start justify-center md:h-[500px] lg:h-[540px]">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true, margin: '-40px' }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="relative h-full w-full max-w-6xl"
+          >
             {CARDS.map((card, index) => {
               const offset = wrapOffset(index - progress, total);
               const abs = Math.abs(offset);
-              // Keep mounted through full fade range — no hard disappear
               if (abs > FADE_END) return null;
 
               const t = cardTransform(offset, isMobile);
-              const labelOpacity = Math.max(0, Math.min(1, t.centerMix * 1.35 - 0.2));
+              const isNearest = index === nearest;
 
               return (
                 <div
@@ -198,77 +229,105 @@ export default function CoverflowCarousel() {
                   }}
                 >
                   <div
-                    className="relative h-full w-full overflow-hidden rounded-2xl border shadow-[0_20px_50px_rgba(0,0,0,0.55)]"
-                    style={{
-                      borderColor:
-                        t.centerMix > 0.55
-                          ? `rgba(255,255,255,${0.12 + t.centerMix * 0.2})`
-                          : 'rgba(255,255,255,0.1)',
-                    }}
+                    className={`relative h-full w-full overflow-hidden rounded-2xl border shadow-[0_16px_40px_rgba(0,0,0,0.5)] transition-colors duration-300 ${
+                      isNearest ? 'border-white/20' : 'border-white/10'
+                    }`}
                   >
                     <Image
                       src={card.src}
                       alt={card.label}
                       fill
-                      sizes="240px"
+                      sizes="208px"
                       className="object-cover"
                       draggable={false}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"
+                      animate={{ opacity: isNearest ? 0.85 : 1 }}
+                      transition={{ duration: 0.35 }}
+                    />
                     <span
-                      className="absolute bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/15 bg-black/50 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white backdrop-blur pointer-events-none"
-                      style={{ opacity: labelOpacity }}
+                      className={`absolute bottom-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] backdrop-blur pointer-events-none transition-all duration-300 ${
+                        isNearest
+                          ? 'border-white/20 bg-black/60 text-white'
+                          : 'border-white/10 bg-black/40 text-white/70'
+                      }`}
                     >
                       {card.label}
                     </span>
-                  </div>
-                </div>
+                  </motion.div>
+                </motion.div>
               );
             })}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
-        <div className="mb-10 flex items-center justify-center gap-4 md:mb-12">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.1, duration: 0.5 }}
+          className="mb-10 flex items-center justify-center gap-4 md:mb-12"
+        >
           <button
             type="button"
             onClick={() => nudge(-1)}
             aria-label="Previous stage"
-            className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white transition-colors hover:border-white/40 hover:bg-white/10"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] text-white transition-colors hover:border-white/35 hover:bg-white/[0.08]"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-4 w-4" />
           </button>
-          <div className="flex items-center gap-1.5">
+          <motion.div
+            className="flex items-center gap-1.5"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={{
+              hidden: {},
+              visible: { transition: { staggerChildren: 0.04 } },
+            }}
+          >
             {CARDS.map((card, i) => (
-              <button
+              <motion.button
                 key={card.id}
                 type="button"
                 aria-label={`Go to ${card.label}`}
                 onClick={() => goTo(i)}
+                variants={{
+                  hidden: { opacity: 0, scale: 0.6 },
+                  visible: { opacity: 1, scale: 1 },
+                }}
                 className={`h-1.5 rounded-full transition-all duration-300 ${
-                  i === nearest ? 'w-6 bg-[#ff5a3c]' : 'w-1.5 bg-white/25 hover:bg-white/45'
+                  i === nearest ? 'w-6 bg-white' : 'w-1.5 bg-white/25 hover:bg-white/45'
                 }`}
               />
             ))}
-          </div>
+          </motion.div>
           <button
             type="button"
             onClick={() => nudge(1)}
             aria-label="Next stage"
-            className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white transition-colors hover:border-white/40 hover:bg-white/10"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] text-white transition-colors hover:border-white/35 hover:bg-white/[0.08]"
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-4 w-4" />
           </button>
-        </div>
+        </motion.div>
 
-        <div className="text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.15, duration: 0.45 }}
+          className="text-center"
+        >
           <Link
             href="/gallery"
-            className="inline-flex items-center justify-center rounded-full bg-[#ff5a3c] px-8 py-3.5 text-sm font-bold uppercase tracking-[0.12em] text-white transition-transform hover:scale-[1.03] hover:shadow-[0_0_28px_rgba(255,90,60,0.35)]"
+            className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/[0.06] px-7 py-3 text-xs font-bold uppercase tracking-[0.14em] text-white transition-all hover:border-white/35 hover:bg-white/10"
           >
             View All Projects
           </Link>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </motion.section>
   );
 }
