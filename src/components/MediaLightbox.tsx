@@ -74,14 +74,10 @@ export default function MediaLightbox({ media, onClose }: Props) {
         el.playsInline = true;
         el.setAttribute('playsinline', 'true');
         el.setAttribute('webkit-playsinline', 'true');
+        // Stay muted — reliable on iOS/Android; tap-to-unmute often blocked
         await el.play();
         if (cancelled) return;
         setPaused(false);
-        try {
-          el.muted = false;
-        } catch {
-          /* stay muted */
-        }
       } catch {
         if (!cancelled) setPaused(true);
       }

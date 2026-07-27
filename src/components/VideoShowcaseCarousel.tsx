@@ -189,43 +189,53 @@ export default function VideoShowcaseCarousel() {
 
   const closeLightbox = useCallback(() => setLightbox(null), []);
 
-  const touchStartX = useRef<number | null>(null);
-  const didSwipe = useRef(false);
+  // Pointer-based tap detection — reliable on iOS/Android (click often fails on 3D transforms)
+  const pointerStart = useRef<{ x: number; y: number; id: number } | null>(null);
 
-  const onTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0]?.clientX ?? null;
-    didSwipe.current = false;
-    setPaused(true);
+  const onStagePointerDown = (e: React.PointerEvent) => {
+    if (e.pointerType === 'touch') setPaused(true);
+    pointerStart.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
   };
 
-  const onTouchEnd = (e: React.TouchEvent) => {
-    const start = touchStartX.current;
-    touchStartX.current = null;
-    if (start == null) return;
-    const end = e.changedTouches[0]?.clientX ?? start;
-    const delta = end - start;
-    if (Math.abs(delta) > 40) {
-      didSwipe.current = true;
-      nudge(delta < 0 ? 1 : -1);
-      window.setTimeout(() => {
-        didSwipe.current = false;
-      }, 400);
-    }
-    window.setTimeout(() => setPaused(false), 2200);
-  };
+  const onStagePointerUp = (e: React.PointerEvent) => {
+    const start = pointerStart.current;
+    pointerStart.current = null;
+    if (!start || start.id !== e.pointerId) return;
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    const dist = Math.hypot(dx, dy);
 
-  const handleClipClick = useCallback(
-    (clip: Clip, index: number) => {
-      if (didSwipe.current) {
-        didSwipe.current = false;
-        return;
+    if (dist > 36) {
+      // Horizontal swipe → nudge carousel
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 36) {
+        nudge(dx < 0 ? 1 : -1);
       }
-      openClip(clip, index);
-    },
-    [openClip]
-  );
+      window.setTimeout(() => setPaused(false), 1800);
+      return;
+    }
 
-  const cardW = isMobile ? 148 : 220;
+    // Tap — open the nearest/center-ish clip under pointer via data attribute handled on card
+    window.setTimeout(() => setPaused(false), 1200);
+  };
+
+  const onCardPointerUp = (e: React.PointerEvent, clip: Clip, index: number) => {
+    e.stopPropagation();
+    const start = pointerStart.current;
+    pointerStart.current = null;
+    if (!start) {
+      openClip(clip, index);
+      return;
+    }
+    const dist = Math.hypot(e.clientX - start.x, e.clientY - start.y);
+    if (dist <= 36) {
+      openClip(clip, index);
+    } else if (Math.abs(e.clientX - start.x) > 36) {
+      nudge(e.clientX - start.x < 0 ? 1 : -1);
+    }
+    window.setTimeout(() => setPaused(false), 1200);
+  };
+
+  const cardW = isMobile ? 156 : 220;
 
   return (
     <section className="relative isolate overflow-x-clip border-b border-white/10 bg-black py-14 sm:py-16 md:py-24">
@@ -257,20 +267,23 @@ export default function VideoShowcaseCarousel() {
         className="relative z-10 mx-auto w-full max-w-7xl px-2 sm:px-4 md:px-8"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
-        onTouchStart={onTouchStart}
-        onTouchEnd={onTouchEnd}
+        onPointerDown={onStagePointerDown}
+        onPointerUp={onStagePointerUp}
+        onPointerCancel={() => {
+          pointerStart.current = null;
+        }}
       >
         <div
-          className="relative mx-auto h-[360px] w-full overflow-hidden sm:h-[430px] md:h-[510px]"
+          className="relative mx-auto h-[380px] w-full overflow-hidden touch-pan-y sm:h-[430px] md:h-[510px]"
           style={{ perspective: isMobile ? '950px' : '1500px' }}
         >
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-y-0 left-0 z-30 w-10 bg-gradient-to-r from-black via-black/80 to-transparent sm:w-16 md:w-24"
+            className="pointer-events-none absolute inset-y-0 left-0 z-30 w-8 bg-gradient-to-r from-black via-black/80 to-transparent sm:w-16 md:w-24"
           />
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-y-0 right-0 z-30 w-10 bg-gradient-to-l from-black via-black/80 to-transparent sm:w-16 md:w-24"
+            className="pointer-events-none absolute inset-y-0 right-0 z-30 w-8 bg-gradient-to-l from-black via-black/80 to-transparent sm:w-16 md:w-24"
           />
 
           <div
@@ -287,17 +300,31 @@ export default function VideoShowcaseCarousel() {
               return (
                 <article
                   key={`${clip.src}-${i}`}
-                  className="absolute left-1/2 top-1/2 aspect-[9/16] cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-black shadow-[0_28px_60px_rgba(0,0,0,0.55)] will-change-transform sm:rounded-3xl"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Open ${clip.title} video`}
+                  className="absolute left-1/2 top-1/2 aspect-[9/16] cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-black shadow-[0_28px_60px_rgba(0,0,0,0.55)] will-change-transform touch-manipulation sm:rounded-3xl"
                   style={{
                     width: cardW,
                     marginLeft: -cardW / 2,
-                    marginTop: isMobile ? -132 : -196,
+                    marginTop: isMobile ? -140 : -196,
                     transformStyle: 'preserve-3d',
                     zIndex: t.zIndex,
                     opacity: t.opacity,
                     transform: `translate3d(${t.x}px, ${t.y}px, ${t.z}px) rotateY(${t.rotateY}deg) scale(${t.scale})`,
                   }}
-                  onClick={() => handleClipClick(clip, i)}
+                  onPointerDown={(e) => {
+                    e.stopPropagation();
+                    pointerStart.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
+                    if (e.pointerType === 'touch') setPaused(true);
+                  }}
+                  onPointerUp={(e) => onCardPointerUp(e, clip, i)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      openClip(clip, i);
+                    }
+                  }}
                   aria-current={isCenter ? 'true' : undefined}
                 >
                   <video
@@ -310,21 +337,21 @@ export default function VideoShowcaseCarousel() {
                     loop
                     playsInline
                     preload="metadata"
-                    className="absolute inset-0 h-full w-full object-cover"
+                    className="pointer-events-none absolute inset-0 h-full w-full object-cover"
                     style={{ filter: `brightness(${t.brightness})` }}
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/20" />
 
                   <div
                     aria-hidden
-                    className={`pointer-events-none absolute inset-0 rounded-2xl sm:rounded-3xl transition-opacity duration-300 ${
+                    className={`pointer-events-none absolute inset-0 rounded-2xl transition-opacity duration-300 sm:rounded-3xl ${
                       isCenter ? 'opacity-100 ring-1 ring-[#3A8FB8]/45' : 'opacity-0'
                     }`}
                   />
 
-                  <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3 sm:p-4">
                     <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#3A8FB8] sm:text-[10px]">
-                      {isCenter ? 'Now playing' : 'Clip'}
+                      {isCenter ? 'Tap to open' : 'Clip'}
                     </p>
                     <p className="mt-0.5 font-display text-sm font-bold uppercase tracking-tight text-white sm:text-base md:text-lg">
                       {clip.title}
