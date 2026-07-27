@@ -71,7 +71,7 @@ export default function SpotlightNavbar() {
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn-primary !py-2.5 !px-4 text-[11px] hidden md:inline-flex"
+            className="btn-primary !py-2.5 !px-4 text-[11px] !hidden md:!inline-flex"
           >
             Book now
           </a>
@@ -118,15 +118,6 @@ export default function SpotlightNavbar() {
                 </motion.div>
               ))}
             </nav>
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setMenuOpen(false)}
-              className="btn-primary mt-auto w-full min-h-[44px]"
-            >
-              Book now
-            </a>
           </motion.div>
         )}
       </AnimatePresence>

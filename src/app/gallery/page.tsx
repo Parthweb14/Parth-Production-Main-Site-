@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, X, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import SpotlightNavbar from '@/components/SpotlightNavbar';
 import Footer from '@/components/Footer';
 import QuoteCta from '@/components/QuoteCta';
@@ -119,10 +119,6 @@ export default function GalleryPage() {
                       className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
-                    <div className="absolute left-5 top-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/50 px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-white backdrop-blur">
-                      <Sparkles className="h-3.5 w-3.5 text-[#3A8FB8]" />
-                      Now featuring
-                    </div>
                     <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
                       <p className="text-[11px] uppercase tracking-[0.22em] text-[#3A8FB8] font-semibold">
                         {spotlight.category}

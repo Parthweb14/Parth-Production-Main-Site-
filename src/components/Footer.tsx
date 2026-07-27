@@ -51,6 +51,17 @@ export default function Footer() {
         <span>© {year} Parth Production</span>
         <span>{siteSettings.address}</span>
       </motion.div>
+      <p className="max-w-7xl mx-auto mt-4 text-center text-[11px] tracking-[0.08em] text-white/35 normal-case">
+        Designed by{' '}
+        <a
+          href="https://trishulhub.in"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-white/55 underline underline-offset-2 transition-colors hover:text-[#3A8FB8]"
+        >
+          Trishulhub
+        </a>
+      </p>
     </footer>
   );
 }

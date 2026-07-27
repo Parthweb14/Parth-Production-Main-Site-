@@ -281,7 +281,7 @@ export default function ServicesPage() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: gi * 0.08, duration: 0.4 }}
-                            className="relative aspect-[4/3] overflow-hidden bg-black group"
+                            className="relative aspect-[3/4] overflow-hidden bg-black group"
                           >
                             <MediaImage
                               src={src}

@@ -89,12 +89,10 @@ export default function AboutPage() {
             viewport={{ once: true }}
             className="relative z-10 max-w-4xl mx-auto text-center"
           >
-            <div className="flex items-center justify-center gap-4 mb-6 text-[#3A8FB8]">
-              <Sparkles className="w-5 h-5" />
-              <span className="text-[10px] uppercase tracking-[0.3em] font-semibold">
+            <div className="mb-6 text-center">
+              <span className="text-[10px] uppercase tracking-[0.3em] font-semibold text-[#3A8FB8]">
                 Our philosophy
               </span>
-              <Sparkles className="w-5 h-5" />
             </div>
             <p className="font-serif italic text-2xl md:text-4xl lg:text-5xl text-white leading-snug">
               “We don&apos;t just play music — we create moments that last forever.”
@@ -185,7 +183,7 @@ export default function AboutPage() {
                 <div className="relative aspect-[4/5]">
                   <MediaImage
                     src={OWNER_IMAGE}
-                    alt="Parth — Founder of Parth Production"
+                    alt="Parth Panchal — Founder of Parth Production"
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />
@@ -204,7 +202,7 @@ export default function AboutPage() {
                 Founder & CEO
               </span>
               <h2 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-white">
-                Parth
+                Parth Panchal
               </h2>
               <p className="mt-2 text-lg text-white/70">Lead DJ & Creative Director</p>
               <p className="font-serif italic text-xl md:text-2xl text-white/90 mt-6 leading-snug">

@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ArrowUpRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 type QuoteCtaProps = {
@@ -34,7 +33,7 @@ const ease = [0.22, 1, 0.36, 1] as const;
 export default function QuoteCta({
   title = DEFAULT_TITLE,
   subtitle = 'Tell us the venue and vibe — we lock sound, light, SFX, truss, and DJ into one production plan.',
-  buttonLabel = 'Book your event',
+  buttonLabel = 'Book Event',
 }: QuoteCtaProps) {
   const { siteSettings } = useAuth();
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
@@ -137,10 +136,9 @@ export default function QuoteCta({
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="cta-book-btn inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-full px-6 py-2.5 text-xs font-bold uppercase tracking-[0.12em] text-white transition-transform duration-300 hover:scale-[1.03]"
+              className="cta-book-btn inline-flex min-h-[42px] items-center justify-center rounded-full px-6 py-2.5 text-xs font-bold uppercase tracking-[0.12em] text-white transition-transform duration-300 hover:scale-[1.03]"
             >
               {buttonLabel}
-              <ArrowUpRight className="h-3.5 w-3.5" />
             </a>
             <Link
               href="/services"

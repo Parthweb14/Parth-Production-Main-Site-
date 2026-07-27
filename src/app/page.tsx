@@ -54,7 +54,7 @@ export default function HomePage() {
 
       <main className="relative overflow-x-hidden bg-black">
         {/* HERO */}
-        <section ref={heroRef} className="relative h-[100svh] min-h-[620px] flex items-end md:items-center overflow-hidden bg-black">
+        <section ref={heroRef} className="relative h-[72svh] min-h-[480px] md:h-[100svh] md:min-h-[620px] flex items-end md:items-center overflow-hidden bg-black">
           <motion.div style={{ y }} className="absolute inset-0">
             <video
               src={HERO_VIDEO}
@@ -69,7 +69,7 @@ export default function HomePage() {
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-black/50" />
           </motion.div>
 
-          <div className="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-10 pb-16 md:pb-0 pt-32">
+          <div className="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-10 pb-12 md:pb-0 pt-24 md:pt-32">
             <motion.p
               custom={0}
               variants={fadeUp}

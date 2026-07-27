@@ -112,7 +112,7 @@ export default function VideoShowcaseCarousel() {
 
   return (
     <section className="relative py-16 md:py-24 bg-black border-b border-white/10">
-      <div className="max-w-7xl mx-auto px-4 md:px-8 mb-8 md:mb-12 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 mb-8 md:mb-12">
         <div>
           <p className="text-xs uppercase tracking-[0.22em] text-accent font-semibold mb-3">
             Parth Production
@@ -123,24 +123,6 @@ export default function VideoShowcaseCarousel() {
           <p className="mt-3 text-white/70 max-w-2xl text-base md:text-lg leading-relaxed">
             Experience our finest DJ, lighting, stage, and event productions.
           </p>
-        </div>
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={() => goToPage(page - 1)}
-            className="w-11 h-11 min-w-[44px] rounded-full border border-white/20 flex items-center justify-center hover:border-accent transition-all"
-            aria-label="Previous videos"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => goToPage(page + 1)}
-            className="w-11 h-11 min-w-[44px] rounded-full border border-white/20 flex items-center justify-center hover:border-accent transition-all"
-            aria-label="Next videos"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
         </div>
       </div>
 
@@ -173,7 +155,26 @@ export default function VideoShowcaseCarousel() {
         </div>
       </div>
 
-      <div className="flex justify-center gap-2 mt-8">
+      <div className="mt-8 flex items-center justify-center gap-3">
+        <button
+          type="button"
+          onClick={() => goToPage(page - 1)}
+          className="w-11 h-11 min-w-[44px] rounded-full border border-white/20 flex items-center justify-center hover:border-accent transition-all"
+          aria-label="Previous videos"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => goToPage(page + 1)}
+          className="w-11 h-11 min-w-[44px] rounded-full border border-white/20 flex items-center justify-center hover:border-accent transition-all"
+          aria-label="Next videos"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+      </div>
+
+      <div className="flex justify-center gap-2 mt-5">
         {Array.from({ length: pageCount }).map((_, i) => (
           <button
             key={i}

@@ -29,7 +29,7 @@ export default function CinematicPageHero({
   chips,
 }: CinematicPageHeroProps) {
   return (
-    <section className="relative min-h-[70vh] flex items-end overflow-hidden border-b border-white/10">
+    <section className="relative min-h-[52vh] md:min-h-[70vh] flex items-end overflow-hidden border-b border-white/10">
       <div className="absolute inset-0">
         <MediaImage
           src={image}
@@ -40,7 +40,7 @@ export default function CinematicPageHero({
         <div className="absolute inset-0 bg-black/40" />
       </div>
 
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-10 pt-36 pb-16 md:pb-20">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-10 pt-28 pb-12 md:pt-36 md:pb-20">
         <motion.p
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
