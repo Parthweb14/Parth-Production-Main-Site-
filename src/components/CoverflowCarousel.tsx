@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { STAGE_IMAGES, resolveGallerySrc } from '@/utils/media';
+import MediaLightbox, { type LightboxMedia } from '@/components/MediaLightbox';
 
 type StageCard = { id: number | string; label: string; src: string };
 
@@ -71,6 +72,7 @@ export default function CoverflowCarousel() {
   const [cards, setCards] = useState<StageCard[]>(DEFAULT_CARDS);
   const [progress, setProgress] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  const [lightbox, setLightbox] = useState<LightboxMedia | null>(null);
   const progressRef = useRef(0);
   const targetRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -120,7 +122,7 @@ export default function CoverflowCarousel() {
       const dt = Math.min(0.05, (ts - lastTs.current) / 1000);
       lastTs.current = ts;
 
-      if (!document.hidden) {
+      if (!document.hidden && !lightbox) {
         if (targetRef.current != null) {
           const current = progressRef.current;
           const target = targetRef.current;
@@ -145,7 +147,7 @@ export default function CoverflowCarousel() {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [total]);
+  }, [total, lightbox]);
 
   const goTo = useCallback(
     (index: number) => {
@@ -161,6 +163,16 @@ export default function CoverflowCarousel() {
     },
     [goTo]
   );
+
+  const openCard = useCallback(
+    (card: StageCard, index: number) => {
+      goTo(index);
+      setLightbox({ type: 'image', src: card.src, title: card.label });
+    },
+    [goTo]
+  );
+
+  const closeLightbox = useCallback(() => setLightbox(null), []);
 
   const cardW = isMobile ? 148 : 208;
   const cardH = isMobile ? 216 : 304;
@@ -251,7 +263,17 @@ export default function CoverflowCarousel() {
               return (
                 <div
                   key={card.id}
-                  className="absolute left-1/2 top-0 will-change-transform"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Open ${card.label}`}
+                  onClick={() => openCard(card, index)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      openCard(card, index);
+                    }
+                  }}
+                  className="absolute left-1/2 top-0 cursor-pointer will-change-transform"
                   style={{
                     width: cardW,
                     height: cardH,
@@ -361,6 +383,8 @@ export default function CoverflowCarousel() {
           </Link>
         </motion.div>
       </div>
+
+      <MediaLightbox media={lightbox} onClose={closeLightbox} />
     </motion.section>
   );
 }

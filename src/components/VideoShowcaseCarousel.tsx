@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { SHOW_VIDEOS, resolveVideoSrc } from '@/utils/media';
+import MediaLightbox, { type LightboxMedia } from '@/components/MediaLightbox';
 
 type Clip = { title: string; src: string };
 
@@ -63,6 +64,7 @@ export default function VideoShowcaseCarousel() {
   const [progress, setProgress] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [lightbox, setLightbox] = useState<LightboxMedia | null>(null);
   const progressRef = useRef(0);
   const targetRef = useRef<number | null>(null);
   const pausedRef = useRef(false);
@@ -105,8 +107,8 @@ export default function VideoShowcaseCarousel() {
   }, []);
 
   useEffect(() => {
-    pausedRef.current = paused;
-  }, [paused]);
+    pausedRef.current = paused || Boolean(lightbox);
+  }, [paused, lightbox]);
 
   useEffect(() => {
     if (reduceMotion || total < 2) return;
@@ -175,10 +177,19 @@ export default function VideoShowcaseCarousel() {
     [goTo, total]
   );
 
+  const openClip = useCallback((clip: Clip, index: number) => {
+    goTo(index);
+    setLightbox({ type: 'video', src: clip.src, title: clip.title });
+  }, [goTo]);
+
+  const closeLightbox = useCallback(() => setLightbox(null), []);
+
   const touchStartX = useRef<number | null>(null);
+  const didSwipe = useRef(false);
 
   const onTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0]?.clientX ?? null;
+    didSwipe.current = false;
     setPaused(true);
   };
 
@@ -188,9 +199,23 @@ export default function VideoShowcaseCarousel() {
     if (start == null) return;
     const end = e.changedTouches[0]?.clientX ?? start;
     const delta = end - start;
-    if (Math.abs(delta) > 40) nudge(delta < 0 ? 1 : -1);
+    if (Math.abs(delta) > 40) {
+      didSwipe.current = true;
+      nudge(delta < 0 ? 1 : -1);
+    }
     window.setTimeout(() => setPaused(false), 2200);
   };
+
+  const handleClipClick = useCallback(
+    (clip: Clip, index: number) => {
+      if (didSwipe.current) {
+        didSwipe.current = false;
+        return;
+      }
+      openClip(clip, index);
+    },
+    [openClip]
+  );
 
   const cardW = isMobile ? 148 : 220;
 
@@ -264,7 +289,7 @@ export default function VideoShowcaseCarousel() {
                     opacity: t.opacity,
                     transform: `translate3d(${t.x}px, ${t.y}px, ${t.z}px) rotateY(${t.rotateY}deg) scale(${t.scale})`,
                   }}
-                  onClick={() => goTo(i)}
+                  onClick={() => handleClipClick(clip, i)}
                   aria-current={isCenter ? 'true' : undefined}
                 >
                   <video
@@ -336,6 +361,8 @@ export default function VideoShowcaseCarousel() {
           />
         ))}
       </div>
+
+      <MediaLightbox media={lightbox} onClose={closeLightbox} />
     </section>
   );
 }
