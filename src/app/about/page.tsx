@@ -63,7 +63,7 @@ export default function AboutPage() {
       <SpotlightNavbar />
       <div className="film-grain" />
       <motion.div
-        className="fixed top-0 left-0 right-0 z-[60] h-[2px] origin-left bg-[#ff5a3c]"
+        className="fixed top-0 left-0 right-0 z-[60] h-[2px] origin-left bg-[#00C2FF]"
         style={{ scaleX: progress }}
       />
 
@@ -89,7 +89,7 @@ export default function AboutPage() {
             viewport={{ once: true }}
             className="relative z-10 max-w-4xl mx-auto text-center"
           >
-            <div className="flex items-center justify-center gap-4 mb-6 text-[#ff5a3c]">
+            <div className="flex items-center justify-center gap-4 mb-6 text-[#00C2FF]">
               <Sparkles className="w-5 h-5" />
               <span className="text-[10px] uppercase tracking-[0.3em] font-semibold">
                 Our philosophy
@@ -121,7 +121,7 @@ export default function AboutPage() {
                 className="absolute left-4 md:left-1/2 top-0 bottom-0 w-px md:-translate-x-1/2"
                 style={{
                   background:
-                    'linear-gradient(180deg, transparent, rgba(255,90,60,0.7), rgba(255,255,255,0.2), transparent)',
+                    'linear-gradient(180deg, transparent, rgba(0,194,255,0.7), rgba(255,255,255,0.2), transparent)',
                 }}
               />
 
@@ -137,13 +137,13 @@ export default function AboutPage() {
                       transition={{ duration: 0.5 }}
                       className="relative pl-12 md:pl-0 md:grid md:grid-cols-2 md:gap-12"
                     >
-                      <span className="absolute left-[11px] md:left-1/2 top-8 md:top-10 h-3.5 w-3.5 -translate-x-1/2 rounded-full bg-[#ff5a3c] shadow-[0_0_16px_rgba(255,90,60,0.85)] z-10" />
+                      <span className="absolute left-[11px] md:left-1/2 top-8 md:top-10 h-3.5 w-3.5 -translate-x-1/2 rounded-full bg-[#00C2FF] shadow-[0_0_16px_rgba(0,194,255,0.85)] z-10" />
 
                       {onRight ? (
                         <>
                           <div className="hidden md:block" />
                           <div className="glass-card rounded-2xl p-6 md:p-8 transition-transform duration-300 hover:-translate-y-2 md:ml-6">
-                            <p className="font-display text-4xl font-bold text-[#ff5a3c] mb-3">
+                            <p className="font-display text-4xl font-bold text-[#00C2FF] mb-3">
                               {item.year}
                             </p>
                             <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
@@ -153,7 +153,7 @@ export default function AboutPage() {
                       ) : (
                         <>
                           <div className="glass-card rounded-2xl p-6 md:p-8 transition-transform duration-300 hover:-translate-y-2 md:mr-6 md:text-right">
-                            <p className="font-display text-4xl font-bold text-[#ff5a3c] mb-3">
+                            <p className="font-display text-4xl font-bold text-[#00C2FF] mb-3">
                               {item.year}
                             </p>
                             <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
@@ -181,7 +181,7 @@ export default function AboutPage() {
               viewport={{ once: true }}
               className="relative mx-auto w-full max-w-md"
             >
-              <div className="relative rounded-3xl overflow-hidden border border-white/25 shadow-[0_0_40px_rgba(255,90,60,0.12)] group">
+              <div className="relative rounded-3xl overflow-hidden border border-white/25 shadow-[0_0_40px_rgba(0,194,255,0.12)] group">
                 <div className="relative aspect-[4/5]">
                   <MediaImage
                     src={OWNER_IMAGE}
@@ -200,7 +200,7 @@ export default function AboutPage() {
               transition={{ delay: 0.08 }}
               className="text-center lg:text-left"
             >
-              <span className="inline-flex items-center min-h-[32px] px-3 py-1 rounded-full bg-[#ff5a3c] text-black text-[10px] uppercase tracking-[0.2em] font-bold mb-5">
+              <span className="inline-flex items-center min-h-[32px] px-3 py-1 rounded-full bg-[#00C2FF] text-white text-[10px] uppercase tracking-[0.2em] font-bold mb-5">
                 Founder & CEO
               </span>
               <h2 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-white">
@@ -244,8 +244,8 @@ export default function AboutPage() {
                     transition={{ delay: i * 0.1 }}
                     className="glass-card rounded-3xl p-6 md:p-8 transition-transform duration-300 hover:-translate-y-2"
                   >
-                    <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#ff5a3c]/15 border border-[#ff5a3c]/30">
-                      <Icon className="h-5 w-5 text-[#ff5a3c]" />
+                    <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#00C2FF]/15 border border-[#00C2FF]/30">
+                      <Icon className="h-5 w-5 text-[#00C2FF]" />
                     </div>
                     <h3 className="font-display text-xl md:text-2xl font-bold text-white mb-2">
                       {value.title}

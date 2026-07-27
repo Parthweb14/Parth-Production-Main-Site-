@@ -41,14 +41,14 @@ export default function HomeServicesGrid() {
             transition={{ duration: 0.7, ease, delay: 0.08 }}
             className="flex flex-col justify-center lg:pl-4"
           >
-            <p className="text-[11px] md:text-[12px] uppercase tracking-[2px] text-[#ff5a3c] font-semibold mb-3">
+            <p className="text-[11px] md:text-[12px] uppercase tracking-[2px] text-[#00C2FF] font-semibold mb-3">
               Designed For Every Celebration
             </p>
 
             <h2 className="font-display font-extrabold text-white leading-[1.1] tracking-tight text-[clamp(1.75rem,3.6vw,2.75rem)]">
               Bringing Every Moment
               <br />
-              <span className="font-serif italic font-normal text-[#ff5a3c]">To Life.</span>
+              <span className="font-serif italic font-normal text-[#00C2FF]">To Life.</span>
             </h2>
 
             <p className="mt-4 max-w-md text-[14px] md:text-[15px] leading-[1.65] text-[#b8b8b8]">
@@ -61,7 +61,7 @@ export default function HomeServicesGrid() {
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center h-11 px-6 rounded-full bg-[#ff5a3c] text-white text-[11px] md:text-xs font-bold tracking-[0.1em] uppercase transition-all duration-[450ms] ease-out hover:scale-[1.03] hover:shadow-[0_0_28px_rgba(255,90,60,0.35)]"
+                className="cta-book-btn inline-flex items-center justify-center h-11 px-6 rounded-full text-white text-[11px] md:text-xs font-bold tracking-[0.1em] uppercase transition-all duration-[450ms] ease-out hover:scale-[1.03]"
               >
                 Book a production
               </a>

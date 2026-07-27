@@ -54,7 +54,7 @@ export default function CinematicPageHero({
         <motion.p
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-[11px] uppercase tracking-[0.32em] text-[#ff5a3c] font-semibold mb-4"
+          className="text-[11px] uppercase tracking-[0.32em] text-[#00C2FF] font-semibold mb-4"
         >
           {eyebrow}
         </motion.p>
@@ -66,7 +66,7 @@ export default function CinematicPageHero({
         >
           {title}
           <br />
-          <span className="font-serif italic font-normal normal-case text-[#ff5a3c]">
+          <span className="font-serif italic font-normal normal-case text-[#00C2FF]">
             {italicLine}
           </span>
         </motion.h1>
@@ -90,7 +90,7 @@ export default function CinematicPageHero({
               <a
                 key={chip.label}
                 href={chip.href}
-                className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-[11px] uppercase tracking-[0.16em] text-white/70 transition-all hover:border-[#ff5a3c]/50 hover:text-white"
+                className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-[11px] uppercase tracking-[0.16em] text-white/70 transition-all hover:border-[#00C2FF]/50 hover:text-white"
               >
                 {chip.label}
               </a>

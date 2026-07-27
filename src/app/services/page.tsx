@@ -163,7 +163,7 @@ export default function ServicesPage() {
       <SpotlightNavbar />
       <div className="film-grain" />
       <motion.div
-        className="fixed top-0 left-0 right-0 z-[60] h-[2px] origin-left bg-[#ff5a3c]"
+        className="fixed top-0 left-0 right-0 z-[60] h-[2px] origin-left bg-[#00C2FF]"
         style={{ scaleX: progress }}
       />
 
@@ -188,7 +188,7 @@ export default function ServicesPage() {
                   href={`#${slug}`}
                   className={`rounded-full border px-4 py-2 text-[11px] uppercase tracking-[0.16em] font-semibold transition-all ${
                     active
-                      ? 'border-[#ff5a3c] bg-[#ff5a3c]/15 text-white'
+                      ? 'border-[#00C2FF] bg-[#00C2FF]/15 text-white'
                       : 'border-white/15 bg-white/5 text-white/70 hover:border-white/35 hover:text-white'
                   }`}
                 >
@@ -237,7 +237,7 @@ export default function ServicesPage() {
                       </div>
 
                       <div className="flex flex-col justify-center p-6 md:p-8 lg:p-10">
-                        <p className="text-[11px] uppercase tracking-[0.22em] text-[#ff5a3c] font-semibold mb-2">
+                        <p className="text-[11px] uppercase tracking-[0.22em] text-[#00C2FF] font-semibold mb-2">
                           {service.subtitle}
                         </p>
                         <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold uppercase tracking-tight text-white leading-none">
@@ -254,7 +254,7 @@ export default function ServicesPage() {
                               key={item}
                               className="rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-white/70"
                             >
-                              <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-[#ff5a3c]" />
+                              <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-[#00C2FF]" />
                               {item}
                             </li>
                           ))}
@@ -264,7 +264,7 @@ export default function ServicesPage() {
                           href={bookHref}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="mt-7 inline-flex w-fit items-center gap-2 rounded-full bg-[#ff5a3c] px-6 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0_28px_rgba(255,90,60,0.4)]"
+                          className="cta-book-btn mt-7 inline-flex w-fit items-center gap-2 rounded-full px-6 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-all duration-300 hover:scale-[1.03]"
                         >
                           Book {service.bookLabel}
                           <ArrowUpRight className="h-4 w-4" />

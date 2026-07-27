@@ -57,7 +57,7 @@ export default function VisualFeedbackWidget() {
         if (target.closest('.feedback-widget-container')) return;
 
         hoveredEl = target;
-        target.style.outline = '2px dashed #FF5F1F';
+        target.style.outline = '2px dashed #00C2FF';
         target.style.outlineOffset = '2px';
         target.style.cursor = 'cell';
       }
@@ -252,7 +252,7 @@ export default function VisualFeedbackWidget() {
                   onClick={() => setInspectActive(!inspectActive)}
                   className={`px-3 py-1.5 rounded-lg border transition cursor-pointer text-[10px] font-bold uppercase ${
                     inspectActive 
-                      ? 'bg-accent text-black border-accent' 
+                      ? 'bg-accent text-white border-accent' 
                       : 'bg-secondary text-gray-300 border-gray-800 hover:border-gray-700'
                   }`}
                 >
@@ -295,7 +295,7 @@ export default function VisualFeedbackWidget() {
 
                 <button
                   type="submit"
-                  className="w-full h-9 bg-accent text-black hover:bg-accent/90 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 cursor-pointer"
+                  className="w-full h-9 bg-accent text-white hover:bg-accent/90 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 cursor-pointer"
                 >
                   Save Note <Send className="w-3 h-3" />
                 </button>

@@ -255,12 +255,12 @@ export default function CoverflowCarousel() {
                     >
                       {card.label}
                     </span>
-                  </motion.div>
-                </motion.div>
+                  </div>
+                </div>
               );
             })}
           </motion.div>
-        </motion.div>
+        </div>
 
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -322,12 +322,12 @@ export default function CoverflowCarousel() {
         >
           <Link
             href="/gallery"
-            className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/[0.06] px-7 py-3 text-xs font-bold uppercase tracking-[0.14em] text-white transition-all hover:border-white/35 hover:bg-white/10"
+            className="inline-flex items-center justify-center rounded-full border border-[#00C2FF]/40 bg-[#00C2FF]/10 px-7 py-3 text-xs font-bold uppercase tracking-[0.14em] text-[#00C2FF] transition-all hover:border-[#00C2FF]/70 hover:bg-[#00C2FF]/18 hover:shadow-[0_0_24px_rgba(0,194,255,0.3)]"
           >
             View All Projects
           </Link>
         </motion.div>
-      </motion.div>
+      </div>
     </motion.section>
   );
 }

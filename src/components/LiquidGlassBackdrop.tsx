@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from 'framer-motion';
 
 type Props = {
-  /** warm = orange brand orbs; cool = silver/white glass without orange wash */
+  /** cool = silver/white glass; default = blue glass brand orbs */
   tone?: 'warm' | 'cool';
 };
 
@@ -18,13 +18,13 @@ export default function LiquidGlassBackdrop({ tone = 'warm' }: Props) {
         className={`absolute inset-0 ${
           cool
             ? 'bg-[radial-gradient(ellipse_at_center,_rgba(255,255,255,0.08)_0%,_transparent_55%)]'
-            : 'bg-[radial-gradient(ellipse_at_center,_rgba(255,95,31,0.12)_0%,_transparent_55%)]'
+            : 'bg-[radial-gradient(ellipse_at_center,_rgba(0,194,255,0.12)_0%,_transparent_55%)]'
         }`}
       />
 
       <motion.div
         className={`liquid-orb liquid-orb-a absolute -left-[15%] top-[10%] h-[55vw] max-h-[520px] w-[55vw] max-w-[520px] rounded-full blur-[80px] md:blur-[100px] ${
-          cool ? 'bg-white/25' : 'bg-[#FF5F1F]/35'
+          cool ? 'bg-white/25' : 'bg-[#00C2FF]/30'
         }`}
         animate={
           reduceMotion
@@ -40,7 +40,7 @@ export default function LiquidGlassBackdrop({ tone = 'warm' }: Props) {
 
       <motion.div
         className={`liquid-orb liquid-orb-b absolute -right-[10%] top-[25%] h-[48vw] max-h-[460px] w-[48vw] max-w-[460px] rounded-full blur-[70px] md:blur-[95px] ${
-          cool ? 'bg-white/18' : 'bg-[#FFB347]/28'
+          cool ? 'bg-white/18' : 'bg-[#0055FF]/28'
         }`}
         animate={
           reduceMotion
@@ -56,7 +56,7 @@ export default function LiquidGlassBackdrop({ tone = 'warm' }: Props) {
 
       <motion.div
         className={`liquid-orb liquid-orb-c absolute bottom-[-10%] left-[30%] h-[42vw] max-h-[400px] w-[42vw] max-w-[400px] rounded-full blur-[75px] md:blur-[110px] max-md:opacity-60 ${
-          cool ? 'bg-zinc-300/20' : 'bg-[#FF5F1F]/22'
+          cool ? 'bg-zinc-300/20' : 'bg-[#001A33]/80'
         }`}
         animate={
           reduceMotion
@@ -70,7 +70,6 @@ export default function LiquidGlassBackdrop({ tone = 'warm' }: Props) {
         transition={{ duration: 26, repeat: Infinity, ease: 'easeInOut' }}
       />
 
-      {/* Extra cool-tone shimmer ribbons */}
       {cool && (
         <>
           <motion.div
@@ -94,7 +93,7 @@ export default function LiquidGlassBackdrop({ tone = 'warm' }: Props) {
             'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 40%, transparent 70%)',
           boxShadow: cool
             ? 'inset 0 1px 0 rgba(255,255,255,0.14), inset 0 -1px 0 rgba(255,255,255,0.06)'
-            : 'inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(255,95,31,0.08)',
+            : 'inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(0,194,255,0.12)',
         }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70" />

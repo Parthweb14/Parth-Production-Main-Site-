@@ -5,9 +5,11 @@
   --font-display: var(--font-display), "Space Grotesk", system-ui, sans-serif;
   --font-serif: var(--font-serif), "Playfair Display", Georgia, serif;
   --color-primary: #000000;
-  --color-secondary: #0a0a0a;
-  --color-accent: #FF5F1F;
-  --color-glow: #FFB347;
+  --color-secondary: #050b14;
+  --color-accent: #00C2FF;
+  --color-glow: #4DB8FF;
+  --color-deep: #001A33;
+  --color-mid: #0055FF;
   --animate-marquee: marquee 28s linear infinite;
   --animate-pulse-soft: pulseSoft 3.2s ease-in-out infinite;
 }
@@ -18,21 +20,25 @@
 }
 
 @keyframes pulseSoft {
-  0%, 100% { box-shadow: 0 0 16px rgba(255, 95, 31, 0.28); }
-  50% { box-shadow: 0 0 32px rgba(255, 95, 31, 0.55); }
+  0%, 100% { box-shadow: 0 0 16px rgba(0, 194, 255, 0.28); }
+  50% { box-shadow: 0 0 32px rgba(0, 194, 255, 0.55); }
 }
 
 .cta-book-btn {
   animation: pulseSoft 3.2s ease-in-out infinite;
+  background: linear-gradient(135deg, #0033aa 0%, #0066ff 48%, #00c2ff 100%);
+  border: 1px solid rgba(0, 194, 255, 0.55);
 }
 .cta-book-btn:hover {
-  box-shadow: 0 0 40px rgba(255, 95, 31, 0.65);
+  box-shadow: 0 0 40px rgba(0, 194, 255, 0.55);
 }
 
 :root {
   --background: #000000;
   --foreground: #FFFFFF;
   --radius-btn: 9999px;
+  --glass-border: rgba(0, 194, 255, 0.28);
+  --glass-fill: rgba(0, 26, 51, 0.55);
 }
 
 html {
@@ -94,8 +100,9 @@ body::-webkit-scrollbar {
   justify-content: center;
   padding: 0.9rem 1.9rem;
   border-radius: var(--radius-btn);
-  background: var(--color-accent);
-  color: #000;
+  background: linear-gradient(135deg, #0033aa 0%, #0066ff 48%, #00c2ff 100%);
+  color: #fff;
+  border: 1px solid rgba(0, 194, 255, 0.55);
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -103,8 +110,8 @@ body::-webkit-scrollbar {
   transition: background 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
 }
 .btn-primary:hover {
-  background: color-mix(in srgb, var(--color-accent) 90%, white);
-  box-shadow: 0 0 28px rgba(255, 95, 31, 0.35);
+  box-shadow: 0 0 28px rgba(0, 194, 255, 0.45);
+  transform: translateY(-1px);
 }
 
 .btn-ghost {
@@ -119,11 +126,12 @@ body::-webkit-scrollbar {
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  transition: border-color 0.25s ease, background 0.25s ease;
+  transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
 }
 .btn-ghost:hover {
-  border-color: #fff;
-  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(0, 194, 255, 0.55);
+  background: rgba(0, 194, 255, 0.08);
+  box-shadow: 0 0 20px rgba(0, 194, 255, 0.15);
 }
 
 .marquee-track {
@@ -137,7 +145,7 @@ body::-webkit-scrollbar {
 }
 
 ::selection {
-  background: rgba(255, 95, 31, 0.28);
+  background: rgba(0, 194, 255, 0.28);
   color: #fff;
 }
 
@@ -162,19 +170,19 @@ body::-webkit-scrollbar {
   scroll-snap-align: center;
 }
 
-/* Services page — liquid glass */
+/* Dark premium glass heading */
 .glass-heading {
   background: linear-gradient(
     180deg,
     #ffffff 0%,
-    #ffffff 42%,
-    rgba(255, 180, 120, 0.92) 72%,
-    rgba(255, 95, 31, 0.85) 100%
+    #e8f7ff 42%,
+    rgba(0, 194, 255, 0.92) 72%,
+    rgba(0, 85, 255, 0.85) 100%
   );
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  filter: drop-shadow(0 2px 24px rgba(255, 95, 31, 0.22));
+  filter: drop-shadow(0 2px 24px rgba(0, 194, 255, 0.22));
 }
 
 .glass-heading-cool {
@@ -192,21 +200,28 @@ body::-webkit-scrollbar {
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.04);
+  background: linear-gradient(
+    145deg,
+    rgba(0, 40, 80, 0.45) 0%,
+    rgba(0, 20, 40, 0.55) 45%,
+    rgba(0, 10, 24, 0.7) 100%
+  );
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(0, 194, 255, 0.22);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 20px 50px rgba(0, 0, 0, 0.35);
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 194, 255, 0.08),
+    0 20px 50px rgba(0, 0, 0, 0.45),
+    0 0 24px rgba(0, 194, 255, 0.08);
   transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
 }
 .glass-card:hover {
-  border-color: rgba(255, 95, 31, 0.55);
+  border-color: rgba(0, 194, 255, 0.55);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 24px 60px rgba(0, 0, 0, 0.45),
-    0 0 28px rgba(255, 95, 31, 0.18);
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 24px 60px rgba(0, 0, 0, 0.5),
+    0 0 32px rgba(0, 194, 255, 0.28);
 }
 
 .celebration-card {
@@ -217,10 +232,10 @@ body::-webkit-scrollbar {
 }
 .celebration-card:hover {
   transform: translateY(-8px);
-  border-color: rgba(255, 90, 60, 0.65);
+  border-color: rgba(0, 194, 255, 0.65);
   box-shadow:
     0 24px 48px rgba(0, 0, 0, 0.45),
-    0 0 28px rgba(255, 90, 60, 0.35);
+    0 0 28px rgba(0, 194, 255, 0.35);
 }
 
 .stage-noise,
@@ -229,10 +244,10 @@ body::-webkit-scrollbar {
 }
 
 .stage-gallery-card:hover {
-  border-color: rgba(255, 90, 60, 0.55) !important;
+  border-color: rgba(0, 194, 255, 0.55) !important;
   box-shadow:
     0 28px 54px rgba(0, 0, 0, 0.5),
-    0 0 30px rgba(255, 90, 60, 0.35);
+    0 0 30px rgba(0, 194, 255, 0.35);
   transform: translateY(-10px) scale(1.03) !important;
 }
 
