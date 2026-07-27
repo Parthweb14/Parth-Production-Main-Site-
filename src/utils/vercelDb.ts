@@ -47,11 +47,17 @@ export interface AdminCredentials {
   resetTokenExpiry?: number | null;
   otpCode?: string | null;
   otpExpiry?: number | null;
+  otpAttempts?: number;
+  credentialsVersion?: number;
   resetCount?: number;
   recoveryKey?: string;
   recoveryKeyHash?: string;
   resetPeriodStart?: number | null;
   recoveryKeys?: string[];
+  /** Set when email OTP ownership is proven (credential change / reset). */
+  emailVerifiedAt?: number | null;
+  /** Account usable for login only after email ownership proof or operator bootstrap. */
+  active?: boolean;
 }
 
 const DEFAULT_SETTINGS: SiteSettings = {
@@ -73,6 +79,9 @@ function bootstrapCredentials(): AdminCredentials {
     resetCount: 0,
     recoveryKeyHash: recovery ? hashRecoveryKey(recovery) : undefined,
     resetPeriodStart: null,
+    // Operator-provisioned bootstrap is active; otherwise inactive until recovery/OTP
+    active: Boolean(bootstrapPassword),
+    emailVerifiedAt: null,
   };
 }
 
@@ -147,5 +156,11 @@ export const vercelDb = {
   },
   async setCredentials(credentials: AdminCredentials): Promise<void> {
     await setValue('credentials', credentials);
+  },
+  async getRateLimit(key: string): Promise<unknown> {
+    return getValue(key, null);
+  },
+  async setRateLimit(key: string, value: unknown): Promise<void> {
+    await setValue(key, value);
   },
 };

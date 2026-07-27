@@ -1,67 +1,100 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import { vercelDb } from '@/utils/vercelDb';
-import { generateOtp, safeErrorMessage } from '@/utils/auth';
+import {
+  generateOtp,
+  hashOtp,
+  normalizeIdentity,
+} from '@/utils/auth';
+import { enforceRateLimit, rateLimitResponse } from '@/utils/rateLimit';
+import { captchaConfigured, verifyCaptchaToken } from '@/utils/captcha';
 
+/** Identical wording whether or not the account exists. */
 const GENERIC = { success: true, message: 'If that account exists, a reset code was sent.' };
 
 export async function POST(request: Request) {
+  const started = Date.now();
   try {
-    const { email } = await request.json();
-    if (!email || typeof email !== 'string') {
-      return NextResponse.json(GENERIC);
+    const body = await request.json().catch(() => ({}));
+    const email = typeof body.email === 'string' ? body.email : '';
+    const captchaToken = typeof body.captchaToken === 'string' ? body.captchaToken : null;
+
+    const limited = await enforceRateLimit(request, 'reset-request', {
+      limit: 3,
+      windowMs: 60 * 60 * 1000,
+      lockAfter: 5,
+      lockMs: 60 * 60 * 1000,
+      identity: email,
+    });
+    if (!limited.ok) {
+      if (limited.locked && captchaConfigured()) {
+        const captcha = await verifyCaptchaToken(captchaToken, request);
+        if (!captcha.ok) return rateLimitResponse(limited);
+      } else {
+        return rateLimitResponse(limited);
+      }
     }
 
     const settings = await vercelDb.getSettings();
     const credentials = await vercelDb.getCredentials();
 
-    const isEmailMatch =
-      email.toLowerCase() === settings.email.toLowerCase() ||
-      email.toLowerCase() === credentials.username.toLowerCase() ||
-      email.toLowerCase() === (settings.from_email || '').toLowerCase() ||
-      email.toLowerCase() === 'parthproductionweb@gmail.com' ||
-      email.toLowerCase() === 'parthproduction123@gmail.com';
+    // Only configured admin identities — no hardcoded public emails
+    const candidates = [settings.email, credentials.username, settings.from_email]
+      .filter(Boolean)
+      .map((v) => normalizeIdentity(String(v)));
 
-    if (!isEmailMatch) {
-      return NextResponse.json(GENERIC);
+    const isEmailMatch = email ? candidates.includes(normalizeIdentity(email)) : false;
+
+    if (isEmailMatch) {
+      const host = settings.smtp_host || 'smtp-relay.brevo.com';
+      const port = parseInt(settings.smtp_port || '587', 10);
+      const user = settings.smtp_user;
+      const pass = settings.smtp_pass;
+      const recipientEmail = settings.from_email || settings.email;
+
+      if (user && pass && recipientEmail) {
+        const otp = generateOtp();
+        try {
+          const transporter = nodemailer.createTransport({
+            host,
+            port,
+            secure: port === 465,
+            auth: { user, pass },
+          });
+
+          await transporter.sendMail({
+            from: `Parth Production Admin Security <${recipientEmail}>`,
+            to: recipientEmail,
+            subject: 'Password reset verification code',
+            text: `Your password reset code is ${otp}. It expires in 10 minutes. If you did not request this, ignore this email.`,
+            html: `<p>Your password reset code is <strong>${otp}</strong>.</p><p>It expires in 10 minutes.</p>`,
+          });
+
+          // Persist HASH only after successful send — never plaintext OTP
+          credentials.otpCode = hashOtp(otp);
+          credentials.otpExpiry = Date.now() + 10 * 60 * 1000;
+          credentials.otpAttempts = 0;
+          credentials.resetToken = null;
+          credentials.resetTokenExpiry = null;
+          await vercelDb.setCredentials(credentials);
+        } catch {
+          console.error('SMTP email send error');
+          // Do not reveal SMTP failure details; still return GENERIC
+        }
+      }
     }
 
-    const otp = generateOtp();
-    credentials.otpCode = otp;
-    credentials.otpExpiry = Date.now() + 10 * 60 * 1000;
-    await vercelDb.setCredentials(credentials);
-
-    const host = settings.smtp_host || 'smtp-relay.brevo.com';
-    const port = parseInt(settings.smtp_port || '587', 10);
-    const user = settings.smtp_user;
-    const pass = settings.smtp_pass;
-    const recipientEmail = settings.from_email || settings.email;
-
-    if (user && pass && recipientEmail) {
-      try {
-        const transporter = nodemailer.createTransport({
-          host,
-          port,
-          secure: port === 465,
-          auth: { user, pass },
-        });
-
-        await transporter.sendMail({
-          from: `Parth Production Admin Security <${recipientEmail}>`,
-          to: recipientEmail,
-          subject: 'Password reset verification code',
-          text: `Your password reset code is ${otp}. It expires in 10 minutes.`,
-          html: `<p>Your password reset code is <strong>${otp}</strong>.</p><p>It expires in 10 minutes.</p>`,
-        });
-      } catch (smtpErr) {
-        console.error('SMTP email send error:', smtpErr);
-      }
+    // Pad timing so miss vs hit is harder to distinguish
+    const elapsed = Date.now() - started;
+    if (elapsed < 400) {
+      await new Promise((r) => setTimeout(r, 400 - elapsed));
     }
 
     return NextResponse.json(GENERIC);
   } catch (err: unknown) {
     console.error('Reset request error:', err);
-    return NextResponse.json({ error: safeErrorMessage(err) }, { status: 500 });
+    // Still avoid enumeration on errors
+    return NextResponse.json(GENERIC);
   }
 }
 

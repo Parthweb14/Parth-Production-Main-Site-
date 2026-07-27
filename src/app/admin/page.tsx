@@ -110,10 +110,10 @@ export default function AdminPage() {
   // Admin credentials states
   const [adminUsername, setAdminUsername] = useState('admin');
   const [adminPassword, setAdminPassword] = useState('');
-  const [adminRecoveryKey, setAdminRecoveryKey] = useState('PP-777-RESET');
+  const [adminRecoveryKey, setAdminRecoveryKey] = useState('');
   const [initialAdminUsername, setInitialAdminUsername] = useState('admin');
   const [initialAdminPassword, setInitialAdminPassword] = useState('');
-  const [initialAdminRecoveryKey, setInitialAdminRecoveryKey] = useState('PP-777-RESET');
+  const [initialAdminRecoveryKey, setInitialAdminRecoveryKey] = useState('');
   const [resetCount, setResetCount] = useState(0);
   const [resetPeriodStart, setResetPeriodStart] = useState<number | null>(null);
   const [showPass, setShowPass] = useState(false);
@@ -779,7 +779,7 @@ export default function AdminPage() {
       if (!res.ok) {
         throw new Error(data.error || 'Failed to send OTP email.');
       }
-      setCredsOtpSuccessMsg(data.message || '6-digit OTP sent to your registered email!');
+      setCredsOtpSuccessMsg(data.message || 'Verification code sent to your registered email.');
     } catch (err: any) {
       setCredsChangeError(err.message || 'SMTP Connection Error');
     } finally {
@@ -791,6 +791,10 @@ export default function AdminPage() {
     e.preventDefault();
     if (newPassword !== confirmNewPassword) {
       setCredsChangeError('New passwords do not match.');
+      return;
+    }
+    if (newPassword.length < 12) {
+      setCredsChangeError('New password must be at least 12 characters.');
       return;
     }
     setCredsChangeLoading(true);
@@ -1783,8 +1787,8 @@ export default function AdminPage() {
                 <input 
                   type="text" 
                   required 
-                  maxLength={6}
-                  placeholder="123456" 
+                  maxLength={12}
+                  placeholder="Enter code from email" 
                   value={credsOtp} 
                   onChange={(e) => setCredsOtp(e.target.value)} 
                   className="w-full h-12 px-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#3A8FB8] focus:outline-none tracking-widest text-center font-bold transition duration-200"
@@ -1804,12 +1808,13 @@ export default function AdminPage() {
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">New Password</label>
+                <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">New Password (min 12)</label>
                 <div className="relative">
                   <input 
                     type={showNewPass ? 'text' : 'password'} 
                     required 
-                    placeholder="••••••••" 
+                    minLength={12}
+                    placeholder="••••••••••••" 
                     value={newPassword} 
                     onChange={(e) => setNewPassword(e.target.value)} 
                     className="w-full h-12 pl-4 pr-11 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#3A8FB8] focus:outline-none transition duration-200"
@@ -1830,7 +1835,8 @@ export default function AdminPage() {
                   <input 
                     type={showNewPass ? 'text' : 'password'} 
                     required 
-                    placeholder="••••••••" 
+                    minLength={12}
+                    placeholder="••••••••••••" 
                     value={confirmNewPassword} 
                     onChange={(e) => setConfirmNewPassword(e.target.value)} 
                     className="w-full h-12 pl-4 pr-11 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#3A8FB8] focus:outline-none transition duration-200"
