@@ -6,21 +6,21 @@ import VisualFeedbackWidget from '@/components/VisualFeedbackWidget';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
-  variable: '--font-display',
+  variable: '--font-space',
   display: 'swap',
 });
 
 const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-sans',
+  variable: '--font-inter',
   display: 'swap',
 });
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
-  weight: ['400', '500', '600'],
+  weight: ['400', '500', '600', '700'],
   style: ['normal', 'italic'],
-  variable: '--font-serif',
+  variable: '--font-playfair',
   display: 'swap',
 });
 
@@ -70,7 +70,7 @@ export const metadata: Metadata = {
       'Sound, light, SFX, truss, fireworks, and DJ production for weddings, festivals, concerts, and corporate events across India.',
     images: [
       {
-        url: '/favicon-512x512.png?v=6',
+        url: '/favicon-512x512.png?v=7',
         width: 512,
         height: 512,
         alt: 'Parth Production logo',
@@ -82,7 +82,7 @@ export const metadata: Metadata = {
     title: 'Parth Production | Event Sound, Light & Stage',
     description:
       'Professional event production — sound, lighting, SFX, fireworks, and DJ for weddings and stages across Gujarat.',
-    images: ['/favicon-512x512.png?v=6'],
+    images: ['/favicon-512x512.png?v=7'],
   },
   robots: {
     index: true,
@@ -97,13 +97,13 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/favicon-32x32.png?v=6', sizes: '32x32', type: 'image/png' },
-      { url: '/favicon-96x96.png?v=6', sizes: '96x96', type: 'image/png' },
-      { url: '/favicon-192x192.png?v=6', sizes: '192x192', type: 'image/png' },
-      { url: '/Parth logo .png?v=6', type: 'image/png' },
+      { url: '/favicon.ico?v=7', sizes: 'any' },
+      { url: '/favicon-32x32.png?v=7', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-96x96.png?v=7', sizes: '96x96', type: 'image/png' },
+      { url: '/favicon-192x192.png?v=7', sizes: '192x192', type: 'image/png' },
     ],
-    shortcut: '/favicon.ico?v=6',
-    apple: [{ url: '/apple-touch-icon.png?v=6', sizes: '180x180', type: 'image/png' }],
+    shortcut: '/favicon.ico?v=7',
+    apple: [{ url: '/apple-touch-icon.png?v=7', sizes: '180x180', type: 'image/png' }],
   },
   manifest: '/site.webmanifest',
   verification: {
@@ -172,9 +172,9 @@ export default function RootLayout({
       <head>
         <link rel="preload" href="/Parth Logo .json" as="fetch" crossOrigin="anonymous" />
         <link rel="preload" href="/Parth logo .png" as="image" />
-        <link rel="icon" href="/favicon.ico?v=6" sizes="any" />
-        <link rel="icon" href="/favicon-96x96.png?v=6" type="image/png" sizes="96x96" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=6" />
+        <link rel="icon" href="/favicon.ico?v=7" sizes="any" />
+        <link rel="icon" href="/favicon-96x96.png?v=7" type="image/png" sizes="96x96" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=7" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

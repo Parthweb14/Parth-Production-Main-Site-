@@ -1,9 +1,10 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-sans), "Inter", system-ui, sans-serif;
-  --font-display: var(--font-display), "Space Grotesk", system-ui, sans-serif;
-  --font-serif: var(--font-serif), "Playfair Display", Georgia, serif;
+  /* Do not self-reference Next font vars — map through stable aliases */
+  --font-sans: var(--font-inter), "Inter", system-ui, sans-serif;
+  --font-display: var(--font-space), "Space Grotesk", system-ui, sans-serif;
+  --font-serif: var(--font-playfair), "Playfair Display", Georgia, serif;
   --color-primary: #000000;
   --color-secondary: #03070e;
   /* Darker steel blue — almost blackish, not electric cyan */
@@ -67,7 +68,7 @@ html::-webkit-scrollbar {
 }
 
 body {
-  font-family: var(--font-sans);
+  font-family: var(--font-inter), "Inter", system-ui, sans-serif;
   background: #000000;
   color: #FFFFFF;
   overflow-x: hidden;
@@ -101,11 +102,11 @@ body::-webkit-scrollbar {
 }
 
 .font-display {
-  font-family: var(--font-display);
+  font-family: var(--font-space), "Space Grotesk", system-ui, sans-serif;
 }
 
 .font-serif {
-  font-family: var(--font-serif);
+  font-family: var(--font-playfair), "Playfair Display", Georgia, serif;
 }
 
 .btn-primary {

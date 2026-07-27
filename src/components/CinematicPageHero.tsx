@@ -56,8 +56,8 @@ export default function CinematicPageHero({
         >
           {title}
           <br />
-          {/* Task 3: Playfair Display (font-serif) for italic accent line */}
-          <span className="font-serif italic font-normal normal-case tracking-normal text-accent">
+          {/* Task 3: Playfair Display italic — clearly distinct from Space Grotesk title */}
+          <span className="font-serif italic font-medium normal-case tracking-normal text-accent">
             {italicLine}
           </span>
         </motion.h1>
