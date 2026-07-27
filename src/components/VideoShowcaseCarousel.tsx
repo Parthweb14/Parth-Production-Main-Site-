@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { SHOW_VIDEOS, resolveVideoSrc } from '@/utils/media';
@@ -9,32 +9,67 @@ type Clip = { title: string; src: string };
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-function useVisibleCount() {
-  const [count, setCount] = useState(1);
+/** Continuous cinema-lane drift — slower/smoother than stage gallery */
+const SPEED = 0.26;
+const EASE_TO_TARGET = 5.2;
+const FADE_START = 2.4;
+const FADE_END = 3.2;
 
-  useEffect(() => {
-    const update = () => {
-      const w = window.innerWidth;
-      if (w >= 1100) setCount(3);
-      else if (w >= 640) setCount(2);
-      else setCount(1);
-    };
-    update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-  }, []);
+function wrapOffset(offset: number, total: number) {
+  let o = ((offset % total) + total) % total;
+  if (o > total / 2) o -= total;
+  return o;
+}
 
-  return count;
+function shortestDiff(from: number, to: number, total: number) {
+  let diff = to - from;
+  if (diff > total / 2) diff -= total;
+  if (diff < -total / 2) diff += total;
+  return diff;
+}
+
+function edgeFade(abs: number) {
+  if (abs <= FADE_START) return 1;
+  if (abs >= FADE_END) return 0;
+  const t = (abs - FADE_START) / (FADE_END - FADE_START);
+  return 1 - t * t * (3 - 2 * t);
+}
+
+/**
+ * Cinema spotlight lane — different from stage gallery's circular arc.
+ * Perspective aisle (rotateY + depth), soft center lift, gentle float.
+ */
+function laneTransform(offset: number, isMobile: boolean, progress: number) {
+  const abs = Math.abs(offset);
+  const spacing = isMobile ? 164 : 232;
+  const depth = isMobile ? 80 : 120;
+
+  const x = offset * spacing;
+  const float = Math.sin(offset * 1.05 + progress * 1.15) * (isMobile ? 3.5 : 6.5);
+  const y = abs * abs * (isMobile ? 2.5 : 4.5) + float;
+  const rotateY = offset * (isMobile ? -12 : -17);
+  const scale = 1 - Math.min(abs, 2.5) * (isMobile ? 0.055 : 0.07);
+  const z = -abs * depth;
+  const opacity = 0.22 + 0.78 * edgeFade(abs);
+  const zIndex = Math.round(40 - abs * 10);
+  const brightness = 1 - Math.min(abs, 2) * 0.2;
+
+  return { x, y, rotateY, scale, z, opacity, zIndex, brightness };
 }
 
 export default function VideoShowcaseCarousel() {
   const reduceMotion = useReducedMotion();
-  const scrollerRef = useRef<HTMLDivElement>(null);
-  const [page, setPage] = useState(0);
   const [clips, setClips] = useState<Clip[]>(SHOW_VIDEOS);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const visible = useVisibleCount();
-  const pageCount = Math.max(1, Math.ceil(clips.length / visible));
+  const [progress, setProgress] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const progressRef = useRef(0);
+  const targetRef = useRef<number | null>(null);
+  const pausedRef = useRef(false);
+  const rafRef = useRef<number | null>(null);
+  const lastTs = useRef<number | null>(null);
+  const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
+  const total = clips.length;
 
   useEffect(() => {
     let cancelled = false;
@@ -63,82 +98,109 @@ export default function VideoShowcaseCarousel() {
   }, []);
 
   useEffect(() => {
-    const id = window.setTimeout(() => {
-      setPage((p) => Math.min(p, pageCount - 1));
-    }, 0);
-    return () => window.clearTimeout(id);
-  }, [pageCount]);
+    const update = () => setIsMobile(window.innerWidth < 768);
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
 
-  // Play videos that are mostly visible in the scroller
   useEffect(() => {
-    const root = scrollerRef.current;
-    if (!root) return;
-    const videos = Array.from(root.querySelectorAll('video'));
+    pausedRef.current = paused;
+  }, [paused]);
 
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const video = entry.target as HTMLVideoElement;
-          const idx = Number(video.dataset.index || 0);
-          if (entry.isIntersecting && entry.intersectionRatio > 0.4) {
-            void video.play().catch(() => undefined);
-            setActiveIndex(idx);
+  useEffect(() => {
+    if (reduceMotion || total < 2) return;
+
+    const tick = (ts: number) => {
+      if (lastTs.current == null) lastTs.current = ts;
+      const dt = Math.min(0.05, (ts - lastTs.current) / 1000);
+      lastTs.current = ts;
+
+      if (!document.hidden) {
+        if (targetRef.current != null) {
+          const current = progressRef.current;
+          const target = targetRef.current;
+          const diff = shortestDiff(current, target, total);
+          if (Math.abs(diff) < 0.008) {
+            progressRef.current = ((target % total) + total) % total;
+            targetRef.current = null;
           } else {
-            video.pause();
+            const step = diff * Math.min(1, EASE_TO_TARGET * dt);
+            progressRef.current = (current + step + total) % total;
           }
-        });
-      },
-      { root, threshold: [0.4, 0.65] }
-    );
+        } else if (!pausedRef.current) {
+          progressRef.current = (progressRef.current + SPEED * dt) % total;
+        }
+        setProgress(progressRef.current);
+      }
 
-    videos.forEach((v) => io.observe(v));
-    return () => io.disconnect();
-  }, [clips, visible]);
+      rafRef.current = requestAnimationFrame(tick);
+    };
 
-  // Gentle auto-advance pages on desktop/tablet
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      lastTs.current = null;
+    };
+  }, [total, reduceMotion]);
+
   useEffect(() => {
-    if (reduceMotion || pageCount < 2) return;
-    const id = window.setInterval(() => {
-      setPage((p) => {
-        const next = (p + 1) % pageCount;
-        const el = scrollerRef.current;
-        if (el) el.scrollTo({ left: next * el.clientWidth, behavior: 'smooth' });
-        return next;
-      });
-    }, 5500);
-    return () => window.clearInterval(id);
-  }, [pageCount, reduceMotion, clips.length]);
+    if (total === 0) return;
+    videoRefs.current.forEach((video, index) => {
+      const offset = Math.abs(wrapOffset(index - progress, total));
+      if (offset < 0.9) {
+        void video.play().catch(() => undefined);
+      } else {
+        video.pause();
+      }
+    });
+  }, [progress, total, clips]);
 
-  const goToPage = (next: number) => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    const clamped = Math.max(0, Math.min(pageCount - 1, next));
-    setPage(clamped);
-    el.scrollTo({ left: clamped * el.clientWidth, behavior: 'smooth' });
+  const activeIndex = ((Math.round(progress) % total) + total) % total;
+
+  const goTo = useCallback(
+    (index: number) => {
+      if (total < 2) return;
+      targetRef.current = ((index % total) + total) % total;
+    },
+    [total]
+  );
+
+  const nudge = useCallback(
+    (dir: -1 | 1) => {
+      if (total < 2) return;
+      const nearest = Math.round(progressRef.current);
+      goTo(nearest + dir);
+    },
+    [goTo, total]
+  );
+
+  const touchStartX = useRef<number | null>(null);
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0]?.clientX ?? null;
+    setPaused(true);
   };
 
-  const onScroll = () => {
-    const el = scrollerRef.current;
-    if (!el || el.clientWidth === 0) return;
-    setPage(Math.round(el.scrollLeft / el.clientWidth));
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const start = touchStartX.current;
+    touchStartX.current = null;
+    if (start == null) return;
+    const end = e.changedTouches[0]?.clientX ?? start;
+    const delta = end - start;
+    if (Math.abs(delta) > 40) nudge(delta < 0 ? 1 : -1);
+    window.setTimeout(() => setPaused(false), 2200);
   };
 
-  const gap = visible === 1 ? 0 : visible === 2 ? 'gap-3 sm:gap-4' : 'gap-3 md:gap-5';
-  const cardWidth =
-    visible === 1
-      ? 'w-[85%] mx-[7.5%]'
-      : visible === 2
-        ? 'w-[calc((100%-0.75rem)/2)] sm:w-[calc((100%-1rem)/2)]'
-        : 'w-[calc((100%-1.5rem)/3)] md:w-[calc((100%-2.5rem)/3)]';
+  const cardW = isMobile ? 148 : 220;
 
   return (
     <section className="relative isolate overflow-x-clip border-b border-white/10 bg-black py-14 sm:py-16 md:py-24">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-[45%] mx-auto h-[36%] max-w-5xl rounded-full bg-[#3A8FB8]/08 blur-[100px]"
+        className="pointer-events-none absolute inset-x-0 top-[48%] mx-auto h-[40%] max-w-4xl rounded-full bg-[#3A8FB8]/10 blur-[110px]"
       />
 
-      {/* Header — own stacking context, never overlapped by video stage */}
       <div className="relative z-20 mx-auto mb-8 max-w-7xl px-4 sm:mb-10 sm:px-6 md:mb-12 md:px-8">
         <motion.div
           initial={{ opacity: 0, y: 18 }}
@@ -158,62 +220,84 @@ export default function VideoShowcaseCarousel() {
         </motion.div>
       </div>
 
-      {/* Multi-video stage — clipped so cards cannot bleed into header */}
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
-        <div className="overflow-hidden rounded-none">
+      <div
+        className="relative z-10 mx-auto w-full max-w-7xl px-2 sm:px-4 md:px-8"
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
+        <div
+          className="relative mx-auto h-[360px] w-full overflow-hidden sm:h-[430px] md:h-[510px]"
+          style={{ perspective: isMobile ? '950px' : '1500px' }}
+        >
           <div
-            ref={scrollerRef}
-            onScroll={onScroll}
-            className={`flex ${gap} snap-x snap-mandatory overflow-x-auto scrollbar-none pb-1`}
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 left-0 z-30 w-10 bg-gradient-to-r from-black via-black/80 to-transparent sm:w-16 md:w-24"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 right-0 z-30 w-10 bg-gradient-to-l from-black via-black/80 to-transparent sm:w-16 md:w-24"
+          />
+
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ transformStyle: 'preserve-3d' }}
           >
             {clips.map((clip, i) => {
-              const isActive = i === activeIndex;
+              const offset = wrapOffset(i - progress, total);
+              if (Math.abs(offset) > FADE_END) return null;
+
+              const t = laneTransform(offset, isMobile, progress);
+              const isCenter = i === activeIndex;
+
               return (
-                <motion.article
+                <article
                   key={`${clip.src}-${i}`}
-                  initial={{ opacity: 0, y: 28 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-30px' }}
-                  transition={{ delay: (i % visible) * 0.07, duration: 0.45, ease }}
-                  className={`relative ${cardWidth} aspect-[9/16] flex-shrink-0 snap-center overflow-hidden rounded-2xl border border-white/10 bg-black shadow-[0_20px_50px_rgba(0,0,0,0.45)] sm:rounded-3xl sm:snap-start`}
+                  className="absolute left-1/2 top-1/2 aspect-[9/16] cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-black shadow-[0_28px_60px_rgba(0,0,0,0.55)] will-change-transform sm:rounded-3xl"
+                  style={{
+                    width: cardW,
+                    marginLeft: -cardW / 2,
+                    marginTop: isMobile ? -132 : -196,
+                    transformStyle: 'preserve-3d',
+                    zIndex: t.zIndex,
+                    opacity: t.opacity,
+                    transform: `translate3d(${t.x}px, ${t.y}px, ${t.z}px) rotateY(${t.rotateY}deg) scale(${t.scale})`,
+                  }}
+                  onClick={() => goTo(i)}
+                  aria-current={isCenter ? 'true' : undefined}
                 >
-                  <motion.div
-                    className="absolute inset-0"
-                    animate={{
-                      scale: reduceMotion ? 1 : isActive ? 1.04 : 1,
+                  <video
+                    ref={(el) => {
+                      if (el) videoRefs.current.set(i, el);
+                      else videoRefs.current.delete(i);
                     }}
-                    transition={{ duration: 0.7, ease }}
-                  >
-                    <video
-                      data-index={i}
-                      src={clip.src}
-                      muted
-                      loop
-                      playsInline
-                      preload="metadata"
-                      className="absolute inset-0 h-full w-full object-cover"
-                    />
-                  </motion.div>
+                    src={clip.src}
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                    className="absolute inset-0 h-full w-full object-cover"
+                    style={{ filter: `brightness(${t.brightness})` }}
+                  />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/20" />
 
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-black/25" />
-
-                  {/* Soft accent rim on active */}
                   <div
                     aria-hidden
-                    className={`pointer-events-none absolute inset-0 rounded-2xl transition-opacity duration-500 sm:rounded-3xl ${
-                      isActive ? 'opacity-100 ring-1 ring-[#3A8FB8]/40' : 'opacity-0'
+                    className={`pointer-events-none absolute inset-0 rounded-2xl sm:rounded-3xl transition-opacity duration-300 ${
+                      isCenter ? 'opacity-100 ring-1 ring-[#3A8FB8]/45' : 'opacity-0'
                     }`}
                   />
 
-                  <div className="absolute inset-x-0 bottom-0 p-3.5 sm:p-4 md:p-5">
+                  <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
                     <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#3A8FB8] sm:text-[10px]">
-                      {isActive ? 'Now playing' : 'Clip'}
+                      {isCenter ? 'Now playing' : 'Clip'}
                     </p>
-                    <p className="mt-1 font-display text-base font-bold uppercase tracking-tight text-white sm:text-lg md:text-xl">
+                    <p className="mt-0.5 font-display text-sm font-bold uppercase tracking-tight text-white sm:text-base md:text-lg">
                       {clip.title}
                     </p>
                   </div>
-                </motion.article>
+                </article>
               );
             })}
           </div>
@@ -223,7 +307,7 @@ export default function VideoShowcaseCarousel() {
       <div className="relative z-20 mt-7 flex items-center justify-center gap-3 sm:mt-9">
         <button
           type="button"
-          onClick={() => goToPage(page - 1)}
+          onClick={() => nudge(-1)}
           className="flex h-11 w-11 min-w-[44px] items-center justify-center rounded-full border border-white/20 transition-all hover:border-accent"
           aria-label="Previous videos"
         >
@@ -231,7 +315,7 @@ export default function VideoShowcaseCarousel() {
         </button>
         <button
           type="button"
-          onClick={() => goToPage(page + 1)}
+          onClick={() => nudge(1)}
           className="flex h-11 w-11 min-w-[44px] items-center justify-center rounded-full border border-white/20 transition-all hover:border-accent"
           aria-label="Next videos"
         >
@@ -239,15 +323,15 @@ export default function VideoShowcaseCarousel() {
         </button>
       </div>
 
-      <div className="relative z-20 mt-4 flex justify-center gap-2 px-4 sm:mt-5">
-        {Array.from({ length: pageCount }).map((_, i) => (
+      <div className="relative z-20 mt-4 flex flex-wrap justify-center gap-2 px-4 sm:mt-5">
+        {clips.map((clip, i) => (
           <button
-            key={i}
+            key={`dot-${clip.src}-${i}`}
             type="button"
-            aria-label={`Jump to video page ${i + 1}`}
-            onClick={() => goToPage(i)}
+            aria-label={`Show ${clip.title}`}
+            onClick={() => goTo(i)}
             className={`h-2 rounded-full transition-all ${
-              i === page ? 'w-7 bg-accent' : 'w-2 bg-white/25'
+              i === activeIndex ? 'w-7 bg-accent' : 'w-2 bg-white/25'
             }`}
           />
         ))}
