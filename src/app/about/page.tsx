@@ -102,28 +102,65 @@ export default function AboutPage() {
 
         <section
           id="journey"
-          className="relative border-t border-white/10 py-14 md:py-20 px-4 sm:px-6 md:px-10 scroll-mt-28"
+          className="relative scroll-mt-28 border-t border-white/10 px-4 py-14 sm:px-6 md:px-10 md:py-20"
         >
-          <div className="max-w-5xl mx-auto">
+          <div className="mx-auto max-w-5xl">
             <motion.h2
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="font-display text-3xl md:text-5xl font-bold uppercase tracking-tight text-center mb-10 md:mb-14"
+              className="mb-10 text-center font-display text-3xl font-bold uppercase tracking-tight md:mb-14 md:text-5xl"
             >
               Our Journey
             </motion.h2>
 
-            <div className="relative">
+            {/* MOBILE — cinematic stacked chapters (PC keeps alternating timeline below) */}
+            <div className="space-y-5 md:hidden">
+              {journey.map((item, i) => (
+                <motion.article
+                  key={`m-${item.year}`}
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-40px' }}
+                  transition={{ duration: 0.45, delay: i * 0.06 }}
+                  className="relative overflow-hidden rounded-[22px] border border-white/10 bg-gradient-to-br from-white/[0.06] to-transparent"
+                >
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute -right-2 -top-4 font-display text-[5.5rem] font-bold leading-none text-white/[0.04]"
+                  >
+                    {item.year}
+                  </div>
+                  <div className="relative p-5 sm:p-6">
+                    <div className="mb-3 flex items-center gap-3">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#3A8FB8]/40 bg-[#3A8FB8]/15 text-[10px] font-bold text-[#3A8FB8]">
+                        0{i + 1}
+                      </span>
+                      <p className="font-display text-3xl font-bold tracking-tight text-[#3A8FB8]">
+                        {item.year}
+                      </p>
+                    </div>
+                    <h3 className="font-display text-xl font-semibold uppercase tracking-tight text-white">
+                      {item.title}
+                    </h3>
+                    <p className="mt-2.5 text-sm leading-relaxed text-white/70">{item.description}</p>
+                    <div className="mt-4 h-px w-12 bg-gradient-to-r from-[#3A8FB8] to-transparent" />
+                  </div>
+                </motion.article>
+              ))}
+            </div>
+
+            {/* DESKTOP — alternating timeline (unchanged structure, polished) */}
+            <div className="relative hidden md:block">
               <div
-                className="absolute left-4 md:left-1/2 top-0 bottom-0 w-px md:-translate-x-1/2"
+                className="absolute bottom-0 left-1/2 top-0 w-px -translate-x-1/2"
                 style={{
                   background:
                     'linear-gradient(180deg, transparent, rgba(58,143,184,0.7), rgba(255,255,255,0.2), transparent)',
                 }}
               />
 
-              <div className="space-y-10 md:space-y-14">
+              <div className="space-y-14">
                 {journey.map((item, i) => {
                   const onRight = i % 2 === 0;
                   return (
@@ -133,31 +170,31 @@ export default function AboutPage() {
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true, margin: '-50px' }}
                       transition={{ duration: 0.5 }}
-                      className="relative pl-12 md:pl-0 md:grid md:grid-cols-2 md:gap-12"
+                      className="relative grid grid-cols-2 gap-12"
                     >
-                      <span className="absolute left-[11px] md:left-1/2 top-8 md:top-10 h-3.5 w-3.5 -translate-x-1/2 rounded-full bg-[#3A8FB8] shadow-[0_0_16px_rgba(58,143,184,0.85)] z-10" />
+                      <span className="absolute left-1/2 top-10 z-10 h-3.5 w-3.5 -translate-x-1/2 rounded-full bg-[#3A8FB8] shadow-[0_0_16px_rgba(58,143,184,0.85)]" />
 
                       {onRight ? (
                         <>
-                          <div className="hidden md:block" />
-                          <div className="glass-card rounded-2xl p-6 md:p-8 transition-transform duration-300 hover:-translate-y-2 md:ml-6">
-                            <p className="font-display text-4xl font-bold text-[#3A8FB8] mb-3">
+                          <div />
+                          <div className="glass-card ml-6 rounded-2xl p-8 transition-transform duration-300 hover:-translate-y-2">
+                            <p className="mb-3 font-display text-4xl font-bold text-[#3A8FB8]">
                               {item.year}
                             </p>
-                            <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
-                            <p className="text-sm text-white/70 leading-relaxed">{item.description}</p>
+                            <h3 className="mb-2 text-xl font-semibold text-white">{item.title}</h3>
+                            <p className="text-sm leading-relaxed text-white/70">{item.description}</p>
                           </div>
                         </>
                       ) : (
                         <>
-                          <div className="glass-card rounded-2xl p-6 md:p-8 transition-transform duration-300 hover:-translate-y-2 md:mr-6 md:text-right">
-                            <p className="font-display text-4xl font-bold text-[#3A8FB8] mb-3">
+                          <div className="glass-card mr-6 rounded-2xl p-8 text-right transition-transform duration-300 hover:-translate-y-2">
+                            <p className="mb-3 font-display text-4xl font-bold text-[#3A8FB8]">
                               {item.year}
                             </p>
-                            <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
-                            <p className="text-sm text-white/70 leading-relaxed">{item.description}</p>
+                            <h3 className="mb-2 text-xl font-semibold text-white">{item.title}</h3>
+                            <p className="text-sm leading-relaxed text-white/70">{item.description}</p>
                           </div>
-                          <div className="hidden md:block" />
+                          <div />
                         </>
                       )}
                     </motion.article>
