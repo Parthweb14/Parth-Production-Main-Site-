@@ -88,7 +88,10 @@ export default function HomePage() {
             >
               One stop solution
               <br />
-              <span className="text-accent">For unforgatable moments</span>
+              {/* Task 2: Space Grotesk (font-display) — same as headline, accent color */}
+              <span className="font-display font-semibold uppercase text-accent">
+                For unforgatable moments
+              </span>
             </motion.h1>
             <motion.p
               custom={2}
