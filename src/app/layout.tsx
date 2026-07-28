@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Space_Grotesk, Inter, Playfair_Display } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
+import HelmetContext from '@/components/HelmetContext';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -34,22 +35,19 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Parth Production | Event Sound, Light & Stage Production Gujarat',
+    default: 'Parth Production | Premium DJ, Sound & Lighting Events',
     template: '%s | Parth Production',
   },
   description:
-    'Parth Production delivers professional sound, lighting, SFX, truss, fireworks, and DJ production for weddings, festivals, concerts, and corporate events across Surat and Gujarat.',
+    'Parth Production offers full-stack live event production. Premium DJ, sound systems, lighting, SFX, and truss for weddings, concerts, and corporate events in India.',
   keywords: [
     'Parth Production',
-    'event production Surat',
-    'sound system rental Gujarat',
-    'stage lighting Surat',
-    'wedding DJ Surat',
-    'SFX fireworks Gujarat',
-    'concert production India',
-    'truss stage setup',
-    'corporate event production',
-    'Palanpur Surat events',
+    'DJ services India',
+    'wedding sound and light',
+    'concert production',
+    'corporate event DJ',
+    'SFX',
+    'truss rigging',
   ],
   authors: [{ name: 'Parth Production' }],
   creator: 'Parth Production',
@@ -57,31 +55,29 @@ export const metadata: Metadata = {
   applicationName: 'Parth Production',
   category: 'Event Production',
   alternates: {
-    canonical: '/',
+    canonical: 'https://parthproduction.in/',
   },
   openGraph: {
     type: 'website',
     locale: 'en_IN',
-    url: SITE_URL,
+    url: 'https://parthproduction.in/',
     siteName: 'Parth Production',
-    title: 'Parth Production | Unforgettable Event Production',
-    description:
-      'Sound, light, SFX, truss, fireworks, and DJ production for weddings, festivals, concerts, and corporate events across India.',
+    title: 'Parth Production | Premium DJ, Sound & Lighting Events',
+    description: 'Full-stack live event production. Premium DJ, sound systems, lighting, SFX, and truss.',
     images: [
       {
-        url: '/favicon-512x512.png?v=8',
-        width: 512,
-        height: 512,
-        alt: 'Parth Production logo',
+        url: 'https://parthproduction.in/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Parth Production',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Parth Production | Event Sound, Light & Stage',
-    description:
-      'Professional event production — sound, lighting, SFX, fireworks, and DJ for weddings and stages across Gujarat.',
-    images: ['/favicon-512x512.png?v=8'],
+    title: 'Parth Production | Premium DJ, Sound & Lighting Events',
+    description: 'Full-stack live event production. Premium DJ, sound systems, lighting, SFX, and truss.',
+    images: ['https://parthproduction.in/og-image.jpg'],
   },
   robots: {
     index: true,
@@ -106,7 +102,8 @@ export const metadata: Metadata = {
   },
   manifest: '/site.webmanifest',
   verification: {
-    // Add Search Console token via NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION when available
+    // Google Search Console Verification Placeholder
+    // <meta name="google-site-verification" content="YOUR_VERIFICATION_CODE_HERE" />
     ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
       ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
       : {}),
@@ -173,15 +170,17 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico?v=8" sizes="any" />
         <link rel="icon" href="/favicon-96x96.png?v=8" type="image/png" sizes="96x96" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=8" />
+        {/* Google Search Console Verification Placeholder */}
+        {/* <meta name="google-site-verification" content="YOUR_VERIFICATION_CODE_HERE" /> */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
       <body className="min-h-full bg-black text-white flex flex-col font-sans overflow-x-hidden">
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <HelmetContext>
+          <AuthProvider>{children}</AuthProvider>
+        </HelmetContext>
       </body>
     </html>
   );

@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import QuoteCta from '@/components/QuoteCta';
 import MediaImage from '@/components/MediaImage';
 import CinematicPageHero from '@/components/CinematicPageHero';
+import SEO from '@/components/SEO';
 import { OWNER_IMAGE, STAGE_IMAGES } from '@/utils/media';
 
 const journey = [
@@ -60,6 +61,11 @@ export default function AboutPage() {
 
   return (
     <>
+      <SEO
+        title="About Parth Production"
+        description="Meet Parth Production — Surat-based event producers crafting sound, light, and stage experiences for weddings, festivals, and corporate nights across Gujarat."
+        canonical="https://parthproduction.in/about"
+      />
       <SpotlightNavbar />
       <div className="film-grain" />
       <motion.div

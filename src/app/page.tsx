@@ -12,6 +12,7 @@ import HomeServicesGrid from '@/components/HomeServicesGrid';
 import QuoteCta from '@/components/QuoteCta';
 import { useAuth } from '@/context/AuthContext';
 import { HERO_VIDEO } from '@/utils/media';
+import SEO from '@/components/SEO';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -59,6 +60,7 @@ export default function HomePage() {
 
   return (
     <>
+      <SEO />
       {!loadingComplete && (
         <PageLoader onComplete={() => setLoadingComplete(true)} isReady={isReady} />
       )}
