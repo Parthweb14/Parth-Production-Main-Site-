@@ -29,8 +29,8 @@ export default function ResetPasswordPage() {
       setErrorMsg('Passwords do not match.');
       return;
     }
-    if (newPassword.length < 12) {
-      setErrorMsg('Password must be at least 12 characters long.');
+    if (!newPassword) {
+      setErrorMsg('Password cannot be empty.');
       return;
     }
 
@@ -117,10 +117,9 @@ export default function ResetPasswordPage() {
                 type={showPass ? 'text' : 'password'}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="New password (min 12 chars)"
+                placeholder="New password"
                 className="w-full h-12 pl-11 pr-11 rounded-xl border border-white/10 bg-black/40 text-sm text-white placeholder-zinc-600 focus:border-[#3A8FB8] focus:outline-none"
                 required
-                minLength={12}
               />
               <button
                 type="button"
@@ -140,7 +139,6 @@ export default function ResetPasswordPage() {
                 placeholder="Confirm password"
                 className="w-full h-12 pl-11 pr-4 rounded-xl border border-white/10 bg-black/40 text-sm text-white placeholder-zinc-600 focus:border-[#3A8FB8] focus:outline-none"
                 required
-                minLength={12}
               />
             </div>
             <button

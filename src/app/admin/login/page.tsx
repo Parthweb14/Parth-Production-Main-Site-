@@ -81,8 +81,8 @@ export default function AdminLoginPage() {
       setForgotError('Passwords do not match.');
       return;
     }
-    if (newPassword.length < 12) {
-      setForgotError('Password must be at least 12 characters.');
+    if (!newPassword) {
+      setForgotError('Password cannot be empty.');
       return;
     }
     setForgotLoading(true);
@@ -269,12 +269,11 @@ export default function AdminLoginPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">New Password (min 12)</label>
+                  <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">New Password</label>
                   <div className="relative">
                     <input 
                       type="password" 
                       required 
-                      minLength={12}
                       autoComplete="new-password"
                       placeholder="••••••••••••" 
                       value={newPassword} 
@@ -291,7 +290,6 @@ export default function AdminLoginPage() {
                     <input 
                       type="password" 
                       required 
-                      minLength={12}
                       autoComplete="new-password"
                       placeholder="••••••••••••" 
                       value={confirmPassword} 

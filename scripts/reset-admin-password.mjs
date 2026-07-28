@@ -29,8 +29,8 @@ function verifyPassword(password, stored) {
 }
 
 const password = process.argv[2];
-if (!password || password.length < 12) {
-  console.error('Usage: node scripts/reset-admin-password.mjs <password-min-12-chars>');
+if (!password || password.length < 1) {
+  console.error('Usage: node scripts/reset-admin-password.mjs <password>');
   process.exit(1);
 }
 

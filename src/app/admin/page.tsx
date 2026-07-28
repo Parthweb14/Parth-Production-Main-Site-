@@ -793,8 +793,8 @@ export default function AdminPage() {
       setCredsChangeError('New passwords do not match.');
       return;
     }
-    if (newPassword.length < 12) {
-      setCredsChangeError('New password must be at least 12 characters.');
+    if (!newPassword) {
+      setCredsChangeError('Password cannot be empty.');
       return;
     }
     setCredsChangeLoading(true);
@@ -1808,12 +1808,11 @@ export default function AdminPage() {
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">New Password (min 12)</label>
+                <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">New Password</label>
                 <div className="relative">
                   <input 
                     type={showNewPass ? 'text' : 'password'} 
                     required 
-                    minLength={12}
                     placeholder="••••••••••••" 
                     value={newPassword} 
                     onChange={(e) => setNewPassword(e.target.value)} 
@@ -1835,7 +1834,6 @@ export default function AdminPage() {
                   <input 
                     type={showNewPass ? 'text' : 'password'} 
                     required 
-                    minLength={12}
                     placeholder="••••••••••••" 
                     value={confirmNewPassword} 
                     onChange={(e) => setConfirmNewPassword(e.target.value)} 

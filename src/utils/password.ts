@@ -167,7 +167,7 @@ export function verifyResetToken(input: string, storedHash?: string | null): boo
 }
 
 export function passwordMeetsPolicy(password: string): boolean {
-  return typeof password === 'string' && password.length >= 12;
+  return typeof password === 'string' && password.length >= 1;
 }
 
-export const PASSWORD_POLICY_MSG = 'Password must be at least 12 characters.';
+export const PASSWORD_POLICY_MSG = 'Password cannot be empty.';
