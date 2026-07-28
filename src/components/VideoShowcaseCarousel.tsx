@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import { SHOW_VIDEOS, resolveVideoSrc } from '@/utils/media';
 import MediaLightbox, { type LightboxMedia } from '@/components/MediaLightbox';
 
@@ -10,68 +10,20 @@ type Clip = { title: string; src: string };
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-/** Continuous cinema-lane drift — slower/smoother than stage gallery */
-const SPEED = 0.26;
-const EASE_TO_TARGET = 5.2;
-const FADE_START = 2.4;
-const FADE_END = 3.2;
-
-function wrapOffset(offset: number, total: number) {
-  let o = ((offset % total) + total) % total;
-  if (o > total / 2) o -= total;
-  return o;
-}
-
-function shortestDiff(from: number, to: number, total: number) {
-  let diff = to - from;
-  if (diff > total / 2) diff -= total;
-  if (diff < -total / 2) diff += total;
-  return diff;
-}
-
-function edgeFade(abs: number) {
-  if (abs <= FADE_START) return 1;
-  if (abs >= FADE_END) return 0;
-  const t = (abs - FADE_START) / (FADE_END - FADE_START);
-  return 1 - t * t * (3 - 2 * t);
-}
-
 /**
- * Cinema spotlight lane — different from stage gallery's circular arc.
- * Perspective aisle (rotateY + depth), soft center lift, gentle float.
+ * Director's Monitor — featured reel + vertical clip rail.
+ * Completely different from the previous 3D cinema lane.
  */
-function laneTransform(offset: number, isMobile: boolean, progress: number) {
-  const abs = Math.abs(offset);
-  const spacing = isMobile ? 164 : 232;
-  const depth = isMobile ? 80 : 120;
-
-  const x = offset * spacing;
-  const float = Math.sin(offset * 1.05 + progress * 1.15) * (isMobile ? 3.5 : 6.5);
-  const y = abs * abs * (isMobile ? 2.5 : 4.5) + float;
-  const rotateY = offset * (isMobile ? -12 : -17);
-  const scale = 1 - Math.min(abs, 2.5) * (isMobile ? 0.055 : 0.07);
-  const z = -abs * depth;
-  const opacity = 0.22 + 0.78 * edgeFade(abs);
-  const zIndex = Math.round(40 - abs * 10);
-  const brightness = 1 - Math.min(abs, 2) * 0.2;
-
-  return { x, y, rotateY, scale, z, opacity, zIndex, brightness };
-}
-
 export default function VideoShowcaseCarousel() {
   const reduceMotion = useReducedMotion();
   const [clips, setClips] = useState<Clip[]>(SHOW_VIDEOS);
-  const [progress, setProgress] = useState(0);
-  const [isMobile, setIsMobile] = useState(false);
-  const [paused, setPaused] = useState(false);
+  const [active, setActive] = useState(0);
   const [lightbox, setLightbox] = useState<LightboxMedia | null>(null);
-  const progressRef = useRef(0);
-  const targetRef = useRef<number | null>(null);
-  const pausedRef = useRef(false);
-  const rafRef = useRef<number | null>(null);
-  const lastTs = useRef<number | null>(null);
-  const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
+  const [paused, setPaused] = useState(false);
+  const featureRef = useRef<HTMLVideoElement>(null);
   const total = clips.length;
+  const safeActive = total > 0 ? Math.min(active, total - 1) : 0;
+  const current = clips[safeActive] || clips[0];
 
   useEffect(() => {
     let cancelled = false;
@@ -90,7 +42,7 @@ export default function VideoShowcaseCarousel() {
           .filter((c: Clip) => Boolean(c.src));
         if (!cancelled && mapped.length) setClips(mapped);
       } catch {
-        /* keep static fallback */
+        /* keep fallback */
       }
     }
     void load();
@@ -99,152 +51,44 @@ export default function VideoShowcaseCarousel() {
     };
   }, []);
 
+  // Auto-advance featured clip
   useEffect(() => {
-    const update = () => setIsMobile(window.innerWidth < 768);
-    update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-  }, []);
-
-  useEffect(() => {
-    pausedRef.current = paused || Boolean(lightbox);
-  }, [paused, lightbox]);
+    if (paused || reduceMotion || total < 2 || lightbox) return;
+    const id = window.setInterval(() => {
+      setActive((a) => (a + 1) % total);
+    }, 5200);
+    return () => window.clearInterval(id);
+  }, [paused, reduceMotion, total, lightbox]);
 
   useEffect(() => {
-    if (reduceMotion || total < 2) return;
+    const el = featureRef.current;
+    if (!el) return;
+    el.currentTime = 0;
+    void el.play().catch(() => undefined);
+  }, [safeActive, current?.src]);
 
-    const tick = (ts: number) => {
-      if (lastTs.current == null) lastTs.current = ts;
-      const dt = Math.min(0.05, (ts - lastTs.current) / 1000);
-      lastTs.current = ts;
+  const openActive = useCallback(() => {
+    if (!current?.src) return;
+    setLightbox({ type: 'video', src: current.src, title: current.title });
+  }, [current]);
 
-      if (!document.hidden) {
-        if (targetRef.current != null) {
-          const current = progressRef.current;
-          const target = targetRef.current;
-          const diff = shortestDiff(current, target, total);
-          if (Math.abs(diff) < 0.008) {
-            progressRef.current = ((target % total) + total) % total;
-            targetRef.current = null;
-          } else {
-            const step = diff * Math.min(1, EASE_TO_TARGET * dt);
-            progressRef.current = (current + step + total) % total;
-          }
-        } else if (!pausedRef.current) {
-          progressRef.current = (progressRef.current + SPEED * dt) % total;
-        }
-        setProgress(progressRef.current);
-      }
-
-      rafRef.current = requestAnimationFrame(tick);
-    };
-
-    rafRef.current = requestAnimationFrame(tick);
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      lastTs.current = null;
-    };
-  }, [total, reduceMotion]);
-
-  useEffect(() => {
-    if (total === 0) return;
-    videoRefs.current.forEach((video, index) => {
-      const offset = Math.abs(wrapOffset(index - progress, total));
-      if (offset < 0.9) {
-        void video.play().catch(() => undefined);
-      } else {
-        video.pause();
-      }
-    });
-  }, [progress, total, clips]);
-
-  const activeIndex = ((Math.round(progress) % total) + total) % total;
-
-  const goTo = useCallback(
-    (index: number) => {
-      if (total < 2) return;
-      targetRef.current = ((index % total) + total) % total;
-    },
-    [total]
-  );
-
-  const nudge = useCallback(
-    (dir: -1 | 1) => {
-      if (total < 2) return;
-      const nearest = Math.round(progressRef.current);
-      goTo(nearest + dir);
-    },
-    [goTo, total]
-  );
-
-  const openClip = useCallback(
-    (clip: Clip, index: number) => {
-      const src = resolveVideoSrc(clip.src, clip.src);
-      if (!src) return;
-      goTo(index);
-      setLightbox({ type: 'video', src, title: clip.title });
-    },
-    [goTo]
-  );
-
-  const closeLightbox = useCallback(() => setLightbox(null), []);
-
-  // Pointer-based tap detection — reliable on iOS/Android (click often fails on 3D transforms)
-  const pointerStart = useRef<{ x: number; y: number; id: number } | null>(null);
-
-  const onStagePointerDown = (e: React.PointerEvent) => {
-    if (e.pointerType === 'touch') setPaused(true);
-    pointerStart.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
+  const go = (dir: number) => {
+    if (total < 2) return;
+    setActive((a) => (a + dir + total) % total);
   };
-
-  const onStagePointerUp = (e: React.PointerEvent) => {
-    const start = pointerStart.current;
-    pointerStart.current = null;
-    if (!start || start.id !== e.pointerId) return;
-    const dx = e.clientX - start.x;
-    const dy = e.clientY - start.y;
-    const dist = Math.hypot(dx, dy);
-
-    if (dist > 36) {
-      // Horizontal swipe → nudge carousel
-      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 36) {
-        nudge(dx < 0 ? 1 : -1);
-      }
-      window.setTimeout(() => setPaused(false), 1800);
-      return;
-    }
-
-    // Tap — open the nearest/center-ish clip under pointer via data attribute handled on card
-    window.setTimeout(() => setPaused(false), 1200);
-  };
-
-  const onCardPointerUp = (e: React.PointerEvent, clip: Clip, index: number) => {
-    e.stopPropagation();
-    const start = pointerStart.current;
-    pointerStart.current = null;
-    if (!start) {
-      openClip(clip, index);
-      return;
-    }
-    const dist = Math.hypot(e.clientX - start.x, e.clientY - start.y);
-    if (dist <= 36) {
-      openClip(clip, index);
-    } else if (Math.abs(e.clientX - start.x) > 36) {
-      nudge(e.clientX - start.x < 0 ? 1 : -1);
-    }
-    window.setTimeout(() => setPaused(false), 1200);
-  };
-
-  const cardW = isMobile ? 156 : 220;
 
   return (
-    <section className="relative isolate overflow-x-clip border-b border-white/10 bg-black py-14 sm:py-16 md:py-24">
+    <section
+      className="relative overflow-hidden border-b border-white/10 bg-black py-14 sm:py-16 md:py-24"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-[48%] mx-auto h-[40%] max-w-4xl rounded-full bg-[#3A8FB8]/10 blur-[110px]"
+        className="pointer-events-none absolute inset-x-0 top-1/2 mx-auto h-[50%] max-w-5xl -translate-y-1/2 rounded-full bg-[#3A8FB8]/08 blur-[120px]"
       />
 
-      <div className="relative z-20 mx-auto mb-8 max-w-7xl px-4 sm:mb-10 sm:px-6 md:mb-12 md:px-8">
+      <div className="relative mx-auto mb-8 max-w-7xl px-4 sm:mb-10 sm:px-6 md:mb-12 md:px-8">
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -263,141 +107,131 @@ export default function VideoShowcaseCarousel() {
         </motion.div>
       </div>
 
-      <div
-        className="relative z-10 mx-auto w-full max-w-7xl px-2 sm:px-4 md:px-8"
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
-        onPointerDown={onStagePointerDown}
-        onPointerUp={onStagePointerUp}
-        onPointerCancel={() => {
-          pointerStart.current = null;
-        }}
-      >
-        <div
-          className="relative mx-auto h-[380px] w-full overflow-hidden touch-pan-y sm:h-[430px] md:h-[510px]"
-          style={{ perspective: isMobile ? '950px' : '1500px' }}
+      <div className="relative mx-auto grid max-w-7xl grid-cols-1 gap-5 px-4 sm:px-6 md:gap-6 md:px-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(240px,0.75fr)]">
+        {/* Featured monitor */}
+        <motion.div
+          initial={{ opacity: 0, y: 22 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.55, ease }}
+          className="relative"
         >
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 left-0 z-30 w-8 bg-gradient-to-r from-black via-black/80 to-transparent sm:w-16 md:w-24"
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 right-0 z-30 w-8 bg-gradient-to-l from-black via-black/80 to-transparent sm:w-16 md:w-24"
-          />
-
-          <div
-            className="absolute inset-0 flex items-center justify-center"
-            style={{ transformStyle: 'preserve-3d' }}
+          <button
+            type="button"
+            onClick={openActive}
+            className="group relative block aspect-[16/10] w-full overflow-hidden rounded-[22px] border border-white/10 bg-black text-left shadow-[0_30px_80px_rgba(0,0,0,0.55)] sm:rounded-[28px] md:aspect-[16/9]"
+            aria-label={`Open ${current?.title || 'video'}`}
           >
-            {clips.map((clip, i) => {
-              const offset = wrapOffset(i - progress, total);
-              if (Math.abs(offset) > FADE_END) return null;
+            <AnimatePresence mode="wait">
+              <motion.video
+                key={current?.src || 'empty'}
+                ref={featureRef}
+                src={current?.src}
+                muted
+                loop
+                playsInline
+                autoPlay
+                preload="auto"
+                initial={{ opacity: 0.4, scale: 1.04 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.45 }}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            </AnimatePresence>
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-black/30" />
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+              <span className="flex h-16 w-16 items-center justify-center rounded-full border border-white/30 bg-black/55 text-white backdrop-blur-md">
+                <Play className="h-7 w-7 fill-white" />
+              </span>
+            </div>
+            <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4 sm:p-6">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#3A8FB8]">
+                  Now featuring
+                </p>
+                <p className="mt-1 font-display text-xl font-bold uppercase tracking-tight text-white sm:text-2xl md:text-3xl">
+                  {current?.title}
+                </p>
+              </div>
+              <p className="font-display text-sm font-semibold text-white/50">
+                {String(safeActive + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
+              </p>
+            </div>
+          </button>
 
-              const t = laneTransform(offset, isMobile, progress);
-              const isCenter = i === activeIndex;
+          <div className="mt-4 flex items-center justify-center gap-3 sm:justify-start">
+            <button
+              type="button"
+              onClick={() => go(-1)}
+              className="flex h-11 w-11 min-w-[44px] items-center justify-center rounded-full border border-white/20 transition-all hover:border-accent"
+              aria-label="Previous video"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => go(1)}
+              className="flex h-11 w-11 min-w-[44px] items-center justify-center rounded-full border border-white/20 transition-all hover:border-accent"
+              aria-label="Next video"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </div>
+        </motion.div>
 
-              return (
-                <article
-                  key={`${clip.src}-${i}`}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`Open ${clip.title} video`}
-                  className="absolute left-1/2 top-1/2 aspect-[9/16] cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-black shadow-[0_28px_60px_rgba(0,0,0,0.55)] will-change-transform touch-manipulation sm:rounded-3xl"
-                  style={{
-                    width: cardW,
-                    marginLeft: -cardW / 2,
-                    marginTop: isMobile ? -140 : -196,
-                    transformStyle: 'preserve-3d',
-                    zIndex: t.zIndex,
-                    opacity: t.opacity,
-                    transform: `translate3d(${t.x}px, ${t.y}px, ${t.z}px) rotateY(${t.rotateY}deg) scale(${t.scale})`,
-                  }}
-                  onPointerDown={(e) => {
-                    e.stopPropagation();
-                    pointerStart.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
-                    if (e.pointerType === 'touch') setPaused(true);
-                  }}
-                  onPointerUp={(e) => onCardPointerUp(e, clip, i)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      openClip(clip, i);
-                    }
-                  }}
-                  aria-current={isCenter ? 'true' : undefined}
-                >
+        {/* Clip rail */}
+        <motion.div
+          initial={{ opacity: 0, y: 22 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.55, delay: 0.08, ease }}
+          className="flex gap-3 overflow-x-auto pb-1 lg:max-h-[min(62vh,560px)] lg:flex-col lg:overflow-y-auto lg:overflow-x-hidden lg:pr-1"
+        >
+          {clips.map((clip, i) => {
+            const isActive = i === safeActive;
+            return (
+              <button
+                key={`${clip.src}-${i}`}
+                type="button"
+                onClick={() => setActive(i)}
+                onDoubleClick={() =>
+                  setLightbox({ type: 'video', src: clip.src, title: clip.title })
+                }
+                className={`relative flex min-w-[72%] flex-shrink-0 items-stretch overflow-hidden rounded-2xl border text-left transition-all sm:min-w-[46%] lg:min-w-0 lg:w-full ${
+                  isActive
+                    ? 'border-[#3A8FB8]/55 bg-[#3A8FB8]/10'
+                    : 'border-white/10 bg-white/[0.03] hover:border-white/25'
+                }`}
+              >
+                <div className="relative aspect-[9/14] w-[88px] flex-shrink-0 sm:w-[100px]">
                   <video
-                    ref={(el) => {
-                      if (el) videoRefs.current.set(i, el);
-                      else videoRefs.current.delete(i);
-                    }}
                     src={clip.src}
                     muted
-                    loop
                     playsInline
                     preload="metadata"
-                    className="pointer-events-none absolute inset-0 h-full w-full object-cover"
-                    style={{ filter: `brightness(${t.brightness})` }}
+                    className="absolute inset-0 h-full w-full object-cover"
                   />
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/20" />
-
-                  <div
-                    aria-hidden
-                    className={`pointer-events-none absolute inset-0 rounded-2xl transition-opacity duration-300 sm:rounded-3xl ${
-                      isCenter ? 'opacity-100 ring-1 ring-[#3A8FB8]/45' : 'opacity-0'
-                    }`}
-                  />
-
-                  <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3 sm:p-4">
-                    <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#3A8FB8] sm:text-[10px]">
-                      {isCenter ? 'Tap to open' : 'Clip'}
-                    </p>
-                    <p className="mt-0.5 font-display text-sm font-bold uppercase tracking-tight text-white sm:text-base md:text-lg">
-                      {clip.title}
-                    </p>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </div>
+                  <div className="absolute inset-0 bg-black/25" />
+                </div>
+                <div className="flex flex-1 flex-col justify-center p-3 sm:p-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#3A8FB8]">
+                    {String(i + 1).padStart(2, '0')}
+                  </p>
+                  <p className="mt-1 font-display text-sm font-bold uppercase tracking-tight text-white sm:text-base">
+                    {clip.title}
+                  </p>
+                  <p className="mt-1 text-[11px] text-white/45">
+                    {isActive ? 'Playing · tap main to open' : 'Select clip'}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </motion.div>
       </div>
 
-      <div className="relative z-20 mt-7 flex items-center justify-center gap-3 sm:mt-9">
-        <button
-          type="button"
-          onClick={() => nudge(-1)}
-          className="flex h-11 w-11 min-w-[44px] items-center justify-center rounded-full border border-white/20 transition-all hover:border-accent"
-          aria-label="Previous videos"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
-        <button
-          type="button"
-          onClick={() => nudge(1)}
-          className="flex h-11 w-11 min-w-[44px] items-center justify-center rounded-full border border-white/20 transition-all hover:border-accent"
-          aria-label="Next videos"
-        >
-          <ChevronRight className="h-5 w-5" />
-        </button>
-      </div>
-
-      <div className="relative z-20 mt-4 flex flex-wrap justify-center gap-2 px-4 sm:mt-5">
-        {clips.map((clip, i) => (
-          <button
-            key={`dot-${clip.src}-${i}`}
-            type="button"
-            aria-label={`Show ${clip.title}`}
-            onClick={() => goTo(i)}
-            className={`h-2 rounded-full transition-all ${
-              i === activeIndex ? 'w-7 bg-accent' : 'w-2 bg-white/25'
-            }`}
-          />
-        ))}
-      </div>
-
-      <MediaLightbox media={lightbox} onClose={closeLightbox} />
+      <MediaLightbox media={lightbox} onClose={() => setLightbox(null)} />
     </section>
   );
 }
