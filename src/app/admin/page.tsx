@@ -94,7 +94,7 @@ const DEFAULT_SERVICES: DBServiceImage[] = [
 
 export default function AdminPage() {
   const router = useRouter();
-  const { user, token, loading: authLoading, logout } = useAuth();
+  const { user, token, loading: authLoading, logout, login } = useAuth();
 
   // Navigation tabs state
   const [activeTab, setActiveTab] = useState<'gallery' | 'videos' | 'services' | 'vibrants' | 'settings'>('gallery');
@@ -437,12 +437,14 @@ export default function AdminPage() {
     
     if (selectedGalleryCat === 'All Events') {
       alert('Please select a specific category (e.g. Weddings) to upload images.');
+      e.target.value = '';
       return;
     }
 
     const catImages = images.filter(img => img.category === selectedGalleryCat);
     if (catImages.length >= 5) {
       alert(`Limit reached! Max 5 images in "${selectedGalleryCat}" category.`);
+      e.target.value = '';
       return;
     }
 
@@ -451,12 +453,13 @@ export default function AdminPage() {
       id: Math.random().toString(36).substring(7),
       category: selectedGalleryCat,
       image_url: localUrl,
-      order_index: catImages.length,
+      order_index: images.length,
       isLocal: true,
       localFile: file
     };
 
     setImages([...images, newImage]);
+    e.target.value = '';
   };
 
   const deleteImageItem = (imgToDelete: DBImage) => {
@@ -464,11 +467,10 @@ export default function AdminPage() {
       if (!imgToDelete.isLocal) {
         setDeletedUrls(prev => [...prev, imgToDelete.image_url]);
       }
-      const remaining = images.filter(img => img.id !== imgToDelete.id);
-      const nonCat = remaining.filter(img => img.category !== imgToDelete.category);
-      const cat = remaining.filter(img => img.category === imgToDelete.category)
-                           .map((img, idx) => ({ ...img, order_index: idx }));
-      setImages([...nonCat, ...cat]);
+      const remaining = images
+        .filter(img => img.id !== imgToDelete.id)
+        .map((img, idx) => ({ ...img, order_index: idx }));
+      setImages(remaining);
     }
   };
 
@@ -480,6 +482,7 @@ export default function AdminPage() {
 
     if (videos.length >= 6) {
       alert('Upload limit reached! You can only have a maximum of 6 stage videos.');
+      e.target.value = '';
       return;
     }
 
@@ -494,6 +497,7 @@ export default function AdminPage() {
     };
 
     setVideos([...videos, newVideo]);
+    e.target.value = '';
   };
 
   const deleteVideoItem = (vidToDelete: DBVideo) => {
@@ -514,17 +518,13 @@ export default function AdminPage() {
       return;
     }
 
-    setImages(prev => prev.map(img => {
-      if (img.id === imageToEdit.id) {
-        const targetCatImages = prev.filter(i => i.category === newCategory);
-        return {
-          ...img,
-          category: newCategory,
-          order_index: targetCatImages.length
-        };
-      }
-      return img;
-    }));
+    setImages(prev =>
+      prev.map(img =>
+        img.id === imageToEdit.id
+          ? { ...img, category: newCategory }
+          : img
+      )
+    );
     setEditingImageId(null);
   };
 
@@ -546,6 +546,7 @@ export default function AdminPage() {
       }
       return s;
     }));
+    e.target.value = '';
   };
 
   // Vibrants Slide Replacer
@@ -566,6 +567,7 @@ export default function AdminPage() {
       }
       return v;
     }));
+    e.target.value = '';
   };
 
   const handleVibrantTitleChange = (id: string, newTitle: string) => {
@@ -815,6 +817,9 @@ export default function AdminPage() {
         throw new Error(data.error || 'Failed to update credentials.');
       }
       alert('Success! Credentials updated successfully.');
+      if (data.user) {
+        login(null, data.user);
+      }
       setShowCredsModal(false);
       setCredsOtp('');
       setNewUsername('');
@@ -1224,7 +1229,7 @@ export default function AdminPage() {
                 type="file"
                 ref={fileInputRef}
                 onChange={handleImageFileChange}
-                accept="image/*"
+                accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,.png,.jpg,.jpeg,.webp,.gif"
                 className="hidden"
               />
             </div>
@@ -1390,7 +1395,7 @@ export default function AdminPage() {
               type="file"
               ref={serviceInputRef}
               onChange={handleServiceImageChange}
-              accept="image/*"
+              accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,.png,.jpg,.jpeg,.webp,.gif"
               className="hidden"
             />
           </div>
@@ -1508,7 +1513,7 @@ export default function AdminPage() {
               type="file"
               ref={vibrantInputRef}
               onChange={handleVibrantImageChange}
-              accept="image/*"
+              accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,.png,.jpg,.jpeg,.webp,.gif"
               className="hidden"
             />
           </div>
@@ -1754,7 +1759,7 @@ export default function AdminPage() {
 
             <div className="space-y-2 pr-8">
               <h3 className="text-lg font-bold text-white uppercase tracking-wider">Change Credentials</h3>
-              <p className="text-xs text-zinc-450 leading-relaxed">Send a 6-digit OTP code to your configured SMTP email address to verify your identity and update your login details.</p>
+              <p className="text-xs text-zinc-450 leading-relaxed">Send an 8-character OTP code to your configured SMTP email address to verify your identity and update your login details.</p>
             </div>
 
             {credsOtpSuccessMsg && (
@@ -1774,7 +1779,7 @@ export default function AdminPage() {
             <form onSubmit={handleChangeCredentials} className="space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase">6-Digit OTP Code</label>
+                  <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase">8-Character OTP Code</label>
                   <button
                     type="button"
                     onClick={handleSendCredsOtp}

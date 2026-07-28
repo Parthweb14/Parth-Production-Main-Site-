@@ -7,6 +7,9 @@ import {
   requireAdmin,
   safeErrorMessage,
   verifyOtp,
+  createSessionToken,
+  ADMIN_COOKIE,
+  sessionCookieOptions,
 } from '@/utils/auth';
 import { enforceRateLimit, rateLimitResponse } from '@/utils/rateLimit';
 
@@ -80,10 +83,20 @@ export async function POST(request: Request) {
 
     await vercelDb.setCredentials(credentials);
 
-    return NextResponse.json({
+    const token = await createSessionToken(
+      credentials.username,
+      credentials.credentialsVersion ?? 0
+    );
+    const response = NextResponse.json({
       success: true,
       resetCount: credentials.resetCount,
+      user: {
+        id: 'admin',
+        username: credentials.username,
+      },
     });
+    response.cookies.set(ADMIN_COOKIE, token, sessionCookieOptions());
+    return response;
   } catch (err: unknown) {
     console.error('Change credentials error:', err);
     return NextResponse.json({ error: safeErrorMessage(err) }, { status: 500 });

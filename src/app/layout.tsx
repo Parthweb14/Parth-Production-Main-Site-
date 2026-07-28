@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Space_Grotesk, Inter, Playfair_Display } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
+import DisableZoom from '@/components/DisableZoom';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -28,6 +29,9 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://parthproduction.in
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  minimumScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   themeColor: '#050505',
 };
 
@@ -179,6 +183,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full bg-black text-white flex flex-col font-sans overflow-x-hidden">
+        <DisableZoom />
         <AuthProvider>
           {children}
         </AuthProvider>

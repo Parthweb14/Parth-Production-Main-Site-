@@ -11,7 +11,8 @@ type Props = {
 
 /** Plain img with one fallback hop — avoids next/image wipe on bad remote URLs. */
 export default function MediaImage({ src, alt, className, fallback }: Props) {
-  const [current, setCurrent] = useState(src);
+  const [failedFor, setFailedFor] = useState<string | null>(null);
+  const current = failedFor === src && fallback ? fallback : src;
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
@@ -22,7 +23,7 @@ export default function MediaImage({ src, alt, className, fallback }: Props) {
       loading="lazy"
       decoding="async"
       onError={() => {
-        if (fallback && current !== fallback) setCurrent(fallback);
+        if (fallback && failedFor !== src) setFailedFor(src);
       }}
     />
   );

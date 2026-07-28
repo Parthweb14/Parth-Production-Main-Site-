@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
 import MediaImage from '@/components/MediaImage';
@@ -9,48 +9,133 @@ import { CRAFT, STAGE_IMAGES } from '@/utils/media';
 
 const ease = [0.22, 1, 0.36, 1] as const;
 const FEATURED_WIDE = STAGE_IMAGES[1]?.src || CRAFT[0].image;
+const AUTO_MS = 3400;
+const SCROLL_SETTLE_MS = 520;
 
 /**
  * Editorial craft strip — featured wide image + three tall panels.
+ * Mobile: discrete card autoplay (no RAF vs snap jitter).
  */
 export default function HomeServicesGrid() {
   const { siteSettings } = useAuth();
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
   const reduceMotion = useReducedMotion();
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const pauseAutoRef = useRef(false);
+  const cardRefs = useRef<(HTMLElement | null)[]>([]);
+  const activeRef = useRef(0);
+  const [active, setActive] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+  const [inView, setInView] = useState(false);
+  const pausedRef = useRef(false);
+  const programmaticRef = useRef(false);
+  const resumeTimer = useRef<number | null>(null);
+  const settleTimer = useRef<number | null>(null);
 
-  // Mobile-only auto-scroll through craft cards
+  const setActiveIndex = useCallback((index: number) => {
+    activeRef.current = index;
+    setActive(index);
+  }, []);
+
   useEffect(() => {
-    if (reduceMotion) return;
+    const update = () => setIsMobile(window.innerWidth < 768);
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
+  useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => setInView(Boolean(entry?.isIntersecting)),
+      { threshold: 0.2, rootMargin: '0px 0px -10% 0px' }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
-    let frame = 0;
-    let last = 0;
-    const SPEED = 38; // px per second
+  const scrollToIndex = useCallback(
+    (index: number, smooth = true) => {
+      const scroller = scrollerRef.current;
+      if (!scroller) return;
+      const n = CRAFT.length;
+      const next = ((index % n) + n) % n;
+      const target = cardRefs.current[next];
+      if (!target) return;
 
-    const tick = (ts: number) => {
-      if (!last) last = ts;
-      const dt = Math.min(0.05, (ts - last) / 1000);
-      last = ts;
+      programmaticRef.current = true;
+      scroller.style.scrollSnapType = 'none';
 
-      const isMobile = window.innerWidth < 768;
-      if (isMobile && !pauseAutoRef.current && !document.hidden) {
-        const max = el.scrollWidth - el.clientWidth;
-        if (max > 8) {
-          let next = el.scrollLeft + SPEED * dt;
-          if (next >= max - 1) next = 0;
-          el.scrollLeft = next;
-        }
-      }
+      const left = target.offsetLeft - (scroller.clientWidth - target.offsetWidth) / 2;
+      scroller.scrollTo({
+        left: Math.max(0, left),
+        behavior: smooth && !reduceMotion ? 'smooth' : 'auto',
+      });
+      setActiveIndex(next);
 
-      frame = requestAnimationFrame(tick);
+      if (settleTimer.current != null) window.clearTimeout(settleTimer.current);
+      settleTimer.current = window.setTimeout(() => {
+        scroller.style.scrollSnapType = '';
+        programmaticRef.current = false;
+        settleTimer.current = null;
+      }, smooth && !reduceMotion ? SCROLL_SETTLE_MS : 40);
+    },
+    [reduceMotion, setActiveIndex]
+  );
+
+  const pauseAuto = useCallback(() => {
+    pausedRef.current = true;
+    if (resumeTimer.current != null) window.clearTimeout(resumeTimer.current);
+    resumeTimer.current = window.setTimeout(() => {
+      pausedRef.current = false;
+      resumeTimer.current = null;
+    }, 4500);
+  }, []);
+
+  useEffect(() => {
+    if (reduceMotion || !isMobile || !inView) return;
+    const id = window.setInterval(() => {
+      if (pausedRef.current || programmaticRef.current || document.hidden) return;
+      scrollToIndex((activeRef.current + 1) % CRAFT.length, true);
+    }, AUTO_MS);
+    return () => window.clearInterval(id);
+  }, [inView, isMobile, reduceMotion, scrollToIndex]);
+
+  useEffect(() => {
+    return () => {
+      if (resumeTimer.current != null) window.clearTimeout(resumeTimer.current);
+      if (settleTimer.current != null) window.clearTimeout(settleTimer.current);
     };
+  }, []);
 
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [reduceMotion]);
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller || !isMobile) return;
+    let ticking = false;
+    const onScroll = () => {
+      if (programmaticRef.current || ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(() => {
+        ticking = false;
+        if (programmaticRef.current) return;
+        const center = scroller.scrollLeft + scroller.clientWidth / 2;
+        let best = 0;
+        let bestDist = Infinity;
+        cardRefs.current.forEach((card, i) => {
+          if (!card) return;
+          const mid = card.offsetLeft + card.offsetWidth / 2;
+          const dist = Math.abs(mid - center);
+          if (dist < bestDist) {
+            bestDist = dist;
+            best = i;
+          }
+        });
+        if (best !== activeRef.current) setActiveIndex(best);
+      });
+    };
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+    return () => scroller.removeEventListener('scroll', onScroll);
+  }, [isMobile, setActiveIndex]);
 
   return (
     <section className="relative w-full overflow-hidden bg-black py-14 sm:py-16 md:py-24">
@@ -64,7 +149,6 @@ export default function HomeServicesGrid() {
       />
 
       <div className="relative mx-auto w-[92%] max-w-[1260px] px-0 sm:w-[90%] md:w-[90%]">
-        {/* Intro — two-line heading on mobile */}
         <div className="mx-auto mb-8 max-w-3xl text-center md:mb-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -111,7 +195,6 @@ export default function HomeServicesGrid() {
           </motion.div>
         </div>
 
-        {/* Horizontal featured image above the 3 craft panels */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -127,14 +210,6 @@ export default function HomeServicesGrid() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
             <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
-            {!reduceMotion && (
-              <motion.div
-                aria-hidden
-                className="pointer-events-none absolute -inset-y-8 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-                animate={{ x: ['-130%', '250%'] }}
-                transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', repeatDelay: 2.5 }}
-              />
-            )}
             <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4 sm:p-6">
               <p className="font-display text-xs font-semibold uppercase tracking-[0.18em] text-white sm:text-sm">
                 Live production
@@ -146,52 +221,30 @@ export default function HomeServicesGrid() {
           </div>
         </motion.div>
 
-        {/* Three craft panels — auto-scroll on mobile, equal columns on desktop */}
         <div
           ref={scrollerRef}
-          onPointerDown={() => {
-            pauseAutoRef.current = true;
-          }}
-          onPointerUp={() => {
-            window.setTimeout(() => {
-              pauseAutoRef.current = false;
-            }, 2200);
-          }}
-          onPointerCancel={() => {
-            pauseAutoRef.current = false;
-          }}
-          className="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-2 scrollbar-none md:mx-0 md:grid md:grid-cols-3 md:gap-5 md:overflow-visible md:px-0 md:pb-0 lg:gap-6"
+          onPointerDown={pauseAuto}
+          onTouchStart={pauseAuto}
+          className="flex gap-4 overflow-x-auto overscroll-x-contain snap-x snap-mandatory pb-3 scrollbar-none [-webkit-overflow-scrolling:touch] md:grid md:grid-cols-3 md:gap-5 md:overflow-visible md:pb-0 md:[scroll-snap-type:none] lg:gap-6"
+          style={{ scrollPaddingInline: isMobile ? '11vw' : undefined }}
         >
           {CRAFT.map((service, i) => (
-            <motion.article
+            <article
               key={service.title}
-              initial={{ opacity: 0, y: 28 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ delay: i * 0.1, duration: 0.55, ease }}
-              className="group relative h-[420px] w-[82vw] max-w-[340px] flex-shrink-0 snap-center overflow-hidden rounded-[24px] border border-white/10 bg-black sm:h-[460px] sm:w-[70vw] md:h-[520px] md:w-auto md:max-w-none lg:h-[560px]"
+              ref={(node) => {
+                cardRefs.current[i] = node;
+              }}
+              className={`group relative h-[400px] w-[78vw] max-w-[320px] flex-shrink-0 snap-center overflow-hidden rounded-[24px] border bg-black transition-[border-color] duration-300 sm:h-[440px] sm:w-[70vw] md:h-[520px] md:w-auto md:max-w-none lg:h-[560px] ${
+                isMobile && active === i ? 'border-[#3A8FB8]/50' : 'border-white/10'
+              }`}
             >
               <MediaImage
                 src={service.image}
                 alt={service.title}
-                className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
+                className="absolute inset-0 h-full w-full object-cover md:transition-transform md:duration-700 md:ease-out md:group-hover:scale-[1.05]"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/10" />
               <div className="absolute inset-0 bg-gradient-to-br from-[#3A8FB8]/10 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-
-              {!reduceMotion && (
-                <motion.div
-                  aria-hidden
-                  className="pointer-events-none absolute -inset-y-8 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100"
-                  animate={{ x: ['-120%', '240%'] }}
-                  transition={{
-                    duration: 5.5,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                    repeatDelay: 3,
-                  }}
-                />
-              )}
 
               <div className="absolute inset-x-0 top-0 flex items-center justify-between p-5 md:p-6">
                 <p className="font-display text-sm font-semibold tabular-nums tracking-[0.2em] text-white/35">
@@ -208,7 +261,24 @@ export default function HomeServicesGrid() {
                   {service.copy}
                 </p>
               </div>
-            </motion.article>
+            </article>
+          ))}
+        </div>
+
+        <div className="mt-4 flex items-center justify-center gap-2 md:hidden">
+          {CRAFT.map((item, i) => (
+            <button
+              key={item.title}
+              type="button"
+              aria-label={`Show ${item.title}`}
+              onClick={() => {
+                pauseAuto();
+                scrollToIndex(i, true);
+              }}
+              className={`h-2 rounded-full transition-all ${
+                active === i ? 'w-7 bg-[#3A8FB8]' : 'w-2 bg-white/25'
+              }`}
+            />
           ))}
         </div>
       </div>
