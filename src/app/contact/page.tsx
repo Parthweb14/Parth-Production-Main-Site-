@@ -18,6 +18,8 @@ export default function ContactPage() {
   const { scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 28 });
 
+  const CONTACT_EMAIL = 'parthproductionweb@gmail.com';
+
   const channels = [
     {
       label: 'Phone',
@@ -29,9 +31,9 @@ export default function ContactPage() {
     },
     {
       label: 'Email',
-      href: `mailto:${siteSettings.email}`,
+      href: `mailto:${CONTACT_EMAIL}`,
       icon: Mail,
-      primary: siteSettings.email,
+      primary: CONTACT_EMAIL,
       secondary: 'Send date, venue, and vibe',
       external: false,
     },
@@ -188,12 +190,6 @@ export default function ContactPage() {
                   title="Parth Production location"
                   className="absolute inset-0 w-full h-full grayscale invert opacity-55 contrast-125 hover:opacity-80 transition-opacity duration-500"
                 />
-                <div className="absolute top-4 left-4 right-4 flex items-center justify-between gap-3 pointer-events-none">
-                  <span className="inline-flex items-center gap-2 rounded-full border border-[#3A8FB8]/35 bg-black/70 backdrop-blur px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-[#3A8FB8] font-semibold">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#3A8FB8] animate-pulse" />
-                    Parth Production Studio
-                  </span>
-                </div>
               </div>
             </motion.div>
           </div>
