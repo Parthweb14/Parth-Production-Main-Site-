@@ -170,7 +170,6 @@ export default function RootLayout({
       className={`${spaceGrotesk.variable} ${inter.variable} ${playfair.variable} dark h-full antialiased`}
     >
       <head>
-        <link rel="preload" href="/Parth Logo .json" as="fetch" crossOrigin="anonymous" />
         <link rel="preload" href="/Parth logo .png" as="image" />
         <link rel="icon" href="/favicon.ico?v=8" sizes="any" />
         <link rel="icon" href="/favicon-96x96.png?v=8" type="image/png" sizes="96x96" />
