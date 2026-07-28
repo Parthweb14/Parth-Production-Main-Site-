@@ -115,6 +115,7 @@ async function setValue(key: string, value: unknown): Promise<void> {
     });
   } catch (err) {
     console.error(`Turso setValue error for key: ${key}`, err);
+    throw err;
   }
 }
 

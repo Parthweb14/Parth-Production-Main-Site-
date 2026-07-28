@@ -30,6 +30,18 @@ export default function GalleryPage() {
   const [featured, setFeatured] = useState(0);
 
   useEffect(() => {
+    if (active === null) {
+      document.body.style.overflow = '';
+      return;
+    }
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [active]);
+
+  useEffect(() => {
     async function load() {
       try {
         const res = await fetch('/api/public/data');

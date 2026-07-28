@@ -49,7 +49,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const res = await fetch('/api/public/data');
         if (res.ok) {
           const data = await res.json();
-          if (data.settings) setSiteSettings(data.settings);
+          if (data.settings && typeof data.settings === 'object') {
+            setSiteSettings((prev) => {
+              const next = { ...prev, ...data.settings };
+              if (!next.phone_1) next.phone_1 = prev.phone_1;
+              if (!next.email) next.email = prev.email;
+              if (!next.address) next.address = prev.address;
+              return next;
+            });
+          }
         }
       } catch (err) {
         console.error('Failed to load site settings:', err);
