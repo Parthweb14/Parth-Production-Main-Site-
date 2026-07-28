@@ -42,8 +42,8 @@ function edgeFade(abs: number) {
  */
 function laneTransform(offset: number, isMobile: boolean, progress: number) {
   const abs = Math.abs(offset);
-  const spacing = isMobile ? 210 : 290;
-  const depth = isMobile ? 95 : 140;
+  const spacing = isMobile ? 236 : 290;
+  const depth = isMobile ? 100 : 140;
 
   const x = offset * spacing;
   const float = Math.sin(offset * 1.05 + progress * 1.15) * (isMobile ? 4 : 7);
@@ -235,7 +235,7 @@ export default function VideoShowcaseCarousel() {
     window.setTimeout(() => setPaused(false), 1200);
   };
 
-  const cardW = isMobile ? 210 : 280;
+  const cardW = isMobile ? 236 : 280;
 
   return (
     <section className="relative isolate overflow-x-clip border-b border-white/10 bg-black py-14 sm:py-16 md:py-24">
@@ -265,8 +265,11 @@ export default function VideoShowcaseCarousel() {
               {clips[activeIndex]?.title || 'Reel'}
             </p>
           </div>
-          <h2 className="font-display text-3xl font-bold uppercase tracking-tight sm:text-4xl md:text-5xl">
-            Beyond Events. We Create Experiences
+          <h2 className="font-display text-[clamp(1.85rem,4.8vw,3rem)] font-bold uppercase leading-[1.08] tracking-tight text-white md:text-5xl">
+            <span className="block">Beyond Events.</span>
+            <span className="mt-1.5 block whitespace-nowrap font-serif text-[clamp(1.2rem,3.9vw,2.5rem)] font-medium normal-case italic leading-[1.2] tracking-normal text-[#3A8FB8] md:mt-2 md:text-[2.65rem]">
+              We Create Experiences
+            </span>
           </h2>
           <p className="mt-3 max-w-2xl text-base leading-relaxed text-white/70 md:text-lg">
             Experience our finest DJ, lighting, stage, and event productions.
@@ -295,7 +298,7 @@ export default function VideoShowcaseCarousel() {
         </div>
 
         <div
-          className="relative mx-auto h-[460px] w-full overflow-hidden touch-pan-y sm:h-[520px] md:h-[620px]"
+          className="relative mx-auto h-[520px] w-full overflow-hidden touch-pan-y sm:h-[540px] md:h-[620px]"
           style={{ perspective: isMobile ? '1100px' : '1600px' }}
         >
           <div
@@ -328,7 +331,7 @@ export default function VideoShowcaseCarousel() {
                   style={{
                     width: cardW,
                     marginLeft: -cardW / 2,
-                    marginTop: isMobile ? -188 : -250,
+                    marginTop: isMobile ? -210 : -250,
                     transformStyle: 'preserve-3d',
                     zIndex: t.zIndex,
                     opacity: t.opacity,
@@ -368,12 +371,6 @@ export default function VideoShowcaseCarousel() {
                       aria-hidden
                       className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-[#3A8FB8]/55 sm:rounded-3xl"
                     />
-                  )}
-
-                  {isCenter && (
-                    <div className="pointer-events-none absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/35 bg-black/45 backdrop-blur-md sm:h-16 sm:w-16">
-                      <span className="ml-0.5 h-0 w-0 border-y-[7px] border-l-[12px] border-y-transparent border-l-white sm:border-y-[8px] sm:border-l-[14px]" />
-                    </div>
                   )}
 
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3.5 sm:p-5">

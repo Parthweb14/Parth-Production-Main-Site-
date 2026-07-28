@@ -66,7 +66,7 @@ export default function PageLoader({ onComplete, isReady }: PageLoaderProps) {
                       Loading the experience
                     </motion.p>
 
-                    <h1 className="flex flex-nowrap items-center justify-center whitespace-nowrap font-display text-[clamp(1.05rem,4.6vw,1.35rem)] font-bold uppercase leading-none tracking-[0.06em] text-white sm:text-4xl sm:tracking-[0.08em] md:text-5xl">
+                    <h1 className="flex flex-nowrap items-center justify-center whitespace-nowrap font-display text-[clamp(1.35rem,5.2vw,1.75rem)] font-bold uppercase leading-none tracking-[0.06em] text-white sm:text-4xl sm:tracking-[0.08em] md:text-5xl">
                       {LETTERS.map((char, i) =>
                         char === ' ' ? (
                           <span key={`space-${i}`} className="inline-block w-[0.28em] sm:w-[0.35em]" aria-hidden />
