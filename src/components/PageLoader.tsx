@@ -53,10 +53,10 @@ export default function PageLoader({ onComplete, isReady }: PageLoaderProps) {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0, y: -12, filter: 'blur(6px)' }}
                   transition={{ duration: 0.4 }}
-                  className="relative flex flex-col items-center"
+                  className="relative flex flex-col items-center px-5 pb-8"
                 >
                   {/* Brand title */}
-                  <div className="mb-10 sm:mb-12 select-none" aria-label="Parth Production">
+                  <div className="mb-8 sm:mb-10 select-none px-4" aria-label="Parth Production">
                     <motion.p
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -97,14 +97,10 @@ export default function PageLoader({ onComplete, isReady }: PageLoaderProps) {
                     />
                   </div>
 
-                  {/* Uiverse animated bars — Cksunandh */}
-                  <div className="page-loader-bars" aria-hidden>
-                    {Array.from({ length: 8 }).map((_, i) => (
-                      <span
-                        key={i}
-                        className="page-loader-bar"
-                        style={{ left: `${i * 25}px`, animationDelay: `${i * 50}ms` }}
-                      />
+                  {/* Uiverse span loader — vikramsinghnegi */}
+                  <div className="loader-spanne-20" aria-hidden>
+                    {Array.from({ length: 7 }).map((_, i) => (
+                      <span key={i} />
                     ))}
                   </div>
                 </motion.div>
