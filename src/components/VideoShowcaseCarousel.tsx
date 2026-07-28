@@ -71,7 +71,27 @@ export default function VideoShowcaseCarousel() {
   const rafRef = useRef<number | null>(null);
   const lastTs = useRef<number | null>(null);
   const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
+  const pointerStart = useRef<{ x: number; y: number; id: number } | null>(null);
+  const resumeTimer = useRef<number | null>(null);
   const total = clips.length;
+
+  const clearResumeTimer = useCallback(() => {
+    if (resumeTimer.current != null) {
+      window.clearTimeout(resumeTimer.current);
+      resumeTimer.current = null;
+    }
+  }, []);
+
+  const scheduleResume = useCallback(
+    (ms = 900) => {
+      clearResumeTimer();
+      resumeTimer.current = window.setTimeout(() => {
+        setPaused(false);
+        resumeTimer.current = null;
+      }, ms);
+    },
+    [clearResumeTimer]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -112,7 +132,7 @@ export default function VideoShowcaseCarousel() {
 
   useEffect(() => {
     return () => clearResumeTimer();
-  }, []);
+  }, [clearResumeTimer]);
 
   useEffect(() => {
     if (reduceMotion || total < 2) return;
@@ -194,24 +214,6 @@ export default function VideoShowcaseCarousel() {
   const closeLightbox = useCallback(() => setLightbox(null), []);
 
   // Pointer-based tap detection — reliable on iOS/Android (click often fails on 3D transforms)
-  const pointerStart = useRef<{ x: number; y: number; id: number } | null>(null);
-  const resumeTimer = useRef<number | null>(null);
-
-  const clearResumeTimer = () => {
-    if (resumeTimer.current != null) {
-      window.clearTimeout(resumeTimer.current);
-      resumeTimer.current = null;
-    }
-  };
-
-  const scheduleResume = (ms = 900) => {
-    clearResumeTimer();
-    resumeTimer.current = window.setTimeout(() => {
-      setPaused(false);
-      resumeTimer.current = null;
-    }, ms);
-  };
-
   const onStagePointerDown = (e: React.PointerEvent) => {
     // Do not pause autoplay on touch-down — vertical page scroll was leaving it paused forever
     // when browsers fire pointercancel instead of pointerup.
