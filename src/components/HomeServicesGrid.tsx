@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
 import MediaImage from '@/components/MediaImage';
@@ -16,6 +17,40 @@ export default function HomeServicesGrid() {
   const { siteSettings } = useAuth();
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
   const reduceMotion = useReducedMotion();
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const pauseAutoRef = useRef(false);
+
+  // Mobile-only auto-scroll through craft cards
+  useEffect(() => {
+    if (reduceMotion) return;
+    const el = scrollerRef.current;
+    if (!el) return;
+
+    let frame = 0;
+    let last = 0;
+    const SPEED = 38; // px per second
+
+    const tick = (ts: number) => {
+      if (!last) last = ts;
+      const dt = Math.min(0.05, (ts - last) / 1000);
+      last = ts;
+
+      const isMobile = window.innerWidth < 768;
+      if (isMobile && !pauseAutoRef.current && !document.hidden) {
+        const max = el.scrollWidth - el.clientWidth;
+        if (max > 8) {
+          let next = el.scrollLeft + SPEED * dt;
+          if (next >= max - 1) next = 0;
+          el.scrollLeft = next;
+        }
+      }
+
+      frame = requestAnimationFrame(tick);
+    };
+
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [reduceMotion]);
 
   return (
     <section className="relative w-full overflow-hidden bg-black py-14 sm:py-16 md:py-24">
@@ -28,7 +63,7 @@ export default function HomeServicesGrid() {
         className="pointer-events-none absolute left-1/2 top-[40%] h-[42%] w-[72%] -translate-x-1/2 rounded-full bg-[#3A8FB8]/07 blur-[130px]"
       />
 
-      <div className="relative mx-auto w-full max-w-[1400px] px-5 sm:px-6 md:px-10">
+      <div className="relative mx-auto w-[92%] max-w-[1260px] px-0 sm:w-[90%] md:w-[90%]">
         {/* Intro — two-line heading on mobile */}
         <div className="mx-auto mb-8 max-w-3xl text-center md:mb-12">
           <motion.div
@@ -111,8 +146,22 @@ export default function HomeServicesGrid() {
           </div>
         </motion.div>
 
-        {/* Three craft panels — snap scroll on mobile, equal columns on desktop */}
-        <div className="-mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2 sm:-mx-6 sm:px-6 md:mx-0 md:grid md:grid-cols-3 md:gap-5 md:overflow-visible md:px-0 md:pb-0 lg:gap-6">
+        {/* Three craft panels — auto-scroll on mobile, equal columns on desktop */}
+        <div
+          ref={scrollerRef}
+          onPointerDown={() => {
+            pauseAutoRef.current = true;
+          }}
+          onPointerUp={() => {
+            window.setTimeout(() => {
+              pauseAutoRef.current = false;
+            }, 2200);
+          }}
+          onPointerCancel={() => {
+            pauseAutoRef.current = false;
+          }}
+          className="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-2 scrollbar-none md:mx-0 md:grid md:grid-cols-3 md:gap-5 md:overflow-visible md:px-0 md:pb-0 lg:gap-6"
+        >
           {CRAFT.map((service, i) => (
             <motion.article
               key={service.title}

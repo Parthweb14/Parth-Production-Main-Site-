@@ -215,9 +215,7 @@ export default function VideoShowcaseCarousel() {
 
   // Pointer-based tap detection — reliable on iOS/Android (click often fails on 3D transforms)
   const onStagePointerDown = (e: React.PointerEvent) => {
-    // Do not pause autoplay on touch-down — vertical page scroll was leaving it paused forever
-    // when browsers fire pointercancel instead of pointerup.
-    if (e.pointerType !== 'touch') setPaused(true);
+    // Keep autoplay running on hover / mouse down — only track pointer for tap/swipe.
     pointerStart.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
   };
 
@@ -311,8 +309,6 @@ export default function VideoShowcaseCarousel() {
 
       <div
         className="relative z-10 mx-auto w-full max-w-7xl px-1 sm:px-4 md:px-8"
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
         onPointerDown={onStagePointerDown}
         onPointerUp={onStagePointerUp}
         onPointerCancel={() => {

@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from 'next';
 import { Space_Grotesk, Inter, Playfair_Display } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
-import VisualFeedbackWidget from '@/components/VisualFeedbackWidget';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -182,7 +181,6 @@ export default function RootLayout({
       <body className="min-h-full bg-black text-white flex flex-col font-sans overflow-x-hidden">
         <AuthProvider>
           {children}
-          <VisualFeedbackWidget />
         </AuthProvider>
       </body>
     </html>
