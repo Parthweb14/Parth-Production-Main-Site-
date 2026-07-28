@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Space_Grotesk, Inter, Playfair_Display } from 'next/font/google';
+import { Space_Grotesk, Inter, Playfair_Display, Plus_Jakarta_Sans, Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import VisualFeedbackWidget from '@/components/VisualFeedbackWidget';
@@ -21,6 +21,24 @@ const playfair = Playfair_Display({
   weight: ['400', '500', '600', '700'],
   style: ['normal', 'italic'],
   variable: '--font-playfair',
+  display: 'swap',
+});
+
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-jakarta',
+  display: 'swap',
+});
+
+const geist = Geist({
+  subsets: ['latin'],
+  variable: '--font-geist',
+  display: 'swap',
+});
+
+const geistMono = Geist_Mono({
+  subsets: ['latin'],
+  variable: '--font-geist-mono',
   display: 'swap',
 });
 
@@ -167,7 +185,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${spaceGrotesk.variable} ${inter.variable} ${playfair.variable} dark h-full antialiased`}
+      className={`${spaceGrotesk.variable} ${inter.variable} ${playfair.variable} ${plusJakarta.variable} ${geist.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <head>
         <link rel="preload" href="/Parth Logo .json" as="fetch" crossOrigin="anonymous" />
@@ -180,7 +198,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="min-h-full bg-black text-white flex flex-col font-sans overflow-x-hidden">
+      <body className="min-h-full bg-background text-foreground flex flex-col font-sans overflow-x-hidden antialiased">
         <AuthProvider>
           {children}
           <VisualFeedbackWidget />
