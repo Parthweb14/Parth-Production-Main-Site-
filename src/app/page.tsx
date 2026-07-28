@@ -47,7 +47,7 @@ export default function HomePage() {
     if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('shot')) {
       return;
     }
-    const a = setTimeout(() => setMinTimeElapsed(true), 1600);
+    const a = setTimeout(() => setMinTimeElapsed(true), 2800);
     const b = setTimeout(() => setVideoLoaded(true), 4500);
     return () => {
       clearTimeout(a);

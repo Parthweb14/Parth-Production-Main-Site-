@@ -100,7 +100,11 @@ export default function PageLoader({ onComplete, isReady }: PageLoaderProps) {
                   {/* Uiverse animated bars — Cksunandh */}
                   <div className="page-loader-bars" aria-hidden>
                     {Array.from({ length: 8 }).map((_, i) => (
-                      <span key={i} className="page-loader-bar" />
+                      <span
+                        key={i}
+                        className="page-loader-bar"
+                        style={{ left: `${i * 25}px`, animationDelay: `${i * 50}ms` }}
+                      />
                     ))}
                   </div>
                 </motion.div>
