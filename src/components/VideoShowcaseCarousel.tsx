@@ -42,14 +42,14 @@ function edgeFade(abs: number) {
  */
 function laneTransform(offset: number, isMobile: boolean, progress: number) {
   const abs = Math.abs(offset);
-  const spacing = isMobile ? 236 : 290;
-  const depth = isMobile ? 100 : 140;
+  const spacing = isMobile ? 248 : 360;
+  const depth = isMobile ? 105 : 155;
 
   const x = offset * spacing;
-  const float = Math.sin(offset * 1.05 + progress * 1.15) * (isMobile ? 4 : 7);
-  const y = abs * abs * (isMobile ? 3 : 5) + float;
-  const rotateY = offset * (isMobile ? -14 : -18);
-  const scale = 1 - Math.min(abs, 2.5) * (isMobile ? 0.048 : 0.065);
+  const float = Math.sin(offset * 1.05 + progress * 1.15) * (isMobile ? 4 : 8);
+  const y = abs * abs * (isMobile ? 3 : 5.5) + float;
+  const rotateY = offset * (isMobile ? -14 : -16);
+  const scale = 1 - Math.min(abs, 2.5) * (isMobile ? 0.045 : 0.055);
   const z = -abs * depth;
   const opacity = 0.22 + 0.78 * edgeFade(abs);
   const zIndex = Math.round(40 - abs * 10);
@@ -109,6 +109,10 @@ export default function VideoShowcaseCarousel() {
   useEffect(() => {
     pausedRef.current = paused || Boolean(lightbox);
   }, [paused, lightbox]);
+
+  useEffect(() => {
+    return () => clearResumeTimer();
+  }, []);
 
   useEffect(() => {
     if (reduceMotion || total < 2) return;
@@ -191,31 +195,54 @@ export default function VideoShowcaseCarousel() {
 
   // Pointer-based tap detection — reliable on iOS/Android (click often fails on 3D transforms)
   const pointerStart = useRef<{ x: number; y: number; id: number } | null>(null);
+  const resumeTimer = useRef<number | null>(null);
+
+  const clearResumeTimer = () => {
+    if (resumeTimer.current != null) {
+      window.clearTimeout(resumeTimer.current);
+      resumeTimer.current = null;
+    }
+  };
+
+  const scheduleResume = (ms = 900) => {
+    clearResumeTimer();
+    resumeTimer.current = window.setTimeout(() => {
+      setPaused(false);
+      resumeTimer.current = null;
+    }, ms);
+  };
 
   const onStagePointerDown = (e: React.PointerEvent) => {
-    if (e.pointerType === 'touch') setPaused(true);
+    // Do not pause autoplay on touch-down — vertical page scroll was leaving it paused forever
+    // when browsers fire pointercancel instead of pointerup.
+    if (e.pointerType !== 'touch') setPaused(true);
     pointerStart.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
   };
 
   const onStagePointerUp = (e: React.PointerEvent) => {
     const start = pointerStart.current;
     pointerStart.current = null;
-    if (!start || start.id !== e.pointerId) return;
+    if (!start || start.id !== e.pointerId) {
+      scheduleResume(200);
+      return;
+    }
     const dx = e.clientX - start.x;
     const dy = e.clientY - start.y;
     const dist = Math.hypot(dx, dy);
 
     if (dist > 36) {
-      // Horizontal swipe → nudge carousel
+      // Horizontal swipe → nudge; vertical scroll → ignore (page scroll)
       if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 36) {
+        setPaused(true);
         nudge(dx < 0 ? 1 : -1);
+        scheduleResume(1600);
+        return;
       }
-      window.setTimeout(() => setPaused(false), 1800);
+      scheduleResume(120);
       return;
     }
 
-    // Tap — open the nearest/center-ish clip under pointer via data attribute handled on card
-    window.setTimeout(() => setPaused(false), 1200);
+    scheduleResume(200);
   };
 
   const onCardPointerUp = (e: React.PointerEvent, clip: Clip, index: number) => {
@@ -226,16 +253,22 @@ export default function VideoShowcaseCarousel() {
       openClip(clip, index);
       return;
     }
-    const dist = Math.hypot(e.clientX - start.x, e.clientY - start.y);
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    const dist = Math.hypot(dx, dy);
     if (dist <= 36) {
       openClip(clip, index);
-    } else if (Math.abs(e.clientX - start.x) > 36) {
-      nudge(e.clientX - start.x < 0 ? 1 : -1);
+      scheduleResume(400);
+    } else if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 36) {
+      setPaused(true);
+      nudge(dx < 0 ? 1 : -1);
+      scheduleResume(1600);
+    } else {
+      scheduleResume(120);
     }
-    window.setTimeout(() => setPaused(false), 1200);
   };
 
-  const cardW = isMobile ? 236 : 280;
+  const cardW = isMobile ? 248 : 340;
 
   return (
     <section className="relative isolate overflow-x-clip border-b border-white/10 bg-black py-14 sm:py-16 md:py-24">
@@ -255,23 +288,20 @@ export default function VideoShowcaseCarousel() {
           viewport={{ once: true, margin: '-60px' }}
           transition={{ duration: 0.55, ease }}
         >
-          <div className="mb-3 flex flex-wrap items-center gap-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-accent">
+          <div className="mb-4 flex items-center justify-center gap-3 md:justify-start">
+            <span className="h-px w-8 bg-[#3A8FB8]" aria-hidden />
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#3A8FB8] md:text-xs md:tracking-[0.22em]">
               Parth Production
             </p>
-            <span className="hidden h-px w-10 bg-white/20 sm:block" aria-hidden />
-            <p className="text-[10px] uppercase tracking-[0.18em] text-white/40 sm:text-[11px]">
-              {String(activeIndex + 1).padStart(2, '0')} / {String(total).padStart(2, '0')} ·{' '}
-              {clips[activeIndex]?.title || 'Reel'}
-            </p>
+            <span className="h-px w-8 bg-[#3A8FB8]" aria-hidden />
           </div>
-          <h2 className="font-display text-[clamp(1.85rem,4.8vw,3rem)] font-bold uppercase leading-[1.08] tracking-tight text-white md:text-5xl">
+          <h2 className="text-center font-display text-[clamp(1.85rem,4.8vw,3rem)] font-bold uppercase leading-[1.08] tracking-tight text-white md:text-left md:text-5xl">
             <span className="block">Beyond Events.</span>
             <span className="mt-1.5 block whitespace-nowrap font-serif text-[clamp(1.2rem,3.9vw,2.5rem)] font-medium normal-case italic leading-[1.2] tracking-normal text-[#3A8FB8] md:mt-2 md:text-[2.65rem]">
               We Create Experiences
             </span>
           </h2>
-          <p className="mt-3 max-w-2xl text-base leading-relaxed text-white/70 md:text-lg">
+          <p className="mx-auto mt-3 max-w-2xl text-center text-base leading-relaxed text-white/70 md:mx-0 md:text-left md:text-lg">
             Experience our finest DJ, lighting, stage, and event productions.
           </p>
         </motion.div>
@@ -285,7 +315,9 @@ export default function VideoShowcaseCarousel() {
         onPointerUp={onStagePointerUp}
         onPointerCancel={() => {
           pointerStart.current = null;
+          scheduleResume(80);
         }}
+        style={{ touchAction: 'pan-y' }}
       >
         {/* Film-frame marks */}
         <div
@@ -298,8 +330,8 @@ export default function VideoShowcaseCarousel() {
         </div>
 
         <div
-          className="relative mx-auto h-[520px] w-full overflow-hidden touch-pan-y sm:h-[540px] md:h-[620px]"
-          style={{ perspective: isMobile ? '1100px' : '1600px' }}
+          className="relative mx-auto h-[560px] w-full overflow-hidden touch-pan-y sm:h-[580px] md:h-[720px]"
+          style={{ perspective: isMobile ? '1100px' : '1700px' }}
         >
           <div
             aria-hidden
@@ -331,7 +363,7 @@ export default function VideoShowcaseCarousel() {
                   style={{
                     width: cardW,
                     marginLeft: -cardW / 2,
-                    marginTop: isMobile ? -210 : -250,
+                    marginTop: isMobile ? -222 : -304,
                     transformStyle: 'preserve-3d',
                     zIndex: t.zIndex,
                     opacity: t.opacity,
@@ -340,9 +372,12 @@ export default function VideoShowcaseCarousel() {
                   onPointerDown={(e) => {
                     e.stopPropagation();
                     pointerStart.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
-                    if (e.pointerType === 'touch') setPaused(true);
                   }}
                   onPointerUp={(e) => onCardPointerUp(e, clip, i)}
+                  onPointerCancel={() => {
+                    pointerStart.current = null;
+                    scheduleResume(80);
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
@@ -388,7 +423,7 @@ export default function VideoShowcaseCarousel() {
         </div>
       </div>
 
-      <div className="relative z-20 mt-7 flex items-center justify-center gap-3 sm:mt-9">
+      <div className="relative z-20 mt-7 hidden items-center justify-center gap-3 md:mt-9 md:flex">
         <button
           type="button"
           onClick={() => nudge(-1)}

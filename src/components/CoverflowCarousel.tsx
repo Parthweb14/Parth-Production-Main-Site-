@@ -228,10 +228,10 @@ export default function CoverflowCarousel() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.05 }}
-            className="font-display text-[clamp(1.85rem,4.8vw,3rem)] font-bold leading-[1.08] tracking-tight text-white md:text-5xl"
+            className="whitespace-nowrap font-display text-[clamp(1.65rem,5vw,3rem)] font-bold leading-[1.08] tracking-tight text-white md:text-5xl"
           >
-            <span className="block uppercase">Stage</span>
-            <span className="mt-1.5 block font-serif text-[clamp(1.45rem,4.2vw,2.65rem)] font-medium normal-case italic leading-[1.2] tracking-normal text-[#3A8FB8] md:mt-2">
+            <span className="uppercase">Stage </span>
+            <span className="font-serif font-medium normal-case italic tracking-normal text-[#3A8FB8]">
               Gallery
             </span>
           </motion.h2>

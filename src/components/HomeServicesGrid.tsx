@@ -4,13 +4,13 @@ import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
 import MediaImage from '@/components/MediaImage';
 import { useAuth } from '@/context/AuthContext';
-import { CRAFT } from '@/utils/media';
+import { CRAFT, STAGE_IMAGES } from '@/utils/media';
 
 const ease = [0.22, 1, 0.36, 1] as const;
+const FEATURED_WIDE = STAGE_IMAGES[1]?.src || CRAFT[0].image;
 
 /**
- * Editorial craft strip — three equal tall panels.
- * Cleaner than chapter switchboards / card grids.
+ * Editorial craft strip — featured wide image + three tall panels.
  */
 export default function HomeServicesGrid() {
   const { siteSettings } = useAuth();
@@ -29,8 +29,8 @@ export default function HomeServicesGrid() {
       />
 
       <div className="relative mx-auto w-full max-w-[1400px] px-5 sm:px-6 md:px-10">
-        {/* Intro — mirrors hero type system */}
-        <div className="mx-auto mb-10 max-w-3xl text-center md:mb-14">
+        {/* Intro — two-line heading on mobile */}
+        <div className="mx-auto mb-8 max-w-3xl text-center md:mb-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -45,9 +45,9 @@ export default function HomeServicesGrid() {
               <span className="h-px w-8 bg-[#3A8FB8]" aria-hidden />
             </div>
 
-            <h2 className="font-display text-[clamp(1.9rem,4.6vw,3.25rem)] font-extrabold leading-[1.08] tracking-tight text-white">
-              <span className="block">Bringing Every Moment</span>
-              <span className="mt-2 block font-serif text-[clamp(1.7rem,4.2vw,2.9rem)] font-medium italic leading-[1.2] tracking-normal text-[#3A8FB8]">
+            <h2 className="font-display text-[clamp(1.55rem,5.2vw,3.25rem)] font-extrabold leading-[1.1] tracking-tight text-white">
+              <span className="block whitespace-nowrap">Bringing Every Moment</span>
+              <span className="mt-1.5 block whitespace-nowrap font-serif text-[clamp(1.45rem,4.8vw,2.9rem)] font-medium italic leading-[1.2] tracking-normal text-[#3A8FB8] md:mt-2">
                 To Life.
               </span>
             </h2>
@@ -75,6 +75,41 @@ export default function HomeServicesGrid() {
             </div>
           </motion.div>
         </div>
+
+        {/* Horizontal featured image above the 3 craft panels */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-40px' }}
+          transition={{ duration: 0.6, ease }}
+          className="relative mb-5 overflow-hidden rounded-[22px] border border-white/10 sm:mb-6 md:mb-7 md:rounded-[26px]"
+        >
+          <div className="relative aspect-[16/9] w-full sm:aspect-[21/9] md:aspect-[2.6/1] md:min-h-[240px]">
+            <MediaImage
+              src={FEATURED_WIDE}
+              alt="Live production stage"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
+            {!reduceMotion && (
+              <motion.div
+                aria-hidden
+                className="pointer-events-none absolute -inset-y-8 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                animate={{ x: ['-130%', '250%'] }}
+                transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', repeatDelay: 2.5 }}
+              />
+            )}
+            <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4 sm:p-6">
+              <p className="font-display text-xs font-semibold uppercase tracking-[0.18em] text-white sm:text-sm">
+                Live production
+              </p>
+              <span className="rounded-full border border-white/20 bg-black/45 px-3 py-1 text-[10px] uppercase tracking-[0.14em] text-white/75 backdrop-blur-sm">
+                Stage ready
+              </span>
+            </div>
+          </div>
+        </motion.div>
 
         {/* Three craft panels — snap scroll on mobile, equal columns on desktop */}
         <div className="-mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2 sm:-mx-6 sm:px-6 md:mx-0 md:grid md:grid-cols-3 md:gap-5 md:overflow-visible md:px-0 md:pb-0 lg:gap-6">
