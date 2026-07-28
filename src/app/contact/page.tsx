@@ -6,6 +6,7 @@ import SpotlightNavbar from '@/components/SpotlightNavbar';
 import Footer from '@/components/Footer';
 import QuoteCta from '@/components/QuoteCta';
 import CinematicPageHero from '@/components/CinematicPageHero';
+import SEO from '@/components/SEO';
 import { useAuth } from '@/context/AuthContext';
 import { STAGE_IMAGES } from '@/utils/media';
 
@@ -47,6 +48,11 @@ export default function ContactPage() {
 
   return (
     <>
+      <SEO
+        title="Contact"
+        description="Contact Parth Production in Surat for quotes on sound, lighting, SFX, and full event production. Call or WhatsApp to book your stage."
+        canonical="https://parthproduction.in/contact"
+      />
       <SpotlightNavbar />
       <div className="film-grain" />
       <motion.div

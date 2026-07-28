@@ -8,6 +8,7 @@ import Footer from '@/components/Footer';
 import QuoteCta from '@/components/QuoteCta';
 import MediaImage from '@/components/MediaImage';
 import CinematicPageHero from '@/components/CinematicPageHero';
+import SEO from '@/components/SEO';
 import { useAuth } from '@/context/AuthContext';
 import { STAGE_IMAGES, resolveGallerySrc } from '@/utils/media';
 
@@ -160,6 +161,11 @@ export default function ServicesPage() {
 
   return (
     <>
+      <SEO
+        title="Services"
+        description="Explore Parth Production services: professional sound systems, stage lighting, SFX, truss, fireworks, and DJ production for every event scale."
+        canonical="https://parthproduction.in/services"
+      />
       <SpotlightNavbar />
       <div className="film-grain" />
       <motion.div
