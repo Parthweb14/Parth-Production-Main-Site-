@@ -2,27 +2,28 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import LottiePlayer from './LottiePlayer';
-import { LOGO_JSON } from '@/utils/media';
 
 interface PageLoaderProps {
   onComplete: () => void;
   isReady: boolean;
 }
 
+const BRAND = 'Parth Production';
+const LETTERS = BRAND.split('');
+
 export default function PageLoader({ onComplete, isReady }: PageLoaderProps) {
-  const [showLogo, setShowLogo] = useState(true);
+  const [showContent, setShowContent] = useState(true);
   const [isActive, setIsActive] = useState(true);
 
   useEffect(() => {
     if (!isReady) return;
-    const hideLogo = setTimeout(() => setShowLogo(false), 120);
+    const hideContent = setTimeout(() => setShowContent(false), 180);
     const exitTimer = setTimeout(() => {
       setIsActive(false);
       onComplete();
-    }, 900);
+    }, 980);
     return () => {
-      clearTimeout(hideLogo);
+      clearTimeout(hideContent);
       clearTimeout(exitTimer);
     };
   }, [isReady, onComplete]);
@@ -43,17 +44,65 @@ export default function PageLoader({ onComplete, isReady }: PageLoaderProps) {
             transition={{ duration: 0.85, ease: [0.77, 0, 0.175, 1] }}
             className="w-1/2 h-full bg-[#050505] pointer-events-auto"
           />
-          <div className="absolute inset-0 flex items-center justify-center z-10">
+
+          <div className="absolute inset-0 z-10 flex items-center justify-center">
             <AnimatePresence>
-              {showLogo && (
+              {showContent && (
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.85 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 1.05 }}
-                  transition={{ duration: 0.45 }}
-                  className="w-64 h-64 sm:w-80 sm:h-80 flex items-center justify-center"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0, y: -12, filter: 'blur(6px)' }}
+                  transition={{ duration: 0.4 }}
+                  className="relative flex flex-col items-center"
                 >
-                  <LottiePlayer src={LOGO_JSON} className="w-full h-full" />
+                  {/* Brand title */}
+                  <div className="mb-10 sm:mb-12 select-none" aria-label="Parth Production">
+                    <motion.p
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                      className="mb-3 text-center text-[10px] font-semibold uppercase tracking-[0.42em] text-[#3A8FB8] sm:text-[11px]"
+                    >
+                      Loading the experience
+                    </motion.p>
+
+                    <h1 className="flex flex-wrap items-center justify-center gap-x-[0.08em] font-display text-[1.65rem] font-bold uppercase leading-none tracking-[0.08em] text-white sm:text-4xl md:text-5xl">
+                      {LETTERS.map((char, i) =>
+                        char === ' ' ? (
+                          <span key={`space-${i}`} className="inline-block w-[0.35em]" aria-hidden />
+                        ) : (
+                          <motion.span
+                            key={`${char}-${i}`}
+                            className="page-loader-letter inline-block origin-bottom"
+                            initial={{ opacity: 0, rotateX: -90, y: 18 }}
+                            animate={{ opacity: 1, rotateX: 0, y: 0 }}
+                            transition={{
+                              duration: 0.7,
+                              delay: 0.08 + i * 0.045,
+                              ease: [0.81, 0.04, 0.4, 0.7],
+                            }}
+                            style={{ transformStyle: 'preserve-3d' }}
+                          >
+                            {char}
+                          </motion.span>
+                        )
+                      )}
+                    </h1>
+
+                    <motion.div
+                      className="mx-auto mt-4 h-px origin-center bg-gradient-to-r from-transparent via-[#3A8FB8] to-transparent"
+                      initial={{ scaleX: 0, opacity: 0 }}
+                      animate={{ scaleX: 1, opacity: 1 }}
+                      transition={{ duration: 0.9, delay: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                    />
+                  </div>
+
+                  {/* Uiverse animated bars — Cksunandh */}
+                  <div className="page-loader-bars" aria-hidden>
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <span key={i} className="page-loader-bar" />
+                    ))}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
