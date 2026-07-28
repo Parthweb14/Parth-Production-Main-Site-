@@ -105,7 +105,7 @@ export default function HomePage() {
           </div>
 
           {/* CONTENT — outside video overflow clip */}
-          <div className="relative z-10 w-full px-5 pb-12 pt-[7.5rem] sm:px-8 sm:pb-14 md:px-10 md:pb-20 md:pt-36 lg:px-14">
+          <div className="relative z-10 w-full px-5 pb-12 pt-[9.5rem] sm:px-8 sm:pb-14 md:px-10 md:pb-20 md:pt-36 lg:px-14">
             <div className="mx-auto w-full max-w-7xl">
               <div className="max-w-[40rem] md:max-w-[46rem]">
                 <motion.div

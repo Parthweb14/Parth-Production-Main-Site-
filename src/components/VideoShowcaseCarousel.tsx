@@ -42,18 +42,18 @@ function edgeFade(abs: number) {
  */
 function laneTransform(offset: number, isMobile: boolean, progress: number) {
   const abs = Math.abs(offset);
-  const spacing = isMobile ? 164 : 232;
-  const depth = isMobile ? 80 : 120;
+  const spacing = isMobile ? 210 : 290;
+  const depth = isMobile ? 95 : 140;
 
   const x = offset * spacing;
-  const float = Math.sin(offset * 1.05 + progress * 1.15) * (isMobile ? 3.5 : 6.5);
-  const y = abs * abs * (isMobile ? 2.5 : 4.5) + float;
-  const rotateY = offset * (isMobile ? -12 : -17);
-  const scale = 1 - Math.min(abs, 2.5) * (isMobile ? 0.055 : 0.07);
+  const float = Math.sin(offset * 1.05 + progress * 1.15) * (isMobile ? 4 : 7);
+  const y = abs * abs * (isMobile ? 3 : 5) + float;
+  const rotateY = offset * (isMobile ? -14 : -18);
+  const scale = 1 - Math.min(abs, 2.5) * (isMobile ? 0.048 : 0.065);
   const z = -abs * depth;
   const opacity = 0.22 + 0.78 * edgeFade(abs);
   const zIndex = Math.round(40 - abs * 10);
-  const brightness = 1 - Math.min(abs, 2) * 0.2;
+  const brightness = 1 - Math.min(abs, 2) * 0.18;
 
   return { x, y, rotateY, scale, z, opacity, zIndex, brightness };
 }
@@ -235,13 +235,17 @@ export default function VideoShowcaseCarousel() {
     window.setTimeout(() => setPaused(false), 1200);
   };
 
-  const cardW = isMobile ? 156 : 220;
+  const cardW = isMobile ? 210 : 280;
 
   return (
     <section className="relative isolate overflow-x-clip border-b border-white/10 bg-black py-14 sm:py-16 md:py-24">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-[48%] mx-auto h-[40%] max-w-4xl rounded-full bg-[#3A8FB8]/10 blur-[110px]"
+        className="pointer-events-none absolute inset-x-0 top-[48%] mx-auto h-[45%] max-w-5xl rounded-full bg-[#3A8FB8]/12 blur-[120px]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#3A8FB8]/40 to-transparent"
       />
 
       <div className="relative z-20 mx-auto mb-8 max-w-7xl px-4 sm:mb-10 sm:px-6 md:mb-12 md:px-8">
@@ -251,9 +255,16 @@ export default function VideoShowcaseCarousel() {
           viewport={{ once: true, margin: '-60px' }}
           transition={{ duration: 0.55, ease }}
         >
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-accent">
-            Parth Production
-          </p>
+          <div className="mb-3 flex flex-wrap items-center gap-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-accent">
+              Parth Production
+            </p>
+            <span className="hidden h-px w-10 bg-white/20 sm:block" aria-hidden />
+            <p className="text-[10px] uppercase tracking-[0.18em] text-white/40 sm:text-[11px]">
+              {String(activeIndex + 1).padStart(2, '0')} / {String(total).padStart(2, '0')} ·{' '}
+              {clips[activeIndex]?.title || 'Reel'}
+            </p>
+          </div>
           <h2 className="font-display text-3xl font-bold uppercase tracking-tight sm:text-4xl md:text-5xl">
             Beyond Events. We Create Experiences
           </h2>
@@ -264,7 +275,7 @@ export default function VideoShowcaseCarousel() {
       </div>
 
       <div
-        className="relative z-10 mx-auto w-full max-w-7xl px-2 sm:px-4 md:px-8"
+        className="relative z-10 mx-auto w-full max-w-7xl px-1 sm:px-4 md:px-8"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
         onPointerDown={onStagePointerDown}
@@ -273,17 +284,27 @@ export default function VideoShowcaseCarousel() {
           pointerStart.current = null;
         }}
       >
+        {/* Film-frame marks */}
         <div
-          className="relative mx-auto h-[380px] w-full overflow-hidden touch-pan-y sm:h-[430px] md:h-[510px]"
-          style={{ perspective: isMobile ? '950px' : '1500px' }}
+          aria-hidden
+          className="pointer-events-none absolute inset-x-4 top-3 z-20 hidden h-3 items-center justify-between sm:flex md:inset-x-10"
+        >
+          {Array.from({ length: 18 }).map((_, i) => (
+            <span key={i} className="h-2 w-2 rounded-[2px] bg-white/15" />
+          ))}
+        </div>
+
+        <div
+          className="relative mx-auto h-[460px] w-full overflow-hidden touch-pan-y sm:h-[520px] md:h-[620px]"
+          style={{ perspective: isMobile ? '1100px' : '1600px' }}
         >
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-y-0 left-0 z-30 w-8 bg-gradient-to-r from-black via-black/80 to-transparent sm:w-16 md:w-24"
+            className="pointer-events-none absolute inset-y-0 left-0 z-30 w-6 bg-gradient-to-r from-black via-black/75 to-transparent sm:w-14 md:w-24"
           />
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-y-0 right-0 z-30 w-8 bg-gradient-to-l from-black via-black/80 to-transparent sm:w-16 md:w-24"
+            className="pointer-events-none absolute inset-y-0 right-0 z-30 w-6 bg-gradient-to-l from-black via-black/75 to-transparent sm:w-14 md:w-24"
           />
 
           <div
@@ -303,11 +324,11 @@ export default function VideoShowcaseCarousel() {
                   role="button"
                   tabIndex={0}
                   aria-label={`Open ${clip.title} video`}
-                  className="absolute left-1/2 top-1/2 aspect-[9/16] cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-black shadow-[0_28px_60px_rgba(0,0,0,0.55)] will-change-transform touch-manipulation sm:rounded-3xl"
+                  className="absolute left-1/2 top-1/2 aspect-[9/16] cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-black shadow-[0_32px_70px_rgba(0,0,0,0.6)] will-change-transform touch-manipulation sm:rounded-3xl"
                   style={{
                     width: cardW,
                     marginLeft: -cardW / 2,
-                    marginTop: isMobile ? -140 : -196,
+                    marginTop: isMobile ? -188 : -250,
                     transformStyle: 'preserve-3d',
                     zIndex: t.zIndex,
                     opacity: t.opacity,
@@ -340,20 +361,26 @@ export default function VideoShowcaseCarousel() {
                     className="pointer-events-none absolute inset-0 h-full w-full object-cover"
                     style={{ filter: `brightness(${t.brightness})` }}
                   />
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/20" />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/25" />
 
-                  <div
-                    aria-hidden
-                    className={`pointer-events-none absolute inset-0 rounded-2xl transition-opacity duration-300 sm:rounded-3xl ${
-                      isCenter ? 'opacity-100 ring-1 ring-[#3A8FB8]/45' : 'opacity-0'
-                    }`}
-                  />
+                  {isCenter && (
+                    <div
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-[#3A8FB8]/55 sm:rounded-3xl"
+                    />
+                  )}
 
-                  <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3 sm:p-4">
+                  {isCenter && (
+                    <div className="pointer-events-none absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/35 bg-black/45 backdrop-blur-md sm:h-16 sm:w-16">
+                      <span className="ml-0.5 h-0 w-0 border-y-[7px] border-l-[12px] border-y-transparent border-l-white sm:border-y-[8px] sm:border-l-[14px]" />
+                    </div>
+                  )}
+
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3.5 sm:p-5">
                     <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#3A8FB8] sm:text-[10px]">
                       {isCenter ? 'Tap to open' : 'Clip'}
                     </p>
-                    <p className="mt-0.5 font-display text-sm font-bold uppercase tracking-tight text-white sm:text-base md:text-lg">
+                    <p className="mt-1 font-display text-base font-bold uppercase tracking-tight text-white sm:text-lg md:text-xl">
                       {clip.title}
                     </p>
                   </div>

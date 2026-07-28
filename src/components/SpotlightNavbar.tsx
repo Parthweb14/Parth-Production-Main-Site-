@@ -31,9 +31,9 @@ export default function SpotlightNavbar() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-5 md:px-10 bg-black border-b border-white/10 h-[96px] md:h-[104px]">
+      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 sm:px-5 md:px-10 bg-black border-b border-white/10 h-[68px] md:h-[104px]">
         <Link href="/" className="relative z-10 flex items-center min-w-0 group py-1" onClick={() => setMenuOpen(false)}>
-          <span className="relative block h-[64px] sm:h-[72px] md:h-[84px] w-[170px] sm:w-[210px] md:w-[260px] overflow-hidden">
+          <span className="relative block h-[48px] sm:h-[56px] md:h-[84px] w-[130px] sm:w-[170px] md:w-[260px] overflow-hidden">
             <img
               src={LOGO_PNG}
               alt="Parth Production"
@@ -94,7 +94,7 @@ export default function SpotlightNavbar() {
             initial={{ opacity: 0, y: -16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
-            className="fixed inset-0 bg-black z-40 md:hidden flex flex-col pt-28 px-6 pb-10"
+            className="fixed inset-0 bg-black z-40 md:hidden flex flex-col pt-20 px-6 pb-10"
           >
             <nav className="flex flex-col gap-5 text-3xl font-display">
               {navItems.map((item, i) => (

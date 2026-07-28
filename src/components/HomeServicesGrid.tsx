@@ -1,59 +1,74 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import MediaImage from '@/components/MediaImage';
 import { useAuth } from '@/context/AuthContext';
-import { CRAFT, STAGE_IMAGES } from '@/utils/media';
+import { CRAFT } from '@/utils/media';
 
-const FEATURED_IMAGE = STAGE_IMAGES[1]?.src || CRAFT[0].image;
 const ease = [0.22, 1, 0.36, 1] as const;
 
+/**
+ * Production Chapters — full-bleed craft showcase.
+ * Completely different from the previous split + 3-card grid.
+ */
 export default function HomeServicesGrid() {
   const { siteSettings } = useAuth();
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
   const reduceMotion = useReducedMotion();
+  const [active, setActive] = useState(0);
+  const craft = CRAFT[active] || CRAFT[0];
 
   return (
-    <section className="relative w-full overflow-hidden bg-black">
-      {/* Soft atmosphere */}
+    <section className="relative w-full overflow-hidden bg-black py-14 sm:py-16 md:py-24">
+      {/* Oversized watermark */}
+      <p
+        aria-hidden
+        className="pointer-events-none absolute -right-4 top-8 select-none font-serif text-[clamp(5rem,22vw,14rem)] italic leading-none text-white/[0.035] md:top-4"
+      >
+        To Life.
+      </p>
       <div
         aria-hidden
-        className="pointer-events-none absolute -left-20 top-10 h-72 w-72 rounded-full bg-[#3A8FB8]/10 blur-[110px]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-24 bottom-20 h-80 w-80 rounded-full bg-[#3A8FB8]/08 blur-[120px]"
+        className="pointer-events-none absolute left-1/2 top-1/3 h-[50%] w-[70%] -translate-x-1/2 rounded-full bg-[#3A8FB8]/08 blur-[140px]"
       />
 
-      {/* INTRO + FEATURED — cinematic split, full-bleed image on large screens */}
-      <div className="relative grid grid-cols-1 lg:grid-cols-2 lg:min-h-[min(78vh,720px)]">
-        <div className="relative z-10 flex flex-col justify-center px-5 py-14 sm:px-8 sm:py-16 md:px-10 md:py-20 lg:py-24 lg:pl-14 xl:pl-20">
+      <div className="relative mx-auto w-full max-w-[1400px] px-5 sm:px-6 md:px-10">
+        {/* Intro */}
+        <div className="mb-8 grid grid-cols-1 gap-8 lg:mb-12 lg:grid-cols-12 lg:items-end lg:gap-10">
           <motion.div
             initial={{ opacity: 0, y: 22 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-60px' }}
             transition={{ duration: 0.6, ease }}
+            className="lg:col-span-7"
           >
-            <div className="mb-5 flex items-center gap-3">
+            <div className="mb-4 flex items-center gap-3">
               <span className="h-px w-9 bg-[#3A8FB8]" aria-hidden />
               <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#3A8FB8] md:text-[12px]">
                 Designed For Every Celebration
               </p>
             </div>
-
             <h2 className="font-display text-[clamp(1.9rem,4.4vw,3.25rem)] font-extrabold leading-[1.08] tracking-tight text-white">
               Bringing Every Moment
               <br />
               <span className="font-serif italic font-normal text-[#3A8FB8]">To Life.</span>
             </h2>
+          </motion.div>
 
-            <p className="mt-5 max-w-md text-[14px] leading-[1.75] text-white/70 md:text-[15px]">
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-60px' }}
+            transition={{ duration: 0.55, delay: 0.08, ease }}
+            className="lg:col-span-5 lg:pb-1"
+          >
+            <p className="max-w-md text-[14px] leading-[1.75] text-white/70 md:text-[15px] lg:ml-auto lg:text-right">
               Sound, lighting, and professional DJs delivering unforgettable experiences for
               weddings, concerts, festivals, and corporate events.
             </p>
-
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center lg:justify-end">
               <a
                 href={whatsappUrl}
                 target="_blank"
@@ -72,72 +87,118 @@ export default function HomeServicesGrid() {
           </motion.div>
         </div>
 
-        {/* Featured visual — edge-to-edge on desktop */}
-        <motion.div
-          initial={{ opacity: 0, x: 28 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true, margin: '-60px' }}
-          transition={{ duration: 0.7, ease }}
-          className="relative min-h-[260px] sm:min-h-[340px] md:min-h-[420px] lg:min-h-full"
-        >
-          <MediaImage
-            src={FEATURED_IMAGE}
-            alt="Concert stage with LED walls, truss, and live lighting"
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent lg:bg-gradient-to-l lg:from-transparent lg:via-black/20 lg:to-black/55" />
-          {!reduceMotion && (
-            <motion.div
-              aria-hidden
-              className="absolute -inset-y-10 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/12 to-transparent"
-              animate={{ x: ['-130%', '260%'] }}
-              transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', repeatDelay: 2.4 }}
-            />
-          )}
-          <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between gap-3 sm:bottom-6 sm:left-6 sm:right-6">
-            <p className="font-display text-xs font-semibold uppercase tracking-[0.18em] text-white sm:text-sm">
-              Live production
-            </p>
-            <span className="rounded-full border border-white/20 bg-black/45 px-3 py-1 text-[10px] uppercase tracking-[0.14em] text-white/75 backdrop-blur-sm">
-              Stage ready
-            </span>
+        {/* Chapter index + immersive stage */}
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.45fr)] lg:gap-7">
+          {/* Chapter selectors — horizontal on mobile, stacked on desktop */}
+          <div
+            className="flex gap-3 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0"
+            role="tablist"
+            aria-label="Craft chapters"
+          >
+            {CRAFT.map((item, i) => {
+              const isActive = i === active;
+              return (
+                <button
+                  key={item.title}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setActive(i)}
+                  className={`group relative min-w-[78%] flex-shrink-0 overflow-hidden rounded-2xl border p-4 text-left transition-all duration-300 sm:min-w-[46%] lg:min-w-0 lg:p-5 ${
+                    isActive
+                      ? 'border-[#3A8FB8]/55 bg-[#3A8FB8]/12'
+                      : 'border-white/10 bg-white/[0.03] hover:border-white/25'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="font-display text-3xl font-bold tabular-nums leading-none text-white/20 transition-colors group-hover:text-white/35 lg:text-4xl">
+                      0{i + 1}
+                    </p>
+                    {isActive && (
+                      <motion.span
+                        layoutId="craft-chapter-dot"
+                        className="mt-1 h-2 w-2 rounded-full bg-[#3A8FB8]"
+                      />
+                    )}
+                  </div>
+                  <p className="mt-3 font-display text-xl font-bold uppercase tracking-tight text-white">
+                    {item.title}
+                  </p>
+                  <p className="mt-2 line-clamp-2 text-[12px] leading-relaxed text-white/55 sm:text-[13px]">
+                    {item.copy}
+                  </p>
+                  {isActive && (
+                    <motion.span
+                      layoutId="craft-chapter-line"
+                      className="absolute inset-y-0 left-0 w-px bg-[#3A8FB8]"
+                    />
+                  )}
+                </button>
+              );
+            })}
           </div>
-        </motion.div>
-      </div>
 
-      {/* CRAFT panels — same Sound / Lighting / DJ data */}
-      <div className="relative mx-auto w-full max-w-[1400px] px-5 pb-14 sm:px-6 sm:pb-16 md:px-10 md:pb-24">
-        <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
-          {CRAFT.map((service, i) => (
-            <motion.article
-              key={service.title}
-              initial={{ opacity: 0, y: 28 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ delay: i * 0.08, duration: 0.5, ease }}
-              className="group relative isolate overflow-hidden rounded-[22px] border border-white/10 bg-black sm:rounded-[24px]"
-            >
-              <div className="relative aspect-[4/5] sm:aspect-[3/4] md:h-[340px] md:aspect-auto">
+          {/* Immersive canvas */}
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="relative min-h-[360px] overflow-hidden rounded-[26px] border border-white/10 bg-black sm:min-h-[440px] md:min-h-[520px] lg:min-h-full"
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={craft.title}
+                initial={{ opacity: 0, scale: 1.06 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.5, ease }}
+                className="absolute inset-0"
+              >
                 <MediaImage
-                  src={service.image}
-                  alt={service.title}
-                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
+                  src={craft.image}
+                  alt={craft.title}
+                  className="absolute inset-0 h-full w-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-black/5" />
-                <div className="absolute inset-x-0 bottom-0 p-5 md:p-6">
-                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#3A8FB8]">
-                    0{i + 1}
-                  </p>
-                  <h3 className="font-display text-lg font-bold uppercase leading-none tracking-tight text-white md:text-xl">
-                    {service.title}
-                  </h3>
-                  <p className="mt-3 line-clamp-3 text-[13px] leading-relaxed text-white/75 md:text-sm">
-                    {service.copy}
-                  </p>
-                </div>
-              </div>
-            </motion.article>
-          ))}
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/15" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-transparent" />
+
+                {!reduceMotion && (
+                  <motion.div
+                    aria-hidden
+                    className="absolute -inset-y-10 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/12 to-transparent"
+                    animate={{ x: ['-130%', '260%'] }}
+                    transition={{
+                      duration: 5.8,
+                      repeat: Infinity,
+                      ease: 'easeInOut',
+                      repeatDelay: 2.2,
+                    }}
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
+
+            <div className="absolute left-5 top-5 sm:left-7 sm:top-7">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#3A8FB8]">
+                Chapter 0{active + 1}
+              </p>
+            </div>
+
+            <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7 md:p-8">
+              <p
+                aria-hidden
+                className="mb-2 font-display text-[clamp(3.5rem,12vw,6rem)] font-bold leading-none text-white/[0.08]"
+              >
+                0{active + 1}
+              </p>
+              <h3 className="font-display text-3xl font-bold uppercase tracking-tight text-white sm:text-4xl md:text-5xl">
+                {craft.title}
+              </h3>
+              <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/75 md:text-base">
+                {craft.copy}
+              </p>
+            </div>
+          </motion.div>
         </div>
       </div>
     </section>
