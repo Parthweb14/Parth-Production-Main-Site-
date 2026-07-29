@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
 import { vercelDb } from '@/utils/vercelDb';
-import { requireAdmin, safeErrorMessage } from '@/utils/auth';
+import { assertSameOrigin, requireAdmin, safeErrorMessage } from '@/utils/auth';
 
 export async function POST(request: Request) {
   try {
+    const originBlock = assertSameOrigin(request);
+    if (originBlock) return originBlock;
+
     const auth = await requireAdmin(request);
     if (!auth.ok) return auth.response;
 

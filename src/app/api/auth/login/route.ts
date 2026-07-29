@@ -29,6 +29,7 @@ export async function POST(request: Request) {
       lockAfter: 12,
       lockMs: 30 * 60 * 1000,
       identity: email,
+      failClosed: true,
     });
     if (!limited.ok) {
       if (limited.locked && captchaConfigured()) {

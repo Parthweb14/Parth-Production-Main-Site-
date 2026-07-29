@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
 import { vercelDb } from '@/utils/vercelDb';
 import {
+  ADMIN_COOKIE,
+  assertSameOrigin,
+  createSessionToken,
   hashPassword,
   passwordMeetsPolicy,
   PASSWORD_POLICY_MSG,
   requireAdmin,
   safeErrorMessage,
+  sessionCookieOptions,
   verifyOtp,
 } from '@/utils/auth';
 import { enforceRateLimit, rateLimitResponse } from '@/utils/rateLimit';
@@ -14,6 +18,9 @@ const GENERIC_FAIL = { error: 'Invalid or expired verification code.' };
 
 export async function POST(request: Request) {
   try {
+    const originBlock = assertSameOrigin(request);
+    if (originBlock) return originBlock;
+
     const auth = await requireAdmin(request);
     if (!auth.ok) return auth.response;
 
@@ -22,6 +29,7 @@ export async function POST(request: Request) {
       windowMs: 15 * 60 * 1000,
       lockAfter: 12,
       identity: auth.username,
+      failClosed: true,
     });
     if (!limited.ok) return rateLimitResponse(limited);
 
@@ -80,10 +88,20 @@ export async function POST(request: Request) {
 
     await vercelDb.setCredentials(credentials);
 
-    return NextResponse.json({
+    const token = await createSessionToken(
+      credentials.username,
+      credentials.credentialsVersion ?? 0
+    );
+    const response = NextResponse.json({
       success: true,
       resetCount: credentials.resetCount,
+      user: {
+        id: 'admin',
+        username: credentials.username,
+      },
     });
+    response.cookies.set(ADMIN_COOKIE, token, sessionCookieOptions());
+    return response;
   } catch (err: unknown) {
     console.error('Change credentials error:', err);
     return NextResponse.json({ error: safeErrorMessage(err) }, { status: 500 });

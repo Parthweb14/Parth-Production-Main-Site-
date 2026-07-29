@@ -29,8 +29,8 @@ export default function ResetPasswordPage() {
       setErrorMsg('Passwords do not match.');
       return;
     }
-    if (!newPassword) {
-      setErrorMsg('Password cannot be empty.');
+    if (!newPassword || newPassword.length < 8) {
+      setErrorMsg('Password must be at least 8 characters.');
       return;
     }
 

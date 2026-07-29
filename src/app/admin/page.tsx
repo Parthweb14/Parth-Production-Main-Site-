@@ -94,7 +94,7 @@ const DEFAULT_SERVICES: DBServiceImage[] = [
 
 export default function AdminPage() {
   const router = useRouter();
-  const { user, token, loading: authLoading, logout } = useAuth();
+  const { user, token, loading: authLoading, logout, login } = useAuth();
 
   // Navigation tabs state
   const [activeTab, setActiveTab] = useState<'gallery' | 'videos' | 'services' | 'vibrants' | 'settings'>('gallery');
@@ -210,8 +210,11 @@ export default function AdminPage() {
       setInitialVideos(videosAreUsable ? JSON.stringify(usableVideos) : '[]');
 
       if (data.settings) {
-        setSettings(data.settings);
-        setSettingsSnapshot(JSON.stringify(data.settings));
+        const incoming = { ...data.settings } as typeof settings & { smtp_pass_set?: boolean };
+        // API never returns smtp_pass — keep local blank unless user types a new one.
+        incoming.smtp_pass = '';
+        setSettings(incoming);
+        setSettingsSnapshot(JSON.stringify({ ...incoming, smtp_pass: '' }));
       }
 
       // Securely fetch admin credentials
@@ -793,8 +796,8 @@ export default function AdminPage() {
       setCredsChangeError('New passwords do not match.');
       return;
     }
-    if (!newPassword) {
-      setCredsChangeError('Password cannot be empty.');
+    if (!newPassword || newPassword.length < 8) {
+      setCredsChangeError('Password must be at least 8 characters.');
       return;
     }
     setCredsChangeLoading(true);
@@ -815,11 +818,14 @@ export default function AdminPage() {
         throw new Error(data.error || 'Failed to update credentials.');
       }
       alert('Success! Credentials updated successfully.');
+      if (data.user) login(null, data.user);
       setShowCredsModal(false);
       setCredsOtp('');
       setNewUsername('');
       setNewPassword('');
       setConfirmNewPassword('');
+      setAdminUsername(data.user?.username || newUsername);
+      setInitialAdminUsername(data.user?.username || newUsername);
       await fetchData();
     } catch (err: any) {
       setCredsChangeError(err.message);
@@ -1629,6 +1635,7 @@ export default function AdminPage() {
                         placeholder="•••••••• (leave blank to keep)"
                         value={settings.smtp_pass || ''}
                         onChange={(e) => setSettings({ ...settings, smtp_pass: e.target.value })}
+                        autoComplete="new-password"
                         className="w-full h-11 px-4 rounded-xl border border-white/10 bg-[#161926] text-sm text-white placeholder-zinc-600 focus:border-blue-500 focus:outline-none transition"
                       />
                     </div>

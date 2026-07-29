@@ -1,12 +1,10 @@
 import { SignJWT, jwtVerify } from 'jose';
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { vercelDb } from '@/utils/vercelDb';
 
 export {
   generateOtp,
-  generateResetToken,
   hashOtp,
   hashPassword,
   hashRecoveryKey,
@@ -108,28 +106,49 @@ export async function requireAdmin(request: Request | NextRequest): Promise<
       };
     }
   } catch {
-    /* if DB unavailable, fall through with JWT-only check */
+    return {
+      ok: false,
+      response: NextResponse.json({ error: 'Unable to verify session.' }, { status: 401 }),
+    };
   }
 
   return { ok: true, username: session.username };
 }
 
-export async function readServerSession(): Promise<{ username: string } | null> {
-  try {
-    const jar = await cookies();
-    const token = jar.get(COOKIE_NAME)?.value;
-    if (!token) return null;
-    return verifySessionToken(token);
-  } catch {
-    return null;
-  }
-}
-
-export function publicSettings<T extends Record<string, unknown>>(settings: T): Omit<T, 'smtp_pass' | 'smtp_user'> {
-  const safe = { ...settings } as T & { smtp_pass?: string; smtp_user?: string };
+/** Strip all SMTP / secret fields from public site settings payloads. */
+export function publicSettings<T extends Record<string, unknown>>(settings: T): Record<string, unknown> {
+  const safe = { ...settings } as Record<string, unknown>;
   delete safe.smtp_pass;
   delete safe.smtp_user;
+  delete safe.smtp_host;
+  delete safe.smtp_port;
+  delete safe.from_email;
   return safe;
+}
+
+/** Admin settings payload without echoing the raw SMTP password. */
+export function adminSettingsSafe<T extends Record<string, unknown>>(settings: T): Record<string, unknown> {
+  const safe = { ...settings } as Record<string, unknown>;
+  const hasPass = typeof safe.smtp_pass === 'string' && safe.smtp_pass.length > 0;
+  delete safe.smtp_pass;
+  safe.smtp_pass_set = hasPass;
+  return safe;
+}
+
+/** Reject cross-site POSTs for cookie-authenticated admin APIs. */
+export function assertSameOrigin(request: Request | NextRequest): NextResponse | null {
+  const origin = request.headers.get('origin');
+  const host = request.headers.get('host');
+  if (!origin || !host) return null; // non-browser / same-origin navigations without Origin
+  try {
+    const originHost = new URL(origin).host;
+    if (originHost !== host) {
+      return NextResponse.json({ error: 'Invalid request origin.' }, { status: 403 });
+    }
+  } catch {
+    return NextResponse.json({ error: 'Invalid request origin.' }, { status: 403 });
+  }
+  return null;
 }
 
 export function safeErrorMessage(err: unknown, fallback = 'Something went wrong.'): string {

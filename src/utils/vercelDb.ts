@@ -91,19 +91,15 @@ function randomBootstrapFallback(): string {
 }
 
 async function getValue(key: string, defaultValue: unknown): Promise<unknown> {
-  try {
-    const rs = await turso.execute({
-      sql: 'SELECT value FROM site_kv WHERE key = ?',
-      args: [key],
-    });
-    if (rs.rows.length > 0) {
-      return JSON.parse(rs.rows[0].value as string);
-    }
-    return defaultValue;
-  } catch (err) {
-    console.error(`Turso getValue error for key: ${key}`, err);
-    return defaultValue;
+  // Fail closed on DB/parse errors — never silently fall back to bootstrap secrets.
+  const rs = await turso.execute({
+    sql: 'SELECT value FROM site_kv WHERE key = ?',
+    args: [key],
+  });
+  if (rs.rows.length > 0) {
+    return JSON.parse(rs.rows[0].value as string);
   }
+  return defaultValue;
 }
 
 async function setValue(key: string, value: unknown): Promise<void> {
@@ -115,6 +111,7 @@ async function setValue(key: string, value: unknown): Promise<void> {
     });
   } catch (err) {
     console.error(`Turso setValue error for key: ${key}`, err);
+    throw err;
   }
 }
 
