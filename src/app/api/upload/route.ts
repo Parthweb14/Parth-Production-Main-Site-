@@ -6,7 +6,7 @@ import { execFileSync } from 'child_process';
 import os from 'os';
 import crypto from 'crypto';
 import fs from 'fs';
-import { requireAdmin, safeErrorMessage } from '@/utils/auth';
+import { assertSameOrigin, requireAdmin, safeErrorMessage } from '@/utils/auth';
 
 const ALLOWED_EXT = new Set([
   '.png',
@@ -18,6 +18,18 @@ const ALLOWED_EXT = new Set([
   '.webm',
   '.mov',
 ]);
+
+const EXT_CONTENT_TYPE: Record<string, string> = {
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.gif': 'image/gif',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
+  '.mov': 'video/quicktime',
+};
+
 const MAX_BYTES = 80 * 1024 * 1024;
 
 function getFFmpegPath() {
@@ -37,6 +49,9 @@ function safeKey(originalName: string): string {
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
+  const originBlock = assertSameOrigin(request);
+  if (originBlock) return originBlock;
+
   const auth = await requireAdmin(request);
   if (!auth.ok) return auth.response;
 
@@ -53,13 +68,19 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json({ error: 'File type not allowed.' }, { status: 400 });
     }
 
+    const contentLength = Number(request.headers.get('content-length') || '0');
+    if (contentLength > MAX_BYTES) {
+      return NextResponse.json({ error: 'File too large.' }, { status: 413 });
+    }
+
     const arrayBuffer = await request.arrayBuffer();
     let buffer: Buffer = Buffer.from(arrayBuffer);
     if (buffer.length > MAX_BYTES) {
       return NextResponse.json({ error: 'File too large.' }, { status: 413 });
     }
 
-    let contentType = request.headers.get('content-type') || 'application/octet-stream';
+    // Never trust client Content-Type — derive from allowlisted extension.
+    let contentType = EXT_CONTENT_TYPE[ext] || 'application/octet-stream';
     let objectKey = safeKey(rawName);
 
     // Optional image compression when sharp is available

@@ -25,7 +25,9 @@ export async function GET() {
       return res;
     }
   } catch {
-    /* ignore */
+    const res = NextResponse.json({ authenticated: false }, { status: 401 });
+    res.cookies.set(ADMIN_COOKIE, '', clearSessionCookieOptions());
+    return res;
   }
 
   return NextResponse.json({

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { vercelDb } from '@/utils/vercelDb';
-import { requireAdmin, safeErrorMessage } from '@/utils/auth';
+import { adminSettingsSafe, requireAdmin, safeErrorMessage } from '@/utils/auth';
 
 export async function GET(request: Request) {
   try {
@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     ]);
 
     return NextResponse.json({
-      settings,
+      settings: adminSettingsSafe(settings as unknown as Record<string, unknown>),
       images: [...images].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)),
       videos: [...videos].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)),
       services,

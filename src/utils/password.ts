@@ -20,7 +20,11 @@ function scryptKey(password: string, salt: string): Buffer {
 }
 
 function otpPepper(): string {
-  return process.env.ADMIN_SESSION_SECRET || process.env.ADMIN_RECOVERY_KEY || 'parth-otp-pepper';
+  const secret = process.env.ADMIN_SESSION_SECRET || process.env.ADMIN_RECOVERY_KEY;
+  if (!secret) {
+    throw new Error('ADMIN_SESSION_SECRET is required for secure OTP hashing.');
+  }
+  return secret;
 }
 
 /** Cached dummy hash so failed logins still pay full scrypt cost (anti-enumeration timing). */
@@ -149,11 +153,7 @@ export function verifyOtp(input: string, storedHash?: string | null): boolean {
   return timingSafeEqual(prev, next);
 }
 
-/** Long single-use reset token (for email links) — hash before storage. */
-export function generateResetToken(): string {
-  return randomBytes(32).toString('base64url');
-}
-
+/** Hash single-use reset tokens before storage. */
 export function hashResetToken(token: string): string {
   return createHmac('sha256', otpPepper()).update(String(token).trim()).digest('hex');
 }
@@ -167,7 +167,7 @@ export function verifyResetToken(input: string, storedHash?: string | null): boo
 }
 
 export function passwordMeetsPolicy(password: string): boolean {
-  return typeof password === 'string' && password.length >= 1;
+  return typeof password === 'string' && password.length >= 8;
 }
 
-export const PASSWORD_POLICY_MSG = 'Password cannot be empty.';
+export const PASSWORD_POLICY_MSG = 'Password must be at least 8 characters.';

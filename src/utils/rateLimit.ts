@@ -21,21 +21,25 @@ function bucketKey(scope: string, id: string): string {
   return `rl_${scope}_${hash}`;
 }
 
-async function readBucket(key: string): Promise<Bucket> {
+async function readBucket(key: string, failClosed = false): Promise<Bucket | null> {
   try {
     const raw = (await vercelDb.getRateLimit(key)) as Bucket | null;
     if (!raw || typeof raw !== 'object') return { count: 0, resetAt: 0 };
     return raw;
-  } catch {
+  } catch (err) {
+    console.error('rateLimit read failed', err);
+    if (failClosed) return null;
     return { count: 0, resetAt: 0 };
   }
 }
 
-async function writeBucket(key: string, bucket: Bucket): Promise<void> {
+async function writeBucket(key: string, bucket: Bucket, failClosed = false): Promise<boolean> {
   try {
     await vercelDb.setRateLimit(key, bucket);
+    return true;
   } catch (err) {
     console.error('rateLimit write failed', err);
+    return !failClosed;
   }
 }
 
@@ -56,13 +60,19 @@ export async function enforceRateLimit(
     lockAfter?: number;
     lockMs?: number;
     identity?: string;
+    /** When true, storage errors deny the request instead of allowing it through. */
+    failClosed?: boolean;
   }
 ): Promise<RateLimitResult> {
+  const failClosed = Boolean(opts.failClosed);
   const ip = clientIp(request);
   const id = opts.identity ? `${ip}:${opts.identity.toLowerCase()}` : ip;
   const key = bucketKey(scope, id);
   const now = Date.now();
-  const bucket = await readBucket(key);
+  const bucket = await readBucket(key, failClosed);
+  if (!bucket) {
+    return { ok: false, retryAfterSec: 30, locked: false };
+  }
 
   if (bucket.lockedUntil && bucket.lockedUntil > now) {
     return {
@@ -83,7 +93,8 @@ export async function enforceRateLimit(
   const lockAfter = opts.lockAfter ?? opts.limit;
   if (bucket.count > lockAfter) {
     bucket.lockedUntil = now + (opts.lockMs ?? 15 * 60 * 1000);
-    await writeBucket(key, bucket);
+    const wrote = await writeBucket(key, bucket, failClosed);
+    if (!wrote) return { ok: false, retryAfterSec: 30, locked: false };
     return {
       ok: false,
       retryAfterSec: Math.ceil((bucket.lockedUntil - now) / 1000),
@@ -91,7 +102,8 @@ export async function enforceRateLimit(
     };
   }
 
-  await writeBucket(key, bucket);
+  const wrote = await writeBucket(key, bucket, failClosed);
+  if (!wrote) return { ok: false, retryAfterSec: 30, locked: false };
 
   if (bucket.count > opts.limit) {
     return {

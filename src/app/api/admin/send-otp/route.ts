@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import { vercelDb } from '@/utils/vercelDb';
-import { generateOtp, hashOtp, requireAdmin, safeErrorMessage } from '@/utils/auth';
+import { generateOtp, hashOtp, assertSameOrigin, requireAdmin, safeErrorMessage } from '@/utils/auth';
 import { enforceRateLimit, rateLimitResponse } from '@/utils/rateLimit';
+import { assertSafeSmtpHost, assertSafeSmtpPort } from '@/utils/smtpSafety';
 
 export async function POST(req: Request) {
   try {
+    const originBlock = assertSameOrigin(req);
+    if (originBlock) return originBlock;
+
     const auth = await requireAdmin(req);
     if (!auth.ok) return auth.response;
 
@@ -15,14 +19,15 @@ export async function POST(req: Request) {
       lockAfter: 8,
       lockMs: 60 * 60 * 1000,
       identity: auth.username,
+      failClosed: true,
     });
     if (!limited.ok) return rateLimitResponse(limited);
 
     const creds = await vercelDb.getCredentials();
     const settings = await vercelDb.getSettings();
 
-    const host = settings.smtp_host || 'smtp-relay.brevo.com';
-    const port = parseInt(settings.smtp_port || '587', 10);
+    const host = await assertSafeSmtpHost(settings.smtp_host || 'smtp-relay.brevo.com');
+    const port = assertSafeSmtpPort(parseInt(settings.smtp_port || '587', 10));
     const user = settings.smtp_user;
     const pass = settings.smtp_pass;
     const recipientEmail = settings.from_email || settings.email;
