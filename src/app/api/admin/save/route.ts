@@ -3,6 +3,7 @@ import { vercelDb } from '@/utils/vercelDb';
 import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { s3 } from '@/utils/s3';
 import { assertSameOrigin, requireAdmin, safeErrorMessage } from '@/utils/auth';
+import { assertSafeSmtpHost } from '@/utils/smtpSafety';
 
 async function deleteFromR2(url: string) {
   try {
@@ -41,6 +42,9 @@ export async function POST(request: Request) {
         next.smtp_pass = current.smtp_pass || '';
       }
       delete next.smtp_pass_set;
+      if (next.smtp_host) {
+        next.smtp_host = await assertSafeSmtpHost(String(next.smtp_host));
+      }
       await vercelDb.setSettings(next);
     }
     if (images) await vercelDb.setImages(images);

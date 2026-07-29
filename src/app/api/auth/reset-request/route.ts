@@ -8,6 +8,7 @@ import {
 } from '@/utils/auth';
 import { enforceRateLimit, rateLimitResponse } from '@/utils/rateLimit';
 import { captchaConfigured, verifyCaptchaToken } from '@/utils/captcha';
+import { assertSafeSmtpHost } from '@/utils/smtpSafety';
 
 /** Identical wording whether or not the account exists. */
 const GENERIC = { success: true, message: 'If that account exists, a reset code was sent.' };
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
     const isEmailMatch = email ? candidates.includes(normalizeIdentity(email)) : false;
 
     if (isEmailMatch) {
-      const host = settings.smtp_host || 'smtp-relay.brevo.com';
+      const host = await assertSafeSmtpHost(settings.smtp_host || 'smtp-relay.brevo.com');
       const port = parseInt(settings.smtp_port || '587', 10);
       const user = settings.smtp_user;
       const pass = settings.smtp_pass;

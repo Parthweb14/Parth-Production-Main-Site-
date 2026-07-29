@@ -3,6 +3,7 @@ import nodemailer from 'nodemailer';
 import { vercelDb } from '@/utils/vercelDb';
 import { generateOtp, hashOtp, assertSameOrigin, requireAdmin, safeErrorMessage } from '@/utils/auth';
 import { enforceRateLimit, rateLimitResponse } from '@/utils/rateLimit';
+import { assertSafeSmtpHost } from '@/utils/smtpSafety';
 
 export async function POST(req: Request) {
   try {
@@ -25,7 +26,7 @@ export async function POST(req: Request) {
     const creds = await vercelDb.getCredentials();
     const settings = await vercelDb.getSettings();
 
-    const host = settings.smtp_host || 'smtp-relay.brevo.com';
+    const host = await assertSafeSmtpHost(settings.smtp_host || 'smtp-relay.brevo.com');
     const port = parseInt(settings.smtp_port || '587', 10);
     const user = settings.smtp_user;
     const pass = settings.smtp_pass;

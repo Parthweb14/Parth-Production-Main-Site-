@@ -29,6 +29,20 @@ export async function middleware(request: NextRequest) {
     if (payload.role !== 'admin') {
       return NextResponse.redirect(new URL('/admin/login', request.url));
     }
+
+    // Enforce credentialsVersion via existing session API (fail closed).
+    const sessionUrl = new URL('/api/auth/session', request.nextUrl.origin);
+    const sessionRes = await fetch(sessionUrl, {
+      headers: {
+        cookie: request.headers.get('cookie') || '',
+      },
+      cache: 'no-store',
+    });
+    if (!sessionRes.ok) {
+      const res = NextResponse.redirect(new URL('/admin/login', request.url));
+      res.cookies.set('admin_token', '', { path: '/', maxAge: 0 });
+      return res;
+    }
   } catch {
     const res = NextResponse.redirect(new URL('/admin/login', request.url));
     res.cookies.set('admin_token', '', { path: '/', maxAge: 0 });

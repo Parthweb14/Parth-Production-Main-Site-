@@ -1,5 +1,5 @@
 const { createClient } = require('@libsql/client');
-const { createHash, randomBytes, scryptSync } = require('crypto');
+const { randomBytes, scryptSync } = require('crypto');
 
 const url = process.env.TURSO_DATABASE_URL;
 const authToken = process.env.TURSO_AUTH_TOKEN;
@@ -10,14 +10,20 @@ if (!url || !authToken) {
 
 const client = createClient({ url, authToken });
 
+/** Must match src/utils/password.ts (N=32768, r=8, p=1). */
+const SCRYPT_OPTS = { N: 32768, r: 8, p: 1, maxmem: 64 * 1024 * 1024 };
+
 function hashPassword(password) {
   const salt = randomBytes(16).toString('hex');
-  const hash = scryptSync(password, salt, 64).toString('hex');
+  const hash = scryptSync(password, salt, 64, SCRYPT_OPTS).toString('hex');
   return `scrypt$${salt}$${hash}`;
 }
 
 function hashRecoveryKey(key) {
-  return createHash('sha256').update(key.trim().toLowerCase()).digest('hex');
+  const normalized = String(key).trim().toLowerCase();
+  const salt = randomBytes(16).toString('hex');
+  const hash = scryptSync(normalized, salt, 64, SCRYPT_OPTS).toString('hex');
+  return `scryptrk$${salt}$${hash}`;
 }
 
 const DEFAULT_SETTINGS = {
