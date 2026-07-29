@@ -1,12 +1,10 @@
 import { SignJWT, jwtVerify } from 'jose';
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { vercelDb } from '@/utils/vercelDb';
 
 export {
   generateOtp,
-  generateResetToken,
   hashOtp,
   hashPassword,
   hashRecoveryKey,
@@ -115,17 +113,6 @@ export async function requireAdmin(request: Request | NextRequest): Promise<
   }
 
   return { ok: true, username: session.username };
-}
-
-export async function readServerSession(): Promise<{ username: string } | null> {
-  try {
-    const jar = await cookies();
-    const token = jar.get(COOKIE_NAME)?.value;
-    if (!token) return null;
-    return verifySessionToken(token);
-  } catch {
-    return null;
-  }
 }
 
 /** Strip all SMTP / secret fields from public site settings payloads. */

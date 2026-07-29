@@ -36,7 +36,6 @@ export function resolveVideoSrc(pathOrUrl: string, fallback = ''): string {
 }
 
 export const HERO_VIDEO = `${ASSET_BASE}/Hero%20Background%20video%20-%20Trim.mp4`;
-export const LOGO_JSON = '/Parth Logo .json';
 export const LOGO_PNG = '/Parth logo .png';
 export const OWNER_IMAGE = `${ASSET_BASE}/Owner.png`;
 

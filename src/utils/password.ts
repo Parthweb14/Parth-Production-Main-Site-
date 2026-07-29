@@ -153,11 +153,7 @@ export function verifyOtp(input: string, storedHash?: string | null): boolean {
   return timingSafeEqual(prev, next);
 }
 
-/** Long single-use reset token (for email links) — hash before storage. */
-export function generateResetToken(): string {
-  return randomBytes(32).toString('base64url');
-}
-
+/** Hash single-use reset tokens before storage. */
 export function hashResetToken(token: string): string {
   return createHmac('sha256', otpPepper()).update(String(token).trim()).digest('hex');
 }

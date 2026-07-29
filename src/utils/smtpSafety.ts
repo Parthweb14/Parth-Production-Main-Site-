@@ -8,6 +8,8 @@ const BLOCKED_HOSTNAMES = new Set([
   'metadata',
 ]);
 
+const ALLOWED_SMTP_PORTS = new Set([25, 465, 587, 2525]);
+
 function isPrivateIp(ip: string): boolean {
   if (ip === '::1' || ip === '0:0:0:0:0:0:0:1') return true;
   if (ip.startsWith('fe80:') || ip.startsWith('fc') || ip.startsWith('fd')) return true;
@@ -25,6 +27,13 @@ function isPrivateIp(ip: string): boolean {
   if (a === 192 && b === 168) return true;
   if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT
   return false;
+}
+
+export function assertSafeSmtpPort(port: number): number {
+  if (!Number.isInteger(port) || !ALLOWED_SMTP_PORTS.has(port)) {
+    throw new Error('SMTP port is not allowed.');
+  }
+  return port;
 }
 
 /**

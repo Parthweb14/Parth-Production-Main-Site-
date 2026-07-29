@@ -10,6 +10,14 @@ function secretKey() {
   return new TextEncoder().encode(secret);
 }
 
+function sessionCheckBase(request: NextRequest): string {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL;
+  if (configured) {
+    return configured.startsWith('http') ? configured : `https://${configured}`;
+  }
+  return request.nextUrl.origin;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -30,8 +38,8 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/admin/login', request.url));
     }
 
-    // Enforce credentialsVersion via existing session API (fail closed).
-    const sessionUrl = new URL('/api/auth/session', request.nextUrl.origin);
+    // Enforce credentialsVersion via session API (fail closed). Prefer configured site URL over Host header.
+    const sessionUrl = new URL('/api/auth/session', sessionCheckBase(request));
     const sessionRes = await fetch(sessionUrl, {
       headers: {
         cookie: request.headers.get('cookie') || '',

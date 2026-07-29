@@ -3,7 +3,7 @@ import nodemailer from 'nodemailer';
 import { vercelDb } from '@/utils/vercelDb';
 import { assertSameOrigin, requireAdmin, safeErrorMessage } from '@/utils/auth';
 import { enforceRateLimit, rateLimitResponse } from '@/utils/rateLimit';
-import { assertSafeSmtpHost } from '@/utils/smtpSafety';
+import { assertSafeSmtpHost, assertSafeSmtpPort } from '@/utils/smtpSafety';
 
 export async function POST(req: Request) {
   try {
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     const settings = await vercelDb.getSettings();
     const rawHost = body.smtp_host || settings.smtp_host || 'smtp-relay.brevo.com';
     const host = await assertSafeSmtpHost(String(rawHost));
-    const port = parseInt(body.smtp_port || settings.smtp_port || '587', 10);
+    const port = assertSafeSmtpPort(parseInt(body.smtp_port || settings.smtp_port || '587', 10));
     const user = body.smtp_user || settings.smtp_user;
     const pass =
       (typeof body.smtp_pass === 'string' && body.smtp_pass.trim()

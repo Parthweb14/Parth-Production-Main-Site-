@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { vercelDb } from '@/utils/vercelDb';
-import { adminSettingsSafe, assertSameOrigin, requireAdmin, safeErrorMessage } from '@/utils/auth';
+import { adminSettingsSafe, requireAdmin, safeErrorMessage } from '@/utils/auth';
 
 export async function GET(request: Request) {
   try {
