@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import { vercelDb } from '@/utils/vercelDb';
-import { generateOtp, hashOtp, requireAdmin, safeErrorMessage } from '@/utils/auth';
+import { generateOtp, hashOtp, assertSameOrigin, requireAdmin, safeErrorMessage } from '@/utils/auth';
 import { enforceRateLimit, rateLimitResponse } from '@/utils/rateLimit';
 
 export async function POST(req: Request) {
   try {
+    const originBlock = assertSameOrigin(req);
+    if (originBlock) return originBlock;
+
     const auth = await requireAdmin(req);
     if (!auth.ok) return auth.response;
 
@@ -15,6 +18,7 @@ export async function POST(req: Request) {
       lockAfter: 8,
       lockMs: 60 * 60 * 1000,
       identity: auth.username,
+      failClosed: true,
     });
     if (!limited.ok) return rateLimitResponse(limited);
 

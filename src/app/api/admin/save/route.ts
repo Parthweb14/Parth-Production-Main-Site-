@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { vercelDb } from '@/utils/vercelDb';
 import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { s3 } from '@/utils/s3';
-import { requireAdmin, safeErrorMessage } from '@/utils/auth';
+import { assertSameOrigin, requireAdmin, safeErrorMessage } from '@/utils/auth';
 
 async function deleteFromR2(url: string) {
   try {
@@ -25,12 +25,24 @@ async function deleteFromR2(url: string) {
 
 export async function POST(request: Request) {
   try {
+    const originBlock = assertSameOrigin(request);
+    if (originBlock) return originBlock;
+
     const auth = await requireAdmin(request);
     if (!auth.ok) return auth.response;
 
     const { settings, images, videos, serviceImages, vibrants, deletedUrls } = await request.json();
 
-    if (settings) await vercelDb.setSettings(settings);
+    if (settings) {
+      const current = await vercelDb.getSettings();
+      const next = { ...settings };
+      // Blank SMTP password means "keep existing" — never wipe secrets accidentally.
+      if (!next.smtp_pass) {
+        next.smtp_pass = current.smtp_pass || '';
+      }
+      delete next.smtp_pass_set;
+      await vercelDb.setSettings(next);
+    }
     if (images) await vercelDb.setImages(images);
     if (videos) await vercelDb.setVideos(videos);
     if (serviceImages) await vercelDb.setServices(serviceImages);

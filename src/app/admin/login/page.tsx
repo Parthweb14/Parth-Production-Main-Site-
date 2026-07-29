@@ -81,8 +81,8 @@ export default function AdminLoginPage() {
       setForgotError('Passwords do not match.');
       return;
     }
-    if (!newPassword) {
-      setForgotError('Password cannot be empty.');
+    if (!newPassword || newPassword.length < 8) {
+      setForgotError('Password must be at least 8 characters.');
       return;
     }
     setForgotLoading(true);

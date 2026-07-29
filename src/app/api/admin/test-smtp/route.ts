@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import { vercelDb } from '@/utils/vercelDb';
-import { requireAdmin, safeErrorMessage } from '@/utils/auth';
+import { assertSameOrigin, requireAdmin, safeErrorMessage } from '@/utils/auth';
 
 export async function POST(req: Request) {
   try {
+    const originBlock = assertSameOrigin(req);
+    if (originBlock) return originBlock;
+
     const auth = await requireAdmin(req);
     if (!auth.ok) return auth.response;
 
@@ -18,7 +21,11 @@ export async function POST(req: Request) {
     const host = body.smtp_host || settings.smtp_host || 'smtp-relay.brevo.com';
     const port = parseInt(body.smtp_port || settings.smtp_port || '587', 10);
     const user = body.smtp_user || settings.smtp_user;
-    const pass = body.smtp_pass || settings.smtp_pass;
+    // Prefer newly typed password; otherwise use the stored server secret (never required from client).
+    const pass =
+      (typeof body.smtp_pass === 'string' && body.smtp_pass.trim()
+        ? body.smtp_pass
+        : settings.smtp_pass) || '';
     const from = body.from_email || settings.from_email || settings.email;
 
     if (!user || !pass || !from) {
