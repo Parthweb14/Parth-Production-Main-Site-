@@ -11,7 +11,10 @@ import { STAGE_IMAGES } from '@/utils/media';
 
 export default function ContactPage() {
   const { siteSettings } = useAuth();
-  const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
+  const whatsapp = (siteSettings.phone_1 || '').replace(/\D/g, '');
+  const call = (siteSettings.phone_2 || '').replace(/\D/g, '');
+  const whatsappUrl = `https://wa.me/91${whatsapp}`;
+  const callUrl = `tel:+91${call}`;
   const address = siteSettings.address || 'Gaurav Path Road, Palanpur, Surat, Gujarat';
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 
@@ -20,11 +23,19 @@ export default function ContactPage() {
 
   const channels = [
     {
-      label: 'Phone',
-      href: `tel:+91${siteSettings.phone_1}`,
+      label: 'WhatsApp',
+      href: whatsappUrl,
+      icon: MessageCircle,
+      primary: `+91 ${whatsapp}`,
+      secondary: 'Tap to open WhatsApp chat',
+      external: true,
+    },
+    {
+      label: 'Calling',
+      href: callUrl,
       icon: Phone,
-      primary: `+91 ${siteSettings.phone_1}`,
-      secondary: siteSettings.phone_2 ? `+91 ${siteSettings.phone_2}` : 'Tap to call the crew',
+      primary: `+91 ${call}`,
+      secondary: 'Tap to call the crew',
       external: false,
     },
     {
@@ -86,16 +97,25 @@ export default function ContactPage() {
                 Send your date, city, guest count, and preferred vibe. We&apos;ll lock a production
                 plan for sound, light, and stage.
               </p>
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="cta-book-btn mt-8 inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-xs font-bold uppercase tracking-[0.14em] text-white transition-all hover:scale-[1.03]"
-              >
-                <MessageCircle className="h-4 w-4" />
-                Start WhatsApp chat
-                <ArrowUpRight className="h-4 w-4" />
-              </a>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cta-book-btn inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-xs font-bold uppercase tracking-[0.14em] text-white transition-all hover:scale-[1.03]"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  WhatsApp {whatsapp}
+                  <ArrowUpRight className="h-4 w-4" />
+                </a>
+                <a
+                  href={callUrl}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/20 px-6 py-3.5 text-xs font-bold uppercase tracking-[0.14em] text-white transition-all hover:border-[#3A8FB8]/50 hover:bg-white/5"
+                >
+                  <Phone className="h-4 w-4" />
+                  Call {call}
+                </a>
+              </div>
 
               <div className="mt-8 grid grid-cols-2 gap-3">
                 <div className="rounded-2xl border border-white/10 bg-black/40 p-4">

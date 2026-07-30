@@ -5,16 +5,17 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { SHOW_VIDEOS, resolveVideoSrc } from '@/utils/media';
 import MediaLightbox, { type LightboxMedia } from '@/components/MediaLightbox';
+import OptimizedVideo from '@/components/OptimizedVideo';
 
 type Clip = { title: string; src: string };
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-/** Continuous cinema-lane drift — slower/smoother than stage gallery */
-const SPEED = 0.26;
-const EASE_TO_TARGET = 5.2;
-const FADE_START = 2.4;
-const FADE_END = 3.2;
+/** Constant cards-per-second — same for all 6 clips, every device */
+const AUTO_SPEED = 0.28;
+const SNAP_LERP = 10;
+const FADE_START = 2.2;
+const FADE_END = 2.85;
 
 function wrapOffset(offset: number, total: number) {
   let o = ((offset % total) + total) % total;
@@ -36,26 +37,17 @@ function edgeFade(abs: number) {
   return 1 - t * t * (3 - 2 * t);
 }
 
-/**
- * Cinema spotlight lane — different from stage gallery's circular arc.
- * Perspective aisle (rotateY + depth), soft center lift, gentle float.
- */
-function laneTransform(offset: number, isMobile: boolean, progress: number) {
+/** Flat horizontal lane — no sine float / deep 3D (those cause jitter) */
+function laneTransform(offset: number, isMobile: boolean) {
   const abs = Math.abs(offset);
-  const spacing = isMobile ? 248 : 360;
-  const depth = isMobile ? 105 : 155;
-
+  const spacing = isMobile ? 236 : 340;
   const x = offset * spacing;
-  const float = Math.sin(offset * 1.05 + progress * 1.15) * (isMobile ? 4 : 8);
-  const y = abs * abs * (isMobile ? 3 : 5.5) + float;
-  const rotateY = offset * (isMobile ? -14 : -16);
-  const scale = 1 - Math.min(abs, 2.5) * (isMobile ? 0.045 : 0.055);
-  const z = -abs * depth;
-  const opacity = 0.22 + 0.78 * edgeFade(abs);
+  const y = abs * abs * (isMobile ? 2 : 4);
+  const scale = 1 - Math.min(abs, 2.2) * (isMobile ? 0.035 : 0.045);
+  const opacity = 0.28 + 0.72 * edgeFade(abs);
   const zIndex = Math.round(40 - abs * 10);
-  const brightness = 1 - Math.min(abs, 2) * 0.18;
-
-  return { x, y, rotateY, scale, z, opacity, zIndex, brightness };
+  const brightness = 1 - Math.min(abs, 2) * 0.14;
+  return { x, y, scale, opacity, zIndex, brightness };
 }
 
 export default function VideoShowcaseCarousel() {
@@ -71,8 +63,15 @@ export default function VideoShowcaseCarousel() {
   const rafRef = useRef<number | null>(null);
   const lastTs = useRef<number | null>(null);
   const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
-  const pointerStart = useRef<{ x: number; y: number; id: number } | null>(null);
+  const dragRef = useRef<{
+    active: boolean;
+    startX: number;
+    startProgress: number;
+    moved: boolean;
+    pointerId: number;
+  } | null>(null);
   const resumeTimer = useRef<number | null>(null);
+  const spacing = isMobile ? 236 : 340;
   const total = clips.length;
 
   const clearResumeTimer = useCallback(() => {
@@ -83,7 +82,7 @@ export default function VideoShowcaseCarousel() {
   }, []);
 
   const scheduleResume = useCallback(
-    (ms = 900) => {
+    (ms = 1600) => {
       clearResumeTimer();
       resumeTimer.current = window.setTimeout(() => {
         setPaused(false);
@@ -130,32 +129,32 @@ export default function VideoShowcaseCarousel() {
     pausedRef.current = paused || Boolean(lightbox);
   }, [paused, lightbox]);
 
-  useEffect(() => {
-    return () => clearResumeTimer();
-  }, [clearResumeTimer]);
+  useEffect(() => () => clearResumeTimer(), [clearResumeTimer]);
 
+  // Constant-speed RAF loop — fixed dt clamp, no velocity fling jitter
   useEffect(() => {
     if (reduceMotion || total < 2) return;
 
     const tick = (ts: number) => {
       if (lastTs.current == null) lastTs.current = ts;
-      const dt = Math.min(0.05, (ts - lastTs.current) / 1000);
+      // Cap dt so background tabs / jank don't cause jumps
+      const dt = Math.min(0.033, (ts - lastTs.current) / 1000);
       lastTs.current = ts;
 
-      if (!document.hidden) {
+      if (!document.hidden && !dragRef.current?.active) {
         if (targetRef.current != null) {
           const current = progressRef.current;
           const target = targetRef.current;
           const diff = shortestDiff(current, target, total);
-          if (Math.abs(diff) < 0.008) {
+          if (Math.abs(diff) < 0.003) {
             progressRef.current = ((target % total) + total) % total;
             targetRef.current = null;
           } else {
-            const step = diff * Math.min(1, EASE_TO_TARGET * dt);
-            progressRef.current = (current + step + total) % total;
+            progressRef.current = (current + diff * Math.min(1, SNAP_LERP * dt) + total) % total;
           }
         } else if (!pausedRef.current) {
-          progressRef.current = (progressRef.current + SPEED * dt) % total;
+          // Constant speed for every card
+          progressRef.current = (progressRef.current + AUTO_SPEED * dt) % total;
         }
         setProgress(progressRef.current);
       }
@@ -174,7 +173,7 @@ export default function VideoShowcaseCarousel() {
     if (total === 0) return;
     videoRefs.current.forEach((video, index) => {
       const offset = Math.abs(wrapOffset(index - progress, total));
-      if (offset < 0.9) {
+      if (offset < 0.95) {
         void video.play().catch(() => undefined);
       } else {
         video.pause();
@@ -195,8 +194,7 @@ export default function VideoShowcaseCarousel() {
   const nudge = useCallback(
     (dir: -1 | 1) => {
       if (total < 2) return;
-      const nearest = Math.round(progressRef.current);
-      goTo(nearest + dir);
+      goTo(Math.round(progressRef.current) + dir);
     },
     [goTo, total]
   );
@@ -213,72 +211,66 @@ export default function VideoShowcaseCarousel() {
 
   const closeLightbox = useCallback(() => setLightbox(null), []);
 
-  // Pointer-based tap detection — reliable on iOS/Android (click often fails on 3D transforms)
-  const onStagePointerDown = (e: React.PointerEvent) => {
-    // Keep autoplay running on hover / mouse down — only track pointer for tap/swipe.
-    pointerStart.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
-  };
-
-  const onStagePointerUp = (e: React.PointerEvent) => {
-    const start = pointerStart.current;
-    pointerStart.current = null;
-    if (!start || start.id !== e.pointerId) {
-      scheduleResume(200);
-      return;
-    }
-    const dx = e.clientX - start.x;
-    const dy = e.clientY - start.y;
-    const dist = Math.hypot(dx, dy);
-
-    if (dist > 36) {
-      // Horizontal swipe → nudge; vertical scroll → ignore (page scroll)
-      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 36) {
-        setPaused(true);
-        nudge(dx < 0 ? 1 : -1);
-        scheduleResume(1600);
-        return;
-      }
-      scheduleResume(120);
-      return;
-    }
-
-    scheduleResume(200);
-  };
-
-  const onCardPointerUp = (e: React.PointerEvent, clip: Clip, index: number) => {
-    e.stopPropagation();
-    const start = pointerStart.current;
-    pointerStart.current = null;
-    if (!start) {
-      openClip(clip, index);
-      return;
-    }
-    const dx = e.clientX - start.x;
-    const dy = e.clientY - start.y;
-    const dist = Math.hypot(dx, dy);
-    if (dist <= 36) {
-      openClip(clip, index);
-      scheduleResume(400);
-    } else if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 36) {
-      setPaused(true);
-      nudge(dx < 0 ? 1 : -1);
-      scheduleResume(1600);
-    } else {
-      scheduleResume(120);
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    clearResumeTimer();
+    setPaused(true);
+    targetRef.current = null;
+    dragRef.current = {
+      active: true,
+      startX: e.clientX,
+      startProgress: progressRef.current,
+      moved: false,
+      pointerId: e.pointerId,
+    };
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      /* ignore */
     }
   };
 
-  const cardW = isMobile ? 248 : 340;
+  const onPointerMove = (e: React.PointerEvent) => {
+    const drag = dragRef.current;
+    if (!drag?.active || drag.pointerId !== e.pointerId) return;
+    const dx = e.clientX - drag.startX;
+    if (Math.abs(dx) > 6) drag.moved = true;
+    const deltaCards = -dx / spacing;
+    progressRef.current = (drag.startProgress + deltaCards + total * 8) % total;
+    setProgress(progressRef.current);
+  };
+
+  const endDrag = (e: React.PointerEvent, clip?: Clip, index?: number) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== e.pointerId) return;
+    drag.active = false;
+    dragRef.current = null;
+
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {
+      /* ignore */
+    }
+
+    if (!drag.moved) {
+      if (clip != null && index != null) openClip(clip, index);
+      scheduleResume(500);
+      return;
+    }
+
+    // Settle to nearest card at constant lerp — no fling jitter
+    const nearest = Math.round(progressRef.current);
+    targetRef.current = ((nearest % total) + total) % total;
+    scheduleResume(1800);
+  };
+
+  const cardW = isMobile ? 236 : 320;
 
   return (
     <section className="relative isolate overflow-x-clip border-b border-white/10 bg-black py-14 sm:py-16 md:py-24">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-[48%] mx-auto h-[45%] max-w-5xl rounded-full bg-[#3A8FB8]/12 blur-[120px]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#3A8FB8]/40 to-transparent"
       />
 
       <div className="relative z-20 mx-auto mb-8 max-w-7xl px-4 sm:mb-10 sm:px-6 md:mb-12 md:px-8">
@@ -309,28 +301,13 @@ export default function VideoShowcaseCarousel() {
 
       <div
         className="relative z-10 mx-auto w-full max-w-7xl px-1 sm:px-4 md:px-8"
-        onPointerDown={onStagePointerDown}
-        onPointerUp={onStagePointerUp}
-        onPointerCancel={() => {
-          pointerStart.current = null;
-          scheduleResume(80);
-        }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={(e) => endDrag(e)}
+        onPointerCancel={(e) => endDrag(e)}
         style={{ touchAction: 'pan-y' }}
       >
-        {/* Film-frame marks */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-4 top-3 z-20 hidden h-3 items-center justify-between sm:flex md:inset-x-10"
-        >
-          {Array.from({ length: 18 }).map((_, i) => (
-            <span key={i} className="h-2 w-2 rounded-[2px] bg-white/15" />
-          ))}
-        </div>
-
-        <div
-          className="relative mx-auto h-[560px] w-full overflow-hidden touch-pan-y sm:h-[580px] md:h-[720px]"
-          style={{ perspective: isMobile ? '1100px' : '1700px' }}
-        >
+        <div className="relative mx-auto h-[540px] w-full overflow-hidden touch-pan-y sm:h-[580px] md:h-[680px]">
           <div
             aria-hidden
             className="pointer-events-none absolute inset-y-0 left-0 z-30 w-6 bg-gradient-to-r from-black via-black/75 to-transparent sm:w-14 md:w-24"
@@ -340,15 +317,12 @@ export default function VideoShowcaseCarousel() {
             className="pointer-events-none absolute inset-y-0 right-0 z-30 w-6 bg-gradient-to-l from-black via-black/75 to-transparent sm:w-14 md:w-24"
           />
 
-          <div
-            className="absolute inset-0 flex items-center justify-center"
-            style={{ transformStyle: 'preserve-3d' }}
-          >
+          <div className="absolute inset-0 flex items-center justify-center">
             {clips.map((clip, i) => {
               const offset = wrapOffset(i - progress, total);
               if (Math.abs(offset) > FADE_END) return null;
 
-              const t = laneTransform(offset, isMobile, progress);
+              const t = laneTransform(offset, isMobile);
               const isCenter = i === activeIndex;
 
               return (
@@ -357,24 +331,30 @@ export default function VideoShowcaseCarousel() {
                   role="button"
                   tabIndex={0}
                   aria-label={`Open ${clip.title} video`}
-                  className="absolute left-1/2 top-1/2 aspect-[9/16] cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-black shadow-[0_32px_70px_rgba(0,0,0,0.6)] will-change-transform touch-manipulation sm:rounded-3xl"
+                  className="absolute left-1/2 top-1/2 aspect-[9/16] cursor-grab overflow-hidden rounded-2xl border border-white/10 bg-black shadow-[0_28px_60px_rgba(0,0,0,0.55)] will-change-transform touch-manipulation active:cursor-grabbing sm:rounded-3xl"
                   style={{
                     width: cardW,
                     marginLeft: -cardW / 2,
-                    marginTop: isMobile ? -222 : -304,
-                    transformStyle: 'preserve-3d',
+                    marginTop: isMobile ? -210 : -290,
                     zIndex: t.zIndex,
                     opacity: t.opacity,
-                    transform: `translate3d(${t.x}px, ${t.y}px, ${t.z}px) rotateY(${t.rotateY}deg) scale(${t.scale})`,
+                    transform: `translate3d(${t.x}px, ${t.y}px, 0) scale(${t.scale})`,
                   }}
                   onPointerDown={(e) => {
                     e.stopPropagation();
-                    pointerStart.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
+                    onPointerDown(e);
                   }}
-                  onPointerUp={(e) => onCardPointerUp(e, clip, i)}
-                  onPointerCancel={() => {
-                    pointerStart.current = null;
-                    scheduleResume(80);
+                  onPointerMove={(e) => {
+                    e.stopPropagation();
+                    onPointerMove(e);
+                  }}
+                  onPointerUp={(e) => {
+                    e.stopPropagation();
+                    endDrag(e, clip, i);
+                  }}
+                  onPointerCancel={(e) => {
+                    e.stopPropagation();
+                    endDrag(e);
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
@@ -384,7 +364,7 @@ export default function VideoShowcaseCarousel() {
                   }}
                   aria-current={isCenter ? 'true' : undefined}
                 >
-                  <video
+                  <OptimizedVideo
                     ref={(el) => {
                       if (el) videoRefs.current.set(i, el);
                       else videoRefs.current.delete(i);
@@ -393,7 +373,8 @@ export default function VideoShowcaseCarousel() {
                     muted
                     loop
                     playsInline
-                    preload="metadata"
+                    preload={Math.abs(offset) < 1.2 ? 'auto' : 'metadata'}
+                    mp4Only
                     className="pointer-events-none absolute inset-0 h-full w-full object-cover"
                     style={{ filter: `brightness(${t.brightness})` }}
                   />
@@ -424,7 +405,11 @@ export default function VideoShowcaseCarousel() {
       <div className="relative z-20 mt-7 hidden items-center justify-center gap-3 md:mt-9 md:flex">
         <button
           type="button"
-          onClick={() => nudge(-1)}
+          onClick={() => {
+            setPaused(true);
+            nudge(-1);
+            scheduleResume(1600);
+          }}
           className="flex h-11 w-11 min-w-[44px] items-center justify-center rounded-full border border-white/20 transition-all hover:border-accent"
           aria-label="Previous videos"
         >
@@ -432,7 +417,11 @@ export default function VideoShowcaseCarousel() {
         </button>
         <button
           type="button"
-          onClick={() => nudge(1)}
+          onClick={() => {
+            setPaused(true);
+            nudge(1);
+            scheduleResume(1600);
+          }}
           className="flex h-11 w-11 min-w-[44px] items-center justify-center rounded-full border border-white/20 transition-all hover:border-accent"
           aria-label="Next videos"
         >
@@ -446,7 +435,11 @@ export default function VideoShowcaseCarousel() {
             key={`dot-${clip.src}-${i}`}
             type="button"
             aria-label={`Show ${clip.title}`}
-            onClick={() => goTo(i)}
+            onClick={() => {
+              setPaused(true);
+              goTo(i);
+              scheduleResume(1600);
+            }}
             className={`h-2 rounded-full transition-all ${
               i === activeIndex ? 'w-7 bg-accent' : 'w-2 bg-white/25'
             }`}

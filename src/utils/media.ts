@@ -1,5 +1,8 @@
 export const ASSET_BASE = 'https://assets.parthproduction.in';
 
+/** Local optimized dual-format videos (WebM + H.264 MP4) for fast mobile playback */
+export const OPTIMIZED_VIDEO_BASE = '/videos/optimized';
+
 export function mediaUrl(pathOrUrl: string | null | undefined, fallback = ''): string {
   if (!pathOrUrl) return fallback;
   if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) return pathOrUrl;
@@ -23,8 +26,16 @@ export function resolveVideoSrc(pathOrUrl: string, fallback = ''): string {
   const url = pathOrUrl.trim();
   if (!url) return fallback;
 
+  // Prefer local optimized copies for known legacy asset filenames
+  const optimized = mapToOptimizedVideo(url);
+  if (optimized) return optimized;
+
   if (url.startsWith('http://') || url.startsWith('https://')) {
     // Encode spaces in already-absolute URLs (common admin paste issue)
+    return url.includes(' ') ? url.replace(/ /g, '%20') : url;
+  }
+  // Site-hosted optimized / public videos stay relative (same-origin, fastest)
+  if (url.startsWith('/videos/optimized/')) {
     return url.includes(' ') ? url.replace(/ /g, '%20') : url;
   }
   if (url.startsWith('/videos/') || url.startsWith('/')) {
@@ -35,18 +46,48 @@ export function resolveVideoSrc(pathOrUrl: string, fallback = ''): string {
   return abs.includes(' ') ? abs.replace(/ /g, '%20') : abs;
 }
 
-export const HERO_VIDEO = `${ASSET_BASE}/Hero%20Background%20video%20-%20Trim.mp4`;
+/** Map a video URL to dual sources (webm + mp4). */
+export function videoSources(pathOrUrl: string): { mp4: string; webm: string } {
+  const resolved = resolveVideoSrc(pathOrUrl, pathOrUrl);
+  if (resolved.endsWith('.webm')) {
+    return { webm: resolved, mp4: resolved.replace(/\.webm$/i, '.mp4') };
+  }
+  if (resolved.endsWith('.mp4')) {
+    return { mp4: resolved, webm: resolved.replace(/\.mp4$/i, '.webm') };
+  }
+  return { mp4: resolved, webm: '' };
+}
+
+function mapToOptimizedVideo(url: string): string | null {
+  const decoded = decodeURIComponent(url).toLowerCase();
+  const map: Array<[RegExp, string]> = [
+    [/hero\s*background|hero\.mp4|hero%20/i, `${OPTIMIZED_VIDEO_BASE}/hero.mp4`],
+    [/video\s*1\s*\.mp4|video%201|show-1/i, `${OPTIMIZED_VIDEO_BASE}/show-1.mp4`],
+    [/video\s*2\s*\.mp4|video%202|show-2/i, `${OPTIMIZED_VIDEO_BASE}/show-2.mp4`],
+    [/video\s*3\.mp4|video%203|show-3/i, `${OPTIMIZED_VIDEO_BASE}/show-3.mp4`],
+    [/video\s*4\.mp4|video%204|show-4/i, `${OPTIMIZED_VIDEO_BASE}/show-4.mp4`],
+    [/video\s*5\.mp4|video%205|show-5/i, `${OPTIMIZED_VIDEO_BASE}/show-5.mp4`],
+    [/video\s*6\.mp4|video%206|show-6/i, `${OPTIMIZED_VIDEO_BASE}/show-6.mp4`],
+  ];
+  for (const [re, dest] of map) {
+    if (re.test(decoded) || re.test(url)) return dest;
+  }
+  return null;
+}
+
+export const HERO_VIDEO = `${OPTIMIZED_VIDEO_BASE}/hero.mp4`;
+export const HERO_POSTER = `${OPTIMIZED_VIDEO_BASE}/hero-poster.jpg`;
 export const LOGO_JSON = '/Parth Logo .json';
 export const LOGO_PNG = '/Parth logo .png';
 export const OWNER_IMAGE = `${ASSET_BASE}/Owner.png`;
 
 export const SHOW_VIDEOS = [
-  { title: 'Weddings', src: `${ASSET_BASE}/Video%201%20.mp4` },
-  { title: 'Concerts', src: `${ASSET_BASE}/Video%202%20.mp4` },
-  { title: 'Festivals', src: `${ASSET_BASE}/Video%203.mp4` },
-  { title: 'Corporate', src: `${ASSET_BASE}/Video%204.mp4` },
-  { title: 'Road Shows', src: `${ASSET_BASE}/Video%205.mp4` },
-  { title: 'SFX Nights', src: `${ASSET_BASE}/Video%206.mp4` },
+  { title: 'Weddings', src: `${OPTIMIZED_VIDEO_BASE}/show-1.mp4` },
+  { title: 'Concerts', src: `${OPTIMIZED_VIDEO_BASE}/show-2.mp4` },
+  { title: 'Festivals', src: `${OPTIMIZED_VIDEO_BASE}/show-3.mp4` },
+  { title: 'Corporate', src: `${OPTIMIZED_VIDEO_BASE}/show-4.mp4` },
+  { title: 'Road Shows', src: `${OPTIMIZED_VIDEO_BASE}/show-5.mp4` },
+  { title: 'SFX Nights', src: `${OPTIMIZED_VIDEO_BASE}/show-6.mp4` },
 ];
 
 export const STAGE_IMAGES = [

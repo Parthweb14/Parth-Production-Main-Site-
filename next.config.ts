@@ -43,19 +43,32 @@ const nextConfig: NextConfig = {
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
         ],
       },
+      {
+        source: '/videos/optimized/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
     ];
   },
   async rewrites() {
-    return [
-      {
-        source: '/images/:path*',
-        destination: `${r2PublicUrl}/images/:path*`,
-      },
-      {
-        source: '/videos/:path*',
-        destination: `${r2PublicUrl}/videos/:path*`,
-      },
-    ];
+    // Use fallback so public/videos/optimized/* is served locally first (fast),
+    // and only missing /videos|/images paths proxy to R2.
+    return {
+      fallback: [
+        {
+          source: '/images/:path*',
+          destination: `${r2PublicUrl}/images/:path*`,
+        },
+        {
+          source: '/videos/:path*',
+          destination: `${r2PublicUrl}/videos/:path*`,
+        },
+      ],
+    };
   },
 };
 

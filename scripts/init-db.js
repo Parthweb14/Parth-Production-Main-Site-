@@ -22,8 +22,8 @@ function hashRecoveryKey(key) {
 
 const DEFAULT_SETTINGS = {
   email: 'parthproductionweb@gmail.com',
-  phone_1: '9537330003',
-  phone_2: '8866655651',
+  phone_1: '9099930202',
+  phone_2: '9624276486',
   address: 'Gaurav Path Road, Palanpur, Surat, Gujarat'
 };
 
@@ -55,12 +55,12 @@ const DEFAULT_IMAGES = [
 ];
 
 const DEFAULT_VIDEOS = [
-  { id: '1', title: 'Our Stage in Action', video_url: '/videos/download_2_sispkn.mp4', order_index: 0 },
-  { id: '2', title: 'Concert Light Rig', video_url: '/videos/Trim-1.mp4', order_index: 1 },
-  { id: '4', title: 'Festival Pyrotechnics', video_url: '/videos/Trim-6.mp4', order_index: 2 },
-  { id: '5', title: 'Neon Laser Show', video_url: '/videos/Untitled_design_2_pbfqf3.mp4', order_index: 3 },
-  { id: '6', title: 'VIP Night Setup', video_url: '/videos/Untitled_design_3_lw9eld.mp4', order_index: 4 },
-  { id: '3', title: 'Wedding Entrance', video_url: '/videos/Trim-3-1.mp4', order_index: 5 }
+  { id: '1', title: 'Weddings', video_url: '/videos/optimized/show-1.mp4', order_index: 0 },
+  { id: '2', title: 'Concerts', video_url: '/videos/optimized/show-2.mp4', order_index: 1 },
+  { id: '4', title: 'Festivals', video_url: '/videos/optimized/show-3.mp4', order_index: 2 },
+  { id: '5', title: 'Corporate', video_url: '/videos/optimized/show-4.mp4', order_index: 3 },
+  { id: '6', title: 'Road Shows', video_url: '/videos/optimized/show-5.mp4', order_index: 4 },
+  { id: '3', title: 'SFX Nights', video_url: '/videos/optimized/show-6.mp4', order_index: 5 }
 ];
 
 const DEFAULT_SERVICES = [

@@ -11,7 +11,12 @@ import VideoShowcaseCarousel from '@/components/VideoShowcaseCarousel';
 import HomeServicesGrid from '@/components/HomeServicesGrid';
 import QuoteCta from '@/components/QuoteCta';
 import { useAuth } from '@/context/AuthContext';
-import { HERO_VIDEO } from '@/utils/media';
+import { HERO_VIDEO, HERO_POSTER } from '@/utils/media';
+import OptimizedVideo from '@/components/OptimizedVideo';
+import {
+  homepageVideoPreloadList,
+  useWarmHomepageVideos,
+} from '@/hooks/useWarmHomepageVideos';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -22,40 +27,66 @@ const fadeUp = {
   }),
 };
 
+function isShotMode() {
+  if (typeof window === 'undefined') return false;
+  return new URLSearchParams(window.location.search).has('shot');
+}
+
 export default function HomePage() {
   const { siteSettings } = useAuth();
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
-  const [loadingComplete, setLoadingComplete] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return new URLSearchParams(window.location.search).has('shot');
-  });
-  const [videoLoaded, setVideoLoaded] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return new URLSearchParams(window.location.search).has('shot');
-  });
-  const [minTimeElapsed, setMinTimeElapsed] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return new URLSearchParams(window.location.search).has('shot');
-  });
+  const shot = isShotMode();
+  const [loadingComplete, setLoadingComplete] = useState(shot);
+  const [heroReady, setHeroReady] = useState(shot);
+  const [minTimeElapsed, setMinTimeElapsed] = useState(shot);
+  const [maxWaitElapsed, setMaxWaitElapsed] = useState(shot);
   const heroRef = useRef<HTMLElement>(null);
+  const warm = useWarmHomepageVideos(!shot && !loadingComplete);
 
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
-  const y = useTransform(scrollYProgress, [0, 1], ['0%', '10%']);
-  const videoScale = useTransform(scrollYProgress, [0, 1], [1, 1.06]);
+  const y = useTransform(scrollYProgress, [0, 1], ['0%', '8%']);
+
+  // Inject early preload hints — hero first, then showcase
+  useEffect(() => {
+    if (shot) return;
+    const links: HTMLLinkElement[] = [];
+    const poster = document.createElement('link');
+    poster.rel = 'preload';
+    poster.as = 'image';
+    poster.href = HERO_POSTER;
+    document.head.appendChild(poster);
+    links.push(poster);
+
+    for (const href of homepageVideoPreloadList()) {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'video';
+      link.href = href;
+      link.type = 'video/mp4';
+      link.setAttribute('fetchpriority', href.includes('hero') ? 'high' : 'low');
+      document.head.appendChild(link);
+      links.push(link);
+    }
+    return () => {
+      links.forEach((l) => l.remove());
+    };
+  }, [shot]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('shot')) {
-      return;
-    }
-    const a = setTimeout(() => setMinTimeElapsed(true), 2800);
-    const b = setTimeout(() => setVideoLoaded(true), 4500);
+    if (shot) return;
+    // Short brand beat — do not wait on all 6 showcase clips
+    const minTimer = setTimeout(() => setMinTimeElapsed(true), 1800);
+    // Safety cap if hero never fires ready
+    const maxTimer = setTimeout(() => setMaxWaitElapsed(true), 7000);
     return () => {
-      clearTimeout(a);
-      clearTimeout(b);
+      clearTimeout(minTimer);
+      clearTimeout(maxTimer);
     };
-  }, []);
+  }, [shot]);
 
-  const isReady = videoLoaded && minTimeElapsed;
+  // Reveal as soon as hero is buffered enough (+ short brand min)
+  const isReady =
+    minTimeElapsed && (heroReady || warm.heroReady || maxWaitElapsed);
 
   return (
     <>
@@ -76,17 +107,29 @@ export default function HomePage() {
           ref={heroRef}
           className="relative flex h-[85svh] min-h-[560px] items-end bg-black md:h-[100svh] md:min-h-[680px]"
         >
-          {/* VIDEO LAYER — isolated clip */}
-          <div className="absolute inset-0 overflow-hidden">
-            <motion.div style={{ y, scale: videoScale }} className="absolute inset-0 origin-center">
-              <video
+          {/* VIDEO LAYER — poster first, then light MP4; no CSS scale (iOS freeze) */}
+          <div className="absolute inset-0 overflow-hidden bg-black">
+            <img
+              src={HERO_POSTER}
+              alt=""
+              aria-hidden
+              className="absolute inset-0 h-full w-full object-cover"
+              fetchPriority="high"
+            />
+            <motion.div style={{ y }} className="absolute inset-0 origin-center will-change-transform">
+              <OptimizedVideo
                 src={HERO_VIDEO}
+                poster={HERO_POSTER}
                 autoPlay
                 muted
                 loop
                 playsInline
                 preload="auto"
-                onLoadedData={() => setVideoLoaded(true)}
+                preferWebm={false}
+                mp4Only
+                onLoadedData={() => setHeroReady(true)}
+                onCanPlay={() => setHeroReady(true)}
+                onPlaying={() => setHeroReady(true)}
                 className="h-full w-full object-cover"
               />
             </motion.div>

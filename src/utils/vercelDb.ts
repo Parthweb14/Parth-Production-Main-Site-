@@ -62,8 +62,8 @@ export interface AdminCredentials {
 
 const DEFAULT_SETTINGS: SiteSettings = {
   email: 'parthproduction123@gmail.com',
-  phone_1: '9537330003',
-  phone_2: '8866655651',
+  phone_1: '9099930202',
+  phone_2: '9624276486',
   address: 'Gaurav Path Road, Palanpur, Surat, Gujarat',
 };
 

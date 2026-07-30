@@ -1539,7 +1539,7 @@ export default function AdminPage() {
                 </label>
                 <input 
                   type="text"
-                  placeholder="9537330003"
+                  placeholder="9099930202"
                   value={settings.phone_1}
                   onChange={(e) => setSettings({ ...settings, phone_1: e.target.value })}
                   className="w-full h-12 px-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#3A8FB8] focus:outline-none transition-colors duration-200"
@@ -1551,15 +1551,18 @@ export default function AdminPage() {
 
               <div>
                 <label className="block text-xs font-bold tracking-widest text-zinc-400 uppercase mb-2">
-                  Secondary Number
+                  Calling Number
                 </label>
                 <input 
                   type="text"
-                  placeholder="8866655651"
+                  placeholder="9624276486"
                   value={settings.phone_2}
                   onChange={(e) => setSettings({ ...settings, phone_2: e.target.value })}
                   className="w-full h-12 px-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-650 focus:border-[#3A8FB8] focus:outline-none transition-colors duration-200"
                 />
+                <span className="text-[10px] text-zinc-500 leading-normal block mt-2">
+                  * Constructed link: <strong>tel:+91[Number]</strong>. Used on Contact and Footer Call buttons.
+                </span>
               </div>
 
               <div>
