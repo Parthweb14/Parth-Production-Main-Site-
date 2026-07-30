@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, Play } from 'lucide-react';
 import Image from 'next/image';
+import { videoSources } from '@/utils/media';
 
 type VideoLightbox = {
   type: 'video';
@@ -189,7 +190,6 @@ export default function MediaLightbox({ media, onClose }: Props) {
                   <video
                     key={media.src}
                     ref={videoRef}
-                    src={media.src}
                     controls={false}
                     controlsList="nodownload noplaybackrate noremoteplayback"
                     disablePictureInPicture
@@ -207,7 +207,17 @@ export default function MediaLightbox({ media, onClose }: Props) {
                     onPause={() => setPaused(true)}
                     onError={() => setVideoError(true)}
                     onContextMenu={(e) => e.preventDefault()}
-                  />
+                  >
+                    {(() => {
+                      const sources = videoSources(media.src);
+                      return (
+                        <>
+                          {sources.webm ? <source src={sources.webm} type="video/webm" /> : null}
+                          {sources.mp4 ? <source src={sources.mp4} type="video/mp4" /> : null}
+                        </>
+                      );
+                    })()}
+                  </video>
 
                   {!videoError && paused && (
                     <button

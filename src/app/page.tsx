@@ -12,6 +12,7 @@ import HomeServicesGrid from '@/components/HomeServicesGrid';
 import QuoteCta from '@/components/QuoteCta';
 import { useAuth } from '@/context/AuthContext';
 import { HERO_VIDEO } from '@/utils/media';
+import OptimizedVideo from '@/components/OptimizedVideo';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -40,8 +41,7 @@ export default function HomePage() {
   const heroRef = useRef<HTMLElement>(null);
 
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
-  const y = useTransform(scrollYProgress, [0, 1], ['0%', '10%']);
-  const videoScale = useTransform(scrollYProgress, [0, 1], [1, 1.06]);
+  const y = useTransform(scrollYProgress, [0, 1], ['0%', '8%']);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('shot')) {
@@ -76,17 +76,19 @@ export default function HomePage() {
           ref={heroRef}
           className="relative flex h-[85svh] min-h-[560px] items-end bg-black md:h-[100svh] md:min-h-[680px]"
         >
-          {/* VIDEO LAYER — isolated clip */}
+          {/* VIDEO LAYER — isolated clip; no CSS scale on the video (freezes iOS decoders) */}
           <div className="absolute inset-0 overflow-hidden">
-            <motion.div style={{ y, scale: videoScale }} className="absolute inset-0 origin-center">
-              <video
+            <motion.div style={{ y }} className="absolute inset-0 origin-center will-change-transform">
+              <OptimizedVideo
                 src={HERO_VIDEO}
                 autoPlay
                 muted
                 loop
                 playsInline
                 preload="auto"
+                preferWebm={false}
                 onLoadedData={() => setVideoLoaded(true)}
+                onCanPlay={() => setVideoLoaded(true)}
                 className="h-full w-full object-cover"
               />
             </motion.div>
