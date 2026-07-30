@@ -76,6 +76,7 @@ function mapToOptimizedVideo(url: string): string | null {
 }
 
 export const HERO_VIDEO = `${OPTIMIZED_VIDEO_BASE}/hero.mp4`;
+export const HERO_POSTER = `${OPTIMIZED_VIDEO_BASE}/hero-poster.jpg`;
 export const LOGO_JSON = '/Parth Logo .json';
 export const LOGO_PNG = '/Parth logo .png';
 export const OWNER_IMAGE = `${ASSET_BASE}/Owner.png`;

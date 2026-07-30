@@ -7,21 +7,25 @@ type Props = Omit<VideoHTMLAttributes<HTMLVideoElement>, 'src'> & {
   src: string;
   /** Prefer webm when available, mp4 fallback for iOS */
   preferWebm?: boolean;
+  /** Force a single MP4 source (fastest start on iOS/Android) */
+  mp4Only?: boolean;
 };
 
 /**
- * Dual-source video: WebM first (smaller/faster where supported),
- * MP4 H.264 fallback for iOS/Safari. Auto-recovers from stalls.
+ * Dual-source video with iOS-safe attributes and stall recovery.
+ * Use mp4Only for hero / critical above-the-fold clips.
  */
 const OptimizedVideo = forwardRef<HTMLVideoElement, Props>(function OptimizedVideo(
   {
     src,
     preferWebm = true,
+    mp4Only = false,
     onLoadedData,
     onCanPlay,
     muted = true,
     playsInline = true,
     autoPlay,
+    poster,
     ...rest
   },
   ref
@@ -38,6 +42,7 @@ const OptimizedVideo = forwardRef<HTMLVideoElement, Props>(function OptimizedVid
     el.setAttribute('playsinline', 'true');
     el.setAttribute('webkit-playsinline', 'true');
     el.setAttribute('x5-playsinline', 'true');
+    el.disableRemotePlayback = true;
 
     const tryPlay = () => {
       if (autoPlay) void el.play().catch(() => undefined);
@@ -59,10 +64,10 @@ const OptimizedVideo = forwardRef<HTMLVideoElement, Props>(function OptimizedVid
     };
 
     el.addEventListener('stalled', onStall);
-    el.addEventListener('suspend', recover);
     el.addEventListener('waiting', recover);
     el.addEventListener('canplay', tryPlay);
     el.addEventListener('loadeddata', tryPlay);
+    el.addEventListener('playing', tryPlay);
 
     const onVis = () => {
       if (!document.hidden) recover();
@@ -73,10 +78,10 @@ const OptimizedVideo = forwardRef<HTMLVideoElement, Props>(function OptimizedVid
 
     return () => {
       el.removeEventListener('stalled', onStall);
-      el.removeEventListener('suspend', recover);
       el.removeEventListener('waiting', recover);
       el.removeEventListener('canplay', tryPlay);
       el.removeEventListener('loadeddata', tryPlay);
+      el.removeEventListener('playing', tryPlay);
       document.removeEventListener('visibilitychange', onVis);
     };
   }, [src, muted, autoPlay]);
@@ -87,13 +92,30 @@ const OptimizedVideo = forwardRef<HTMLVideoElement, Props>(function OptimizedVid
     else if (ref) ref.current = node;
   };
 
-  // Safari/iOS: prefer H.264 MP4. Chrome/Android: WebM often lighter.
   const isApple =
     typeof navigator !== 'undefined' &&
     (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent) ||
       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
-  const useWebmFirst = preferWebm && !isApple;
 
+  // Hero / critical: single MP4 src is fastest (no dual-source negotiation)
+  if (mp4Only || isApple) {
+    return (
+      <video
+        ref={setRefs}
+        src={sources.mp4 || src}
+        poster={poster}
+        muted={muted}
+        playsInline={playsInline}
+        autoPlay={autoPlay}
+        preload="auto"
+        onLoadedData={onLoadedData}
+        onCanPlay={onCanPlay}
+        {...rest}
+      />
+    );
+  }
+
+  const useWebmFirst = preferWebm;
   const ordered = useWebmFirst
     ? [
         { src: sources.webm, type: 'video/webm' },
@@ -107,6 +129,7 @@ const OptimizedVideo = forwardRef<HTMLVideoElement, Props>(function OptimizedVid
   return (
     <video
       ref={setRefs}
+      poster={poster}
       muted={muted}
       playsInline={playsInline}
       autoPlay={autoPlay}

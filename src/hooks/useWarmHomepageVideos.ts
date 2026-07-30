@@ -5,6 +5,7 @@ import { HERO_VIDEO, SHOW_VIDEOS, videoSources } from '@/utils/media';
 
 export type VideoWarmStatus = {
   ready: boolean;
+  heroReady: boolean;
   loaded: number;
   total: number;
 };
@@ -17,14 +18,12 @@ function warmOne(url: string, timeoutMs: number): Promise<boolean> {
     }
 
     const sources = videoSources(url);
-    const isApple =
-      /iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent) ||
-      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    const primary = isApple ? sources.mp4 || sources.webm : sources.webm || sources.mp4;
-    const fallback = primary === sources.mp4 ? sources.webm : sources.mp4;
+    // Prefer MP4 everywhere for fastest decode start (baseline H.264 on iOS/Android)
+    const primary = sources.mp4 || sources.webm || url;
 
     const video = document.createElement('video');
     video.muted = true;
+    video.defaultMuted = true;
     video.playsInline = true;
     video.preload = 'auto';
     video.setAttribute('playsinline', 'true');
@@ -35,36 +34,38 @@ function warmOne(url: string, timeoutMs: number): Promise<boolean> {
       if (settled) return;
       settled = true;
       window.clearTimeout(timer);
-      video.removeAttribute('src');
-      video.load();
+      // Keep element briefly so browser HTTP cache retains bytes, then detach
+      window.setTimeout(() => {
+        video.removeAttribute('src');
+        try {
+          video.load();
+        } catch {
+          /* ignore */
+        }
+      }, 50);
       resolve(ok);
     };
 
-    const timer = window.setTimeout(() => done(false), timeoutMs);
+    const timer = window.setTimeout(() => done(video.readyState >= 2), timeoutMs);
 
-    video.addEventListener('canplaythrough', () => done(true), { once: true });
+    video.addEventListener('canplay', () => done(true), { once: true });
     video.addEventListener('loadeddata', () => {
-      // Good enough buffer for hero/cards if canplaythrough is slow on cellular
       if (video.readyState >= 2) done(true);
     });
-    video.addEventListener('error', () => {
-      if (fallback && video.src !== fallback) {
-        video.src = fallback;
-        video.load();
-        return;
-      }
-      done(false);
-    });
+    video.addEventListener('error', () => done(false), { once: true });
 
-    video.src = primary || url;
+    video.src = primary;
     video.load();
   });
 }
 
-/** Preload hero + Beyond Events clips while the page loader is visible. */
+/**
+ * Warm hero first (blocks page reveal), then showcase clips in background.
+ */
 export function useWarmHomepageVideos(enabled = true): VideoWarmStatus {
   const [status, setStatus] = useState<VideoWarmStatus>({
     ready: !enabled,
+    heroReady: !enabled,
     loaded: 0,
     total: 1 + SHOW_VIDEOS.length,
   });
@@ -77,24 +78,24 @@ export function useWarmHomepageVideos(enabled = true): VideoWarmStatus {
     const total = urls.length;
 
     (async () => {
-      let loaded = 0;
-      // Warm hero first (priority), then showcase in parallel batches
-      await warmOne(urls[0], 12000);
+      const heroOk = await warmOne(urls[0], 8000);
       if (cancelled) return;
-      loaded += 1;
-      setStatus({ ready: false, loaded, total });
+      setStatus({ ready: false, heroReady: true, loaded: heroOk ? 1 : 1, total });
 
+      // Showcase warm does not block the loader
       const rest = urls.slice(1);
-      const batchSize = 3;
-      for (let i = 0; i < rest.length; i += batchSize) {
-        const batch = rest.slice(i, i + batchSize);
-        const results = await Promise.all(batch.map((u) => warmOne(u, 10000)));
-        if (cancelled) return;
-        loaded += results.length;
-        setStatus({ ready: false, loaded, total });
+      let loaded = 1;
+      await Promise.all(
+        rest.map(async (u) => {
+          await warmOne(u, 10000);
+          if (cancelled) return;
+          loaded += 1;
+          setStatus((s) => ({ ...s, loaded, ready: loaded >= total }));
+        })
+      );
+      if (!cancelled) {
+        setStatus((s) => ({ ...s, ready: true, loaded: total, total }));
       }
-
-      if (!cancelled) setStatus({ ready: true, loaded: total, total });
     })();
 
     return () => {
@@ -105,7 +106,7 @@ export function useWarmHomepageVideos(enabled = true): VideoWarmStatus {
   return status;
 }
 
-/** List of homepage video URLs for <link rel="preload"> hints */
 export function homepageVideoPreloadList(): string[] {
+  // Hero first, then shows — MP4 only for broadest device support
   return [HERO_VIDEO, ...SHOW_VIDEOS.map((v) => videoSources(v.src).mp4 || v.src)];
 }

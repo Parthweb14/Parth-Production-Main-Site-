@@ -11,7 +11,7 @@ import VideoShowcaseCarousel from '@/components/VideoShowcaseCarousel';
 import HomeServicesGrid from '@/components/HomeServicesGrid';
 import QuoteCta from '@/components/QuoteCta';
 import { useAuth } from '@/context/AuthContext';
-import { HERO_VIDEO } from '@/utils/media';
+import { HERO_VIDEO, HERO_POSTER } from '@/utils/media';
 import OptimizedVideo from '@/components/OptimizedVideo';
 import {
   homepageVideoPreloadList,
@@ -46,16 +46,24 @@ export default function HomePage() {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
   const y = useTransform(scrollYProgress, [0, 1], ['0%', '8%']);
 
-  // Inject early preload hints for hero + showcase MP4s
+  // Inject early preload hints — hero first, then showcase
   useEffect(() => {
     if (shot) return;
     const links: HTMLLinkElement[] = [];
+    const poster = document.createElement('link');
+    poster.rel = 'preload';
+    poster.as = 'image';
+    poster.href = HERO_POSTER;
+    document.head.appendChild(poster);
+    links.push(poster);
+
     for (const href of homepageVideoPreloadList()) {
       const link = document.createElement('link');
       link.rel = 'preload';
       link.as = 'video';
       link.href = href;
       link.type = 'video/mp4';
+      link.setAttribute('fetchpriority', href.includes('hero') ? 'high' : 'low');
       document.head.appendChild(link);
       links.push(link);
     }
@@ -66,18 +74,19 @@ export default function HomePage() {
 
   useEffect(() => {
     if (shot) return;
-    // Longer brand loader so clips can buffer before reveal
-    const minTimer = setTimeout(() => setMinTimeElapsed(true), 5600);
-    // Hard cap so slow networks don't hang forever
-    const maxTimer = setTimeout(() => setMaxWaitElapsed(true), 14000);
+    // Short brand beat — do not wait on all 6 showcase clips
+    const minTimer = setTimeout(() => setMinTimeElapsed(true), 1800);
+    // Safety cap if hero never fires ready
+    const maxTimer = setTimeout(() => setMaxWaitElapsed(true), 7000);
     return () => {
       clearTimeout(minTimer);
       clearTimeout(maxTimer);
     };
   }, [shot]);
 
-  const videosWarmed = warm.ready || maxWaitElapsed;
-  const isReady = minTimeElapsed && videosWarmed && (heroReady || maxWaitElapsed);
+  // Reveal as soon as hero is buffered enough (+ short brand min)
+  const isReady =
+    minTimeElapsed && (heroReady || warm.heroReady || maxWaitElapsed);
 
   return (
     <>
@@ -98,19 +107,29 @@ export default function HomePage() {
           ref={heroRef}
           className="relative flex h-[85svh] min-h-[560px] items-end bg-black md:h-[100svh] md:min-h-[680px]"
         >
-          {/* VIDEO LAYER — isolated clip; no CSS scale on the video (freezes iOS decoders) */}
-          <div className="absolute inset-0 overflow-hidden">
+          {/* VIDEO LAYER — poster first, then light MP4; no CSS scale (iOS freeze) */}
+          <div className="absolute inset-0 overflow-hidden bg-black">
+            <img
+              src={HERO_POSTER}
+              alt=""
+              aria-hidden
+              className="absolute inset-0 h-full w-full object-cover"
+              fetchPriority="high"
+            />
             <motion.div style={{ y }} className="absolute inset-0 origin-center will-change-transform">
               <OptimizedVideo
                 src={HERO_VIDEO}
+                poster={HERO_POSTER}
                 autoPlay
                 muted
                 loop
                 playsInline
                 preload="auto"
                 preferWebm={false}
+                mp4Only
                 onLoadedData={() => setHeroReady(true)}
                 onCanPlay={() => setHeroReady(true)}
+                onPlaying={() => setHeroReady(true)}
                 className="h-full w-full object-cover"
               />
             </motion.div>
