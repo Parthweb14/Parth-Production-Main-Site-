@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
 import MediaImage from '@/components/MediaImage';
@@ -9,48 +9,84 @@ import { CRAFT, STAGE_IMAGES } from '@/utils/media';
 
 const ease = [0.22, 1, 0.36, 1] as const;
 const FEATURED_WIDE = STAGE_IMAGES[1]?.src || CRAFT[0].image;
+const AUTO_MS = 3200;
 
 /**
  * Editorial craft strip — featured wide image + three tall panels.
+ * Mobile: discrete card-by-card auto-scroll (no snap fight / jitter).
  */
 export default function HomeServicesGrid() {
   const { siteSettings } = useAuth();
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
   const reduceMotion = useReducedMotion();
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const pauseAutoRef = useRef(false);
+  const indexRef = useRef(0);
+  const pausedRef = useRef(false);
+  const programScrollRef = useRef(false);
+  const resumeTimer = useRef<number | null>(null);
 
-  // Mobile-only auto-scroll through craft cards
-  useEffect(() => {
-    if (reduceMotion) return;
+  const clearResume = useCallback(() => {
+    if (resumeTimer.current != null) {
+      window.clearTimeout(resumeTimer.current);
+      resumeTimer.current = null;
+    }
+  }, []);
+
+  const pauseThenResume = useCallback(
+    (ms = 4500) => {
+      pausedRef.current = true;
+      clearResume();
+      resumeTimer.current = window.setTimeout(() => {
+        pausedRef.current = false;
+        resumeTimer.current = null;
+      }, ms);
+    },
+    [clearResume]
+  );
+
+  const scrollToCard = useCallback((index: number, smooth = true) => {
     const el = scrollerRef.current;
     if (!el) return;
+    const cards = Array.from(el.querySelectorAll<HTMLElement>('[data-craft-card]'));
+    if (!cards.length) return;
+    const i = ((index % cards.length) + cards.length) % cards.length;
+    indexRef.current = i;
+    const card = cards[i];
+    programScrollRef.current = true;
+    // Disable snap while we programmatically move (prevents jitter)
+    el.classList.remove('snap-x', 'snap-mandatory');
+    el.scrollTo({
+      left: Math.max(0, card.offsetLeft - (el.clientWidth - card.clientWidth) / 2),
+      behavior: smooth ? 'smooth' : 'auto',
+    });
+    window.setTimeout(
+      () => {
+        el.classList.add('snap-x', 'snap-mandatory');
+        programScrollRef.current = false;
+      },
+      smooth ? 520 : 60
+    );
+  }, []);
 
-    let frame = 0;
-    let last = 0;
-    const SPEED = 38; // px per second
+  // Mobile-only discrete auto-scroll
+  useEffect(() => {
+    if (reduceMotion) return;
 
-    const tick = (ts: number) => {
-      if (!last) last = ts;
-      const dt = Math.min(0.05, (ts - last) / 1000);
-      last = ts;
+    const id = window.setInterval(() => {
+      const el = scrollerRef.current;
+      if (!el) return;
+      if (window.innerWidth >= 768) return;
+      if (pausedRef.current || programScrollRef.current || document.hidden) return;
+      const cards = el.querySelectorAll('[data-craft-card]');
+      if (cards.length < 2) return;
+      scrollToCard(indexRef.current + 1, true);
+    }, AUTO_MS);
 
-      const isMobile = window.innerWidth < 768;
-      if (isMobile && !pauseAutoRef.current && !document.hidden) {
-        const max = el.scrollWidth - el.clientWidth;
-        if (max > 8) {
-          let next = el.scrollLeft + SPEED * dt;
-          if (next >= max - 1) next = 0;
-          el.scrollLeft = next;
-        }
-      }
-
-      frame = requestAnimationFrame(tick);
+    return () => {
+      window.clearInterval(id);
+      clearResume();
     };
-
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [reduceMotion]);
+  }, [reduceMotion, scrollToCard, clearResume]);
 
   return (
     <section className="relative w-full overflow-hidden bg-black py-14 sm:py-16 md:py-24">
@@ -64,7 +100,6 @@ export default function HomeServicesGrid() {
       />
 
       <div className="relative mx-auto w-[92%] max-w-[1260px] px-0 sm:w-[90%] md:w-[90%]">
-        {/* Intro — two-line heading on mobile */}
         <div className="mx-auto mb-8 max-w-3xl text-center md:mb-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -111,7 +146,6 @@ export default function HomeServicesGrid() {
           </motion.div>
         </div>
 
-        {/* Horizontal featured image above the 3 craft panels */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -146,25 +180,18 @@ export default function HomeServicesGrid() {
           </div>
         </motion.div>
 
-        {/* Three craft panels — auto-scroll on mobile, equal columns on desktop */}
         <div
           ref={scrollerRef}
-          onPointerDown={() => {
-            pauseAutoRef.current = true;
-          }}
-          onPointerUp={() => {
-            window.setTimeout(() => {
-              pauseAutoRef.current = false;
-            }, 2200);
-          }}
-          onPointerCancel={() => {
-            pauseAutoRef.current = false;
-          }}
-          className="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-2 scrollbar-none md:mx-0 md:grid md:grid-cols-3 md:gap-5 md:overflow-visible md:px-0 md:pb-0 lg:gap-6"
+          onPointerDown={() => pauseThenResume(5000)}
+          onTouchStart={() => pauseThenResume(5000)}
+          onWheel={() => pauseThenResume(4000)}
+          className="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain px-1 pb-2 scrollbar-none md:mx-0 md:grid md:grid-cols-3 md:gap-5 md:overflow-visible md:px-0 md:pb-0 lg:gap-6"
+          style={{ WebkitOverflowScrolling: 'touch', scrollBehavior: 'smooth' }}
         >
           {CRAFT.map((service, i) => (
             <motion.article
               key={service.title}
+              data-craft-card
               initial={{ opacity: 0, y: 28 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-40px' }}

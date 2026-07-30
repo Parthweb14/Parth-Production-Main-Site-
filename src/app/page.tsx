@@ -13,6 +13,10 @@ import QuoteCta from '@/components/QuoteCta';
 import { useAuth } from '@/context/AuthContext';
 import { HERO_VIDEO } from '@/utils/media';
 import OptimizedVideo from '@/components/OptimizedVideo';
+import {
+  homepageVideoPreloadList,
+  useWarmHomepageVideos,
+} from '@/hooks/useWarmHomepageVideos';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -23,39 +27,57 @@ const fadeUp = {
   }),
 };
 
+function isShotMode() {
+  if (typeof window === 'undefined') return false;
+  return new URLSearchParams(window.location.search).has('shot');
+}
+
 export default function HomePage() {
   const { siteSettings } = useAuth();
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
-  const [loadingComplete, setLoadingComplete] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return new URLSearchParams(window.location.search).has('shot');
-  });
-  const [videoLoaded, setVideoLoaded] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return new URLSearchParams(window.location.search).has('shot');
-  });
-  const [minTimeElapsed, setMinTimeElapsed] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return new URLSearchParams(window.location.search).has('shot');
-  });
+  const shot = isShotMode();
+  const [loadingComplete, setLoadingComplete] = useState(shot);
+  const [heroReady, setHeroReady] = useState(shot);
+  const [minTimeElapsed, setMinTimeElapsed] = useState(shot);
+  const [maxWaitElapsed, setMaxWaitElapsed] = useState(shot);
   const heroRef = useRef<HTMLElement>(null);
+  const warm = useWarmHomepageVideos(!shot && !loadingComplete);
 
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
   const y = useTransform(scrollYProgress, [0, 1], ['0%', '8%']);
 
+  // Inject early preload hints for hero + showcase MP4s
   useEffect(() => {
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('shot')) {
-      return;
+    if (shot) return;
+    const links: HTMLLinkElement[] = [];
+    for (const href of homepageVideoPreloadList()) {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'video';
+      link.href = href;
+      link.type = 'video/mp4';
+      document.head.appendChild(link);
+      links.push(link);
     }
-    const a = setTimeout(() => setMinTimeElapsed(true), 2800);
-    const b = setTimeout(() => setVideoLoaded(true), 4500);
     return () => {
-      clearTimeout(a);
-      clearTimeout(b);
+      links.forEach((l) => l.remove());
     };
-  }, []);
+  }, [shot]);
 
-  const isReady = videoLoaded && minTimeElapsed;
+  useEffect(() => {
+    if (shot) return;
+    // Longer brand loader so clips can buffer before reveal
+    const minTimer = setTimeout(() => setMinTimeElapsed(true), 5600);
+    // Hard cap so slow networks don't hang forever
+    const maxTimer = setTimeout(() => setMaxWaitElapsed(true), 14000);
+    return () => {
+      clearTimeout(minTimer);
+      clearTimeout(maxTimer);
+    };
+  }, [shot]);
+
+  const videosWarmed = warm.ready || maxWaitElapsed;
+  const isReady = minTimeElapsed && videosWarmed && (heroReady || maxWaitElapsed);
 
   return (
     <>
@@ -87,8 +109,8 @@ export default function HomePage() {
                 playsInline
                 preload="auto"
                 preferWebm={false}
-                onLoadedData={() => setVideoLoaded(true)}
-                onCanPlay={() => setVideoLoaded(true)}
+                onLoadedData={() => setHeroReady(true)}
+                onCanPlay={() => setHeroReady(true)}
                 className="h-full w-full object-cover"
               />
             </motion.div>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { LOGO_PNG } from '@/utils/media';
@@ -17,29 +17,48 @@ function FooterAccordion({
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="border-b border-white/10 md:border-0">
+    <div className="overflow-hidden rounded-xl border border-white/15 bg-white/[0.03] md:rounded-none md:border-0 md:bg-transparent">
+      {/* Mobile dropdown trigger — always visible under md */}
       <button
         type="button"
-        className="flex w-full items-center justify-between py-3.5 text-left md:hidden"
+        className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left touch-manipulation md:hidden"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        <span className="font-display text-base text-white">{title}</span>
-        <ChevronDown
-          className={`h-4 w-4 shrink-0 text-white/55 transition-transform duration-300 ${
-            open ? 'rotate-180' : ''
+        <span className="font-display text-base font-semibold tracking-wide text-white">{title}</span>
+        <span
+          className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/5 transition-transform duration-300 ${
+            open ? 'rotate-180 border-[#3A8FB8]/50 text-[#3A8FB8]' : 'text-white/70'
           }`}
           aria-hidden
-        />
+        >
+          <ChevronDown className="h-4 w-4" />
+        </span>
       </button>
+
+      {/* Desktop static heading */}
       <h4 className="mb-3 hidden font-display text-base text-white md:block">{title}</h4>
-      <div
-        className={`${
-          open ? 'flex pb-3.5' : 'hidden'
-        } flex-col gap-2.5 text-sm text-white/55 md:flex md:gap-3 md:pb-0`}
-      >
-        {children}
-      </div>
+
+      {/* Mobile collapsible panel */}
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="mobile-panel"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-hidden md:hidden"
+          >
+            <div className="flex flex-col gap-3 border-t border-white/10 px-4 py-3.5 text-sm text-white/60">
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Desktop always-open links */}
+      <div className="hidden flex-col gap-3 text-sm text-white/55 md:flex">{children}</div>
     </div>
   );
 }
@@ -54,8 +73,8 @@ export default function Footer() {
 
   return (
     <footer className="relative z-20 border-t border-white/10 bg-black px-6 pb-10 pt-12 md:px-10 md:pt-16">
-      <div className="relative mx-auto mb-8 grid max-w-7xl grid-cols-1 gap-4 md:mb-12 md:grid-cols-3 md:gap-10">
-        <div>
+      <div className="relative mx-auto mb-8 grid max-w-7xl grid-cols-1 gap-3 md:mb-12 md:grid-cols-3 md:gap-10">
+        <div className="mb-1 md:mb-0">
           <Link href="/" className="inline-flex items-center gap-3">
             <img src={LOGO_PNG} alt="Parth Production" className="h-11 object-contain" />
             <span className="font-display text-xl tracking-tight">Parth Production</span>

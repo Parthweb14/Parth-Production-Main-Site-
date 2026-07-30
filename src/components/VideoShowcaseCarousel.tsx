@@ -433,7 +433,7 @@ export default function VideoShowcaseCarousel() {
                     muted
                     loop
                     playsInline
-                    preload={isCenter ? 'auto' : 'metadata'}
+                    preload="auto"
                     className="pointer-events-none absolute inset-0 h-full w-full object-cover"
                     style={{ filter: `brightness(${t.brightness})` }}
                   />
