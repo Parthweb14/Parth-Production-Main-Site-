@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { LOGO_PNG } from '@/utils/media';
@@ -15,50 +15,51 @@ function FooterAccordion({
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const panelId = useId();
 
   return (
-    <div className="overflow-hidden rounded-xl border border-white/15 bg-white/[0.03] md:rounded-none md:border-0 md:bg-transparent">
-      {/* Mobile dropdown trigger — always visible under md */}
-      <button
-        type="button"
-        className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left touch-manipulation md:hidden"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-      >
-        <span className="font-display text-base font-semibold tracking-wide text-white">{title}</span>
-        <span
-          className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/5 transition-transform duration-300 ${
-            open ? 'rotate-180 border-[#3A8FB8]/50 text-[#3A8FB8]' : 'text-white/70'
-          }`}
-          aria-hidden
+    <div className="md:contents">
+      {/* ===== MOBILE DROPDOWN (max-md only) ===== */}
+      <div className="mb-2 overflow-hidden rounded-2xl border border-white/20 bg-[#0a0a0a] md:hidden">
+        <button
+          type="button"
+          id={`${panelId}-btn`}
+          aria-controls={panelId}
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+          className="flex min-h-[52px] w-full items-center justify-between gap-3 px-4 py-3 text-left touch-manipulation"
         >
-          <ChevronDown className="h-4 w-4" />
-        </span>
-      </button>
-
-      {/* Desktop static heading */}
-      <h4 className="mb-3 hidden font-display text-base text-white md:block">{title}</h4>
-
-      {/* Mobile collapsible panel */}
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            key="mobile-panel"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            className="overflow-hidden md:hidden"
+          <span className="font-display text-[15px] font-semibold uppercase tracking-[0.08em] text-white">
+            {title}
+          </span>
+          <span
+            className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
+              open
+                ? 'rotate-180 border-[#3A8FB8] bg-[#3A8FB8]/15 text-[#3A8FB8]'
+                : 'border-white/30 bg-white/5 text-white'
+            }`}
+            aria-hidden
           >
-            <div className="flex flex-col gap-3 border-t border-white/10 px-4 py-3.5 text-sm text-white/60">
-              {children}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <ChevronDown className="h-5 w-5" strokeWidth={2.25} />
+          </span>
+        </button>
 
-      {/* Desktop always-open links */}
-      <div className="hidden flex-col gap-3 text-sm text-white/55 md:flex">{children}</div>
+        <div
+          id={panelId}
+          role="region"
+          aria-labelledby={`${panelId}-btn`}
+          hidden={!open}
+          className={open ? 'block border-t border-white/15' : 'hidden'}
+        >
+          <div className="flex flex-col gap-1 px-2 py-2 text-sm text-white/70">{children}</div>
+        </div>
+      </div>
+
+      {/* ===== DESKTOP COLUMN ===== */}
+      <div className="hidden flex-col gap-3 text-sm text-white/55 md:flex">
+        <h4 className="font-display text-base text-white">{title}</h4>
+        {children}
+      </div>
     </div>
   );
 }
@@ -71,10 +72,13 @@ export default function Footer() {
   const whatsappUrl = `https://wa.me/91${whatsapp}`;
   const callUrl = `tel:+91${call}`;
 
+  const linkClass =
+    'rounded-lg px-3 py-2.5 transition-colors hover:bg-white/5 hover:text-accent md:rounded-none md:px-0 md:py-0';
+
   return (
     <footer className="relative z-20 border-t border-white/10 bg-black px-6 pb-10 pt-12 md:px-10 md:pt-16">
       <div className="relative mx-auto mb-8 grid max-w-7xl grid-cols-1 gap-3 md:mb-12 md:grid-cols-3 md:gap-10">
-        <div className="mb-1 md:mb-0">
+        <div className="mb-2 md:mb-0">
           <Link href="/" className="inline-flex items-center gap-3">
             <img src={LOGO_PNG} alt="Parth Production" className="h-11 object-contain" />
             <span className="font-display text-xl tracking-tight">Parth Production</span>
@@ -85,16 +89,16 @@ export default function Footer() {
         </div>
 
         <FooterAccordion title="Explore">
-          <Link href="/services" className="transition-colors hover:text-accent">
+          <Link href="/services" className={linkClass}>
             Services
           </Link>
-          <Link href="/gallery" className="transition-colors hover:text-accent">
+          <Link href="/gallery" className={linkClass}>
             Gallery
           </Link>
-          <Link href="/about" className="transition-colors hover:text-accent">
+          <Link href="/about" className={linkClass}>
             About
           </Link>
-          <Link href="/contact" className="transition-colors hover:text-accent">
+          <Link href="/contact" className={linkClass}>
             Contact
           </Link>
         </FooterAccordion>
@@ -104,17 +108,14 @@ export default function Footer() {
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="transition-colors hover:text-accent"
+            className={linkClass}
           >
             WhatsApp {whatsapp}
           </a>
-          <a href={callUrl} className="transition-colors hover:text-accent">
+          <a href={callUrl} className={linkClass}>
             Call {call}
           </a>
-          <a
-            href={`mailto:${siteSettings.email}`}
-            className="break-all transition-colors hover:text-accent"
-          >
+          <a href={`mailto:${siteSettings.email}`} className={`${linkClass} break-all`}>
             {siteSettings.email}
           </a>
         </FooterAccordion>
