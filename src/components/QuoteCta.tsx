@@ -24,7 +24,7 @@ const RIBBON = [
   'Concerts',
   'Weddings',
   'Festivals',
-  'Corporate',
+  'Corporate Events',
   'Road Shows',
 ];
 
