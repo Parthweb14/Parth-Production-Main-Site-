@@ -60,8 +60,8 @@ export default function Footer() {
           <h4 className="font-display text-base text-white">Explore</h4>
           <Link href="/services" className="hover:text-accent transition-colors">Services</Link>
           <Link href="/gallery" className="hover:text-accent transition-colors">Gallery</Link>
-          <Link href="/about" className="hover:text-accent transition-colors">About us</Link>
-          <Link href="/contact" className="hover:text-accent transition-colors">Contact us</Link>
+          <Link href="/about" className="hover:text-accent transition-colors">About Us</Link>
+          <Link href="/contact" className="hover:text-accent transition-colors">Contact Us</Link>
         </div>
         <div className="flex flex-col gap-3 text-sm text-white/55">
           <h4 className="font-display text-base text-white">Services</h4>
