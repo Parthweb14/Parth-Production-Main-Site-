@@ -67,10 +67,16 @@ export default function GalleryPage() {
         if (!res.ok) return;
         const data = await res.json();
 
-        // Services are the source of truth for gallery categories
+        // Services are the source of truth for gallery categories (order = admin order)
+        const orderedServices = [...(data.services || [])].sort(
+          (
+            a: { order_index?: number },
+            b: { order_index?: number }
+          ) => (a.order_index ?? 0) - (b.order_index ?? 0)
+        );
         const serviceCats: string[] =
-          data.services?.length > 0
-            ? data.services.map((s: { service_title: string }) =>
+          orderedServices.length > 0
+            ? orderedServices.map((s: { service_title: string }) =>
                 canonicalizeCategory(s.service_title)
               )
             : DEFAULT_CATS;
@@ -212,7 +218,7 @@ export default function GalleryPage() {
                 </h2>
               </div>
               <p className="hidden md:block text-sm text-white/45 max-w-xs text-right">
-                Top four services sit beside the cover. Extra service categories appear below.
+                Positions 1–4 sit beside the cover. Position 5+ appear once in Beyond the Spotlight.
               </p>
             </div>
 

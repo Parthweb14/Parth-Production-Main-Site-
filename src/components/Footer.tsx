@@ -42,10 +42,15 @@ export default function Footer() {
         const data = await res.json();
         if (data.services?.length) {
           setServices(
-            data.services.map((s: FooterService) => ({
-              id: s.id,
-              service_title: canonicalizeCategory(s.service_title),
-            }))
+            [...data.services]
+              .sort(
+                (a: FooterService & { order_index?: number }, b: FooterService & { order_index?: number }) =>
+                  (a.order_index ?? 0) - (b.order_index ?? 0)
+              )
+              .map((s: FooterService) => ({
+                id: s.id,
+                service_title: canonicalizeCategory(s.service_title),
+              }))
           );
         }
       } catch {

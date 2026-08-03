@@ -49,6 +49,8 @@ export interface DBServiceImage {
   subtitle?: string;
   summary?: string;
   detail?: string;
+  /** Gallery order: 0–3 = spotlight side cards, 4+ = Beyond the Spotlight */
+  order_index?: number;
 }
 
 export interface AboutContent {
@@ -188,10 +190,17 @@ export const vercelDb = {
     await setValue('videos', videos);
   },
   async getServices(): Promise<DBServiceImage[]> {
-    return (await getValue('services', [])) as DBServiceImage[];
+    const services = (await getValue('services', [])) as DBServiceImage[];
+    return [...services].sort(
+      (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)
+    );
   },
   async setServices(services: DBServiceImage[]): Promise<void> {
-    await setValue('services', services);
+    const ordered = services.map((s, idx) => ({
+      ...s,
+      order_index: typeof s.order_index === 'number' ? s.order_index : idx,
+    }));
+    await setValue('services', ordered);
   },
   async getAbout(): Promise<AboutContent> {
     const stored = (await getValue('about', null)) as AboutContent | null;

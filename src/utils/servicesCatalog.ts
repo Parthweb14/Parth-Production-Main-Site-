@@ -117,6 +117,7 @@ export type DbServiceRow = {
   subtitle?: string;
   summary?: string;
   detail?: string;
+  order_index?: number;
 };
 
 function resolveServiceUrl(url: string | undefined, fallback: string): string {
@@ -132,7 +133,11 @@ export function mergePublicServices(rows: DbServiceRow[]): PublicServiceBlock[] 
   const usedIds = new Set<number>();
   const result: PublicServiceBlock[] = [];
 
-  for (const row of rows) {
+  const orderedRows = [...rows].sort(
+    (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)
+  );
+
+  for (const row of orderedRows) {
     usedIds.add(row.id);
     const title = canonicalizeCategory(row.service_title || 'Service');
     const base = byId.get(row.id);
@@ -146,11 +151,13 @@ export function mergePublicServices(rows: DbServiceRow[]): PublicServiceBlock[] 
     const g0 = resolveServiceUrl(row.gallery_images?.[0], fallbackGallery[0]);
     const g1 = resolveServiceUrl(row.gallery_images?.[1], fallbackGallery[1]);
     const g2 = resolveServiceUrl(row.gallery_images?.[2], fallbackGallery[2]);
+    const badge = String(result.length + 1).padStart(2, '0');
 
     if (base) {
       result.push({
         ...base,
         title,
+        badge,
         hero,
         subtitle: row.subtitle || base.subtitle,
         summary: row.summary || base.summary,
@@ -159,7 +166,6 @@ export function mergePublicServices(rows: DbServiceRow[]): PublicServiceBlock[] 
         bookLabel: title.replace(/s$/i, '') || title,
       });
     } else {
-      const badge = String(result.length + 1).padStart(2, '0');
       result.push({
         id: row.id,
         title,
