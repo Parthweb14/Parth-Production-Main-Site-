@@ -32,6 +32,7 @@ export default function Footer() {
   const [services, setServices] = useState<FooterService[]>(DEFAULT_FOOTER_SERVICES);
   const [exploreOpen, setExploreOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -125,25 +126,43 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-white/10 pt-4 md:border-0 md:pt-0 flex flex-col gap-3 text-sm text-white/55">
-          <h4 className="font-display text-base text-white">Connect</h4>
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-accent transition-colors"
+        <div className="border-t border-white/10 pt-4 md:border-0 md:pt-0">
+          <button
+            type="button"
+            className="flex w-full items-center justify-between md:cursor-default"
+            onClick={() => setContactOpen((o) => !o)}
+            aria-expanded={contactOpen}
           >
-            WhatsApp {siteSettings.phone_1}
-          </a>
-          <a href={`tel:+91${siteSettings.phone_2}`} className="hover:text-accent transition-colors">
-            Call {siteSettings.phone_2}
-          </a>
-          <a
-            href={`mailto:${siteSettings.email}`}
-            className="hover:text-accent transition-colors break-all"
+            <h4 className="font-display text-base text-white">Contact Us</h4>
+            <ChevronDown
+              className={`h-4 w-4 text-white/50 transition-transform md:hidden ${
+                contactOpen ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+          <div
+            className={`mt-3 flex-col gap-3 text-sm text-white/55 ${
+              contactOpen ? 'flex' : 'hidden'
+            } md:flex`}
           >
-            {siteSettings.email}
-          </a>
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-accent transition-colors"
+            >
+              WhatsApp {siteSettings.phone_1}
+            </a>
+            <a href={`tel:+91${siteSettings.phone_2}`} className="hover:text-accent transition-colors">
+              Call {siteSettings.phone_2}
+            </a>
+            <a
+              href={`mailto:${siteSettings.email}`}
+              className="hover:text-accent transition-colors break-all"
+            >
+              {siteSettings.email}
+            </a>
+          </div>
         </div>
       </div>
       <motion.div
