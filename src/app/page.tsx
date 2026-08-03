@@ -11,7 +11,7 @@ import VideoShowcaseCarousel from '@/components/VideoShowcaseCarousel';
 import HomeServicesGrid from '@/components/HomeServicesGrid';
 import QuoteCta from '@/components/QuoteCta';
 import { useAuth } from '@/context/AuthContext';
-import { HERO_VIDEO } from '@/utils/media';
+import { HERO_VIDEO, HERO_POSTER } from '@/utils/media';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -47,8 +47,8 @@ export default function HomePage() {
     if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('shot')) {
       return;
     }
-    const a = setTimeout(() => setMinTimeElapsed(true), 2800);
-    const b = setTimeout(() => setVideoLoaded(true), 4500);
+    const a = setTimeout(() => setMinTimeElapsed(true), 900);
+    const b = setTimeout(() => setVideoLoaded(true), 2800);
     return () => {
       clearTimeout(a);
       clearTimeout(b);
@@ -80,15 +80,18 @@ export default function HomePage() {
           <div className="absolute inset-0 overflow-hidden">
             <motion.div style={{ y, scale: videoScale }} className="absolute inset-0 origin-center">
               <video
-                src={HERO_VIDEO}
                 autoPlay
                 muted
                 loop
                 playsInline
                 preload="auto"
+                poster={HERO_POSTER}
                 onLoadedData={() => setVideoLoaded(true)}
+                onCanPlay={() => setVideoLoaded(true)}
                 className="h-full w-full object-cover"
-              />
+              >
+                <source src={HERO_VIDEO} type="video/mp4" />
+              </video>
             </motion.div>
             <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-black/25" />
             <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/55" />

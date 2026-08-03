@@ -1,17 +1,18 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
 import MediaImage from '@/components/MediaImage';
 import { useAuth } from '@/context/AuthContext';
-import { CRAFT, STAGE_IMAGES } from '@/utils/media';
+import { resolveGallerySrc } from '@/utils/media';
+import { DEFAULT_CRAFT, type CraftContent } from '@/utils/craftDefaults';
 
 const ease = [0.22, 1, 0.36, 1] as const;
-const FEATURED_WIDE = STAGE_IMAGES[1]?.src || CRAFT[0].image;
 
 /**
  * Editorial craft strip — featured wide image + three tall panels.
+ * Admin tab: Bringing
  */
 export default function HomeServicesGrid() {
   const { siteSettings } = useAuth();
@@ -19,8 +20,48 @@ export default function HomeServicesGrid() {
   const reduceMotion = useReducedMotion();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const pauseAutoRef = useRef(false);
+  const [craft, setCraft] = useState<CraftContent>(DEFAULT_CRAFT);
 
-  // Mobile-only auto-scroll through craft cards
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch('/api/public/data');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.craft) return;
+        setCraft({
+          ...DEFAULT_CRAFT,
+          ...data.craft,
+          featured_image_url: resolveGallerySrc(
+            data.craft.featured_image_url || '',
+            DEFAULT_CRAFT.featured_image_url
+          ),
+          cards:
+            Array.isArray(data.craft.cards) && data.craft.cards.length
+              ? data.craft.cards.map(
+                  (
+                    c: { id: string; title: string; copy: string; image_url: string; order_index: number },
+                    i: number
+                  ) => ({
+                    id: c.id || `craft-${i + 1}`,
+                    title: c.title || DEFAULT_CRAFT.cards[i % 3]?.title || 'Craft',
+                    copy: c.copy || DEFAULT_CRAFT.cards[i % 3]?.copy || '',
+                    image_url: resolveGallerySrc(
+                      c.image_url || '',
+                      DEFAULT_CRAFT.cards[i % 3]?.image_url || DEFAULT_CRAFT.featured_image_url
+                    ),
+                    order_index: c.order_index ?? i,
+                  })
+                )
+              : DEFAULT_CRAFT.cards,
+        });
+      } catch {
+        // keep defaults
+      }
+    }
+    load();
+  }, []);
+
   useEffect(() => {
     if (reduceMotion) return;
     const el = scrollerRef.current;
@@ -28,7 +69,7 @@ export default function HomeServicesGrid() {
 
     let frame = 0;
     let last = 0;
-    const SPEED = 38; // px per second
+    const SPEED = 38;
 
     const tick = (ts: number) => {
       if (!last) last = ts;
@@ -52,6 +93,8 @@ export default function HomeServicesGrid() {
     return () => cancelAnimationFrame(frame);
   }, [reduceMotion]);
 
+  const cards = [...craft.cards].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
+
   return (
     <section className="relative w-full overflow-hidden bg-black py-14 sm:py-16 md:py-24">
       <div
@@ -64,7 +107,6 @@ export default function HomeServicesGrid() {
       />
 
       <div className="relative mx-auto w-[92%] max-w-[1260px] px-0 sm:w-[90%] md:w-[90%]">
-        {/* Intro — two-line heading on mobile */}
         <div className="mx-auto mb-8 max-w-3xl text-center md:mb-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -75,21 +117,20 @@ export default function HomeServicesGrid() {
             <div className="mb-4 flex items-center justify-center gap-3">
               <span className="h-px w-8 bg-[#3A8FB8]" aria-hidden />
               <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#3A8FB8] md:text-[12px]">
-                Designed For Every Celebration
+                {craft.eyebrow}
               </p>
               <span className="h-px w-8 bg-[#3A8FB8]" aria-hidden />
             </div>
 
             <h2 className="font-display text-[clamp(1.55rem,5.2vw,3.25rem)] font-extrabold leading-[1.1] tracking-tight text-white">
-              <span className="block whitespace-nowrap">Bringing Every Moment</span>
+              <span className="block whitespace-nowrap">{craft.heading}</span>
               <span className="mt-1.5 block whitespace-nowrap font-serif text-[clamp(1.45rem,4.8vw,2.9rem)] font-medium italic leading-[1.2] tracking-normal text-[#3A8FB8] md:mt-2">
-                To Life.
+                {craft.italic_line}
               </span>
             </h2>
 
             <p className="mx-auto mt-5 max-w-xl text-[14px] leading-[1.75] text-white/65 md:text-[15px]">
-              Sound, lighting, and professional DJs delivering unforgettable experiences for
-              weddings, concerts, festivals, and corporate events.
+              {craft.description}
             </p>
 
             <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -111,7 +152,6 @@ export default function HomeServicesGrid() {
           </motion.div>
         </div>
 
-        {/* Horizontal featured image above the 3 craft panels */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -121,8 +161,8 @@ export default function HomeServicesGrid() {
         >
           <div className="relative aspect-[16/9] w-full sm:aspect-[21/9] md:aspect-[2.6/1] md:min-h-[240px]">
             <MediaImage
-              src={FEATURED_WIDE}
-              alt="Live production stage"
+              src={craft.featured_image_url}
+              alt={craft.featured_title}
               className="absolute inset-0 h-full w-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
@@ -137,16 +177,15 @@ export default function HomeServicesGrid() {
             )}
             <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4 sm:p-6">
               <p className="font-display text-xs font-semibold uppercase tracking-[0.18em] text-white sm:text-sm">
-                Live production
+                {craft.featured_title}
               </p>
               <span className="rounded-full border border-white/20 bg-black/45 px-3 py-1 text-[10px] uppercase tracking-[0.14em] text-white/75 backdrop-blur-sm">
-                Stage ready
+                {craft.featured_badge}
               </span>
             </div>
           </div>
         </motion.div>
 
-        {/* Three craft panels — auto-scroll on mobile, equal columns on desktop */}
         <div
           ref={scrollerRef}
           onPointerDown={() => {
@@ -162,9 +201,9 @@ export default function HomeServicesGrid() {
           }}
           className="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-2 scrollbar-none md:mx-0 md:grid md:grid-cols-3 md:gap-5 md:overflow-visible md:px-0 md:pb-0 lg:gap-6"
         >
-          {CRAFT.map((service, i) => (
+          {cards.map((service, i) => (
             <motion.article
-              key={service.title}
+              key={service.id}
               initial={{ opacity: 0, y: 28 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-40px' }}
@@ -172,26 +211,12 @@ export default function HomeServicesGrid() {
               className="group relative h-[420px] w-[82vw] max-w-[340px] flex-shrink-0 snap-center overflow-hidden rounded-[24px] border border-white/10 bg-black sm:h-[460px] sm:w-[70vw] md:h-[520px] md:w-auto md:max-w-none lg:h-[560px]"
             >
               <MediaImage
-                src={service.image}
+                src={service.image_url}
                 alt={service.title}
                 className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/10" />
               <div className="absolute inset-0 bg-gradient-to-br from-[#3A8FB8]/10 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-
-              {!reduceMotion && (
-                <motion.div
-                  aria-hidden
-                  className="pointer-events-none absolute -inset-y-8 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100"
-                  animate={{ x: ['-120%', '240%'] }}
-                  transition={{
-                    duration: 5.5,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                    repeatDelay: 3,
-                  }}
-                />
-              )}
 
               <div className="absolute inset-x-0 top-0 flex items-center justify-between p-5 md:p-6">
                 <p className="font-display text-sm font-semibold tabular-nums tracking-[0.2em] text-white/35">

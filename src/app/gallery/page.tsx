@@ -27,6 +27,12 @@ const defaults: GalleryItem[] = STAGE_IMAGES.slice(0, 5).map((img, i) => ({
 
 const DEFAULT_CATS = ['Weddings', 'Festivals', 'Concerts', 'Road Shows', 'Corporate'];
 
+function firstOfCategory(items: GalleryItem[], cat: string): GalleryItem | null {
+  return (
+    items.find((i) => i.category.toLowerCase() === cat.toLowerCase()) || null
+  );
+}
+
 export default function GalleryPage() {
   const [items, setItems] = useState<GalleryItem[]>(defaults);
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATS);
@@ -48,34 +54,56 @@ export default function GalleryPage() {
                 toGalleryCategory(s.service_title)
               )
             : DEFAULT_CATS;
-        const uniqueCats = [...new Set(serviceCats.filter(Boolean))];
-        setCategories(uniqueCats.length ? uniqueCats : DEFAULT_CATS);
 
-        if (!data.images?.length) {
-          setItems(
-            uniqueCats.map((cat, i) => ({
-              id: i + 1,
-              category: cat,
-              title: cat,
-              src: defaults[i % defaults.length].src,
-            }))
+        // Always include defaults so Weddings etc. never disappear
+        const uniqueCats = [
+          ...new Set([...serviceCats, ...DEFAULT_CATS].filter(Boolean)),
+        ];
+        // Prefer service order first
+        const ordered = [
+          ...serviceCats.filter(Boolean),
+          ...uniqueCats.filter((c) => !serviceCats.includes(c)),
+        ];
+        const finalCats = [...new Set(ordered)];
+        setCategories(finalCats.length ? finalCats : DEFAULT_CATS);
+
+        let mapped: GalleryItem[] = [];
+        if (data.images?.length) {
+          mapped = data.images.map(
+            (item: { id: string; category: string; image_url: string }, idx: number) => {
+              const fallback = defaults[idx % defaults.length].src;
+              const cat = toGalleryCategory(item.category || 'Events');
+              return {
+                id: item.id || idx,
+                category: cat,
+                title: cat,
+                src: resolveGallerySrc(item.image_url, fallback),
+              };
+            }
           );
-          return;
         }
 
-        const mapped: GalleryItem[] = data.images.map(
-          (item: { id: string; category: string; image_url: string }, idx: number) => {
-            const fallback = defaults[idx % defaults.length].src;
-            const cat = toGalleryCategory(item.category || 'Events');
-            return {
-              id: item.id || idx,
+        // Ensure every service category has at least one visible frame
+        const ensured = [...mapped];
+        finalCats.forEach((cat, i) => {
+          if (!ensured.some((img) => img.category.toLowerCase() === cat.toLowerCase())) {
+            const serviceMatch = data.services?.find(
+              (s: { service_title: string; image_url: string }) =>
+                toGalleryCategory(s.service_title).toLowerCase() === cat.toLowerCase()
+            );
+            const src = serviceMatch?.image_url
+              ? resolveGallerySrc(serviceMatch.image_url, defaults[i % defaults.length].src)
+              : defaults[i % defaults.length].src;
+            ensured.push({
+              id: `seed-${cat}`,
               category: cat,
               title: cat,
-              src: resolveGallerySrc(item.image_url, fallback),
-            };
+              src,
+            });
           }
-        );
-        setItems(mapped.length ? mapped : defaults);
+        });
+
+        setItems(ensured.length ? ensured : defaults);
       } catch {
         // keep defaults
       }
@@ -83,23 +111,37 @@ export default function GalleryPage() {
     load();
   }, []);
 
-  const filtered = useMemo(() => {
-    if (filter === 'All') return items;
-    return items.filter(
-      (item) => item.category.toLowerCase() === filter.toLowerCase()
+  const featuredCats = useMemo(() => categories.slice(0, 4), [categories]);
+  const overflowCats = useMemo(() => categories.slice(4), [categories]);
+
+  const featuredSideCards = useMemo(() => {
+    return featuredCats
+      .map((cat) => firstOfCategory(items, cat))
+      .filter(Boolean) as GalleryItem[];
+  }, [featuredCats, items]);
+
+  const featuredPool = useMemo(() => {
+    return items.filter((item) =>
+      featuredCats.some((c) => c.toLowerCase() === item.category.toLowerCase())
     );
-  }, [items, filter]);
+  }, [items, featuredCats]);
+
+  const overflowItems = useMemo(() => {
+    return items.filter((item) =>
+      overflowCats.some((c) => c.toLowerCase() === item.category.toLowerCase())
+    );
+  }, [items, overflowCats]);
 
   useEffect(() => {
-    if (!filtered.length) return;
+    if (!featuredPool.length) return;
     const id = window.setInterval(() => {
-      setFeatured((i) => (i + 1) % Math.min(filtered.length, 6));
+      setFeatured((i) => (i + 1) % featuredPool.length);
     }, 3200);
     return () => window.clearInterval(id);
-  }, [filtered.length, filter]);
+  }, [featuredPool.length]);
 
-  const spotlight = filtered[featured % Math.max(filtered.length, 1)] || filtered[0];
-  const reel = [...filtered, ...filtered].slice(0, Math.max(12, filtered.length * 2));
+  const spotlight =
+    featuredPool[featured % Math.max(featuredPool.length, 1)] || featuredSideCards[0];
 
   const openLightbox = (item: GalleryItem) => {
     const catItems = items.filter(
@@ -148,7 +190,7 @@ export default function GalleryPage() {
                 </h2>
               </div>
               <p className="hidden md:block text-sm text-white/45 max-w-xs text-right">
-                Browse by service category — open any frame to slide through that category.
+                Top four services sit beside the cover. Extra service categories appear below.
               </p>
             </div>
 
@@ -181,124 +223,147 @@ export default function GalleryPage() {
               })}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-6 mb-8">
-              <AnimatePresence mode="wait">
-                {spotlight && (
-                  <motion.button
-                    key={String(spotlight.id) + spotlight.src + filter}
-                    type="button"
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 1.02 }}
-                    transition={{ duration: 0.45 }}
-                    onClick={() => openLightbox(spotlight)}
-                    className="relative lg:col-span-8 aspect-[16/10] overflow-hidden rounded-[28px] border border-white/10 text-left group"
-                  >
-                    <MediaImage
-                      src={spotlight.src}
-                      alt={spotlight.title}
-                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-                      <p className="text-[11px] uppercase tracking-[0.22em] text-[#3A8FB8] font-semibold">
-                        {spotlight.category}
-                      </p>
-                      <h3 className="mt-2 font-display text-3xl md:text-5xl font-bold uppercase tracking-tight text-white">
-                        {spotlight.title}
-                      </h3>
-                    </div>
-                  </motion.button>
-                )}
-              </AnimatePresence>
-
-              <div className="lg:col-span-4 grid grid-cols-2 lg:grid-cols-1 gap-3 md:gap-4">
-                {filtered.slice(0, 4).map((item, i) => (
-                  <motion.button
-                    key={`side-${item.id}`}
-                    type="button"
-                    initial={{ opacity: 0, x: 20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.06 }}
-                    onClick={() => {
-                      setFeatured(i);
-                      openLightbox(item);
-                    }}
-                    className={`relative aspect-[16/10] lg:aspect-auto lg:min-h-[92px] overflow-hidden rounded-2xl border text-left transition-all ${
-                      featured % Math.max(filtered.length, 1) === i
-                        ? 'border-[#3A8FB8]/60 shadow-[0_0_24px_rgba(58,143,184,0.25)]'
-                        : 'border-white/10 hover:border-white/30'
-                    }`}
-                  >
-                    <MediaImage
-                      src={item.src}
-                      alt={item.title}
-                      className="absolute inset-0 h-full w-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/45" />
-                    <div className="absolute inset-x-0 bottom-0 p-3">
-                      <p className="text-[10px] uppercase tracking-[0.16em] text-white/80">
-                        {item.category}
-                      </p>
-                    </div>
-                  </motion.button>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 mb-8">
-              {filtered.map((item, i) => (
-                <motion.button
-                  key={`grid-${item.id}-${i}`}
-                  type="button"
-                  initial={{ opacity: 0, y: 12 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: Math.min(i * 0.03, 0.3) }}
-                  onClick={() => openLightbox(item)}
-                  className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-white/10 text-left group"
-                >
-                  <MediaImage
-                    src={item.src}
-                    alt={item.title}
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                  <p className="absolute bottom-3 left-3 text-[10px] uppercase tracking-[0.16em] text-white/85">
-                    {item.category}
-                  </p>
-                </motion.button>
-              ))}
-              {!filtered.length && (
-                <p className="col-span-full text-center text-sm text-white/45 py-10">
-                  No images in this category yet.
-                </p>
-              )}
-            </div>
-
-            {reel.length > 0 && (
-              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] py-4">
-                <motion.div
-                  className="flex w-max gap-3"
-                  animate={{ x: ['0%', '-50%'] }}
-                  transition={{ duration: 28, repeat: Infinity, ease: 'linear' }}
-                >
-                  {reel.map((item, i) => (
-                    <button
-                      key={`reel-${item.id}-${i}`}
+            {/* Cover + 4 category cards (first four services) — All view or when browsing a featured cat */}
+            {filter === 'All' && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-6 mb-10">
+                <AnimatePresence mode="wait">
+                  {spotlight && (
+                    <motion.button
+                      key={String(spotlight.id) + spotlight.src}
                       type="button"
-                      onClick={() => openLightbox(item)}
-                      className="relative h-24 w-40 flex-shrink-0 overflow-hidden rounded-xl border border-white/10 md:h-28 md:w-48"
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 1.02 }}
+                      transition={{ duration: 0.45 }}
+                      onClick={() => openLightbox(spotlight)}
+                      className="relative lg:col-span-8 aspect-[16/10] overflow-hidden rounded-[28px] border border-white/10 text-left group"
+                    >
+                      <MediaImage
+                        src={spotlight.src}
+                        alt={spotlight.title}
+                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+                        <p className="text-[11px] uppercase tracking-[0.22em] text-[#3A8FB8] font-semibold">
+                          {spotlight.category}
+                        </p>
+                        <h3 className="mt-2 font-display text-3xl md:text-5xl font-bold uppercase tracking-tight text-white">
+                          {spotlight.title}
+                        </h3>
+                      </div>
+                    </motion.button>
+                  )}
+                </AnimatePresence>
+
+                <div className="lg:col-span-4 grid grid-cols-2 lg:grid-cols-1 gap-3 md:gap-4">
+                  {featuredSideCards.map((item, i) => (
+                    <motion.button
+                      key={`side-${item.id}`}
+                      type="button"
+                      initial={{ opacity: 0, x: 20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.06 }}
+                      onClick={() => {
+                        const idx = featuredPool.findIndex((f) => f.id === item.id);
+                        if (idx >= 0) setFeatured(idx);
+                        openLightbox(item);
+                      }}
+                      className={`relative aspect-[16/10] lg:aspect-auto lg:min-h-[92px] overflow-hidden rounded-2xl border text-left transition-all ${
+                        spotlight?.id === item.id
+                          ? 'border-[#3A8FB8]/60 shadow-[0_0_24px_rgba(58,143,184,0.25)]'
+                          : 'border-white/10 hover:border-white/30'
+                      }`}
                     >
                       <MediaImage
                         src={item.src}
                         alt={item.title}
                         className="absolute inset-0 h-full w-full object-cover"
                       />
-                    </button>
+                      <div className="absolute inset-0 bg-black/45" />
+                      <div className="absolute inset-x-0 bottom-0 p-3">
+                        <p className="text-[10px] uppercase tracking-[0.16em] text-white/80">
+                          {item.category}
+                        </p>
+                      </div>
+                    </motion.button>
                   ))}
-                </motion.div>
+                </div>
+              </div>
+            )}
+
+            {/* Filtered category grid (any single category) */}
+            {filter !== 'All' && (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 mb-10">
+                {items
+                  .filter((item) => item.category.toLowerCase() === filter.toLowerCase())
+                  .map((item, i) => (
+                    <motion.button
+                      key={`filter-${item.id}-${i}`}
+                      type="button"
+                      initial={{ opacity: 0, y: 12 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      onClick={() => openLightbox(item)}
+                      className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-white/10 text-left group"
+                    >
+                      <MediaImage
+                        src={item.src}
+                        alt={item.title}
+                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                      <p className="absolute bottom-3 left-3 text-[10px] uppercase tracking-[0.16em] text-white/85">
+                        {item.category}
+                      </p>
+                    </motion.button>
+                  ))}
+              </div>
+            )}
+
+            {/* Overflow categories only (5th+) — never repeats the top-4 cards */}
+            {filter === 'All' && (
+              <div>
+                {overflowCats.length > 0 && (
+                  <div className="mb-5">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-[#3A8FB8] font-semibold mb-1">
+                      More categories
+                    </p>
+                    <h3 className="font-display text-xl md:text-2xl font-bold uppercase tracking-tight text-white">
+                      Beyond the spotlight
+                    </h3>
+                  </div>
+                )}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+                  {overflowItems.map((item, i) => (
+                    <motion.button
+                      key={`overflow-${item.id}-${i}`}
+                      type="button"
+                      initial={{ opacity: 0, y: 12 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: Math.min(i * 0.03, 0.3) }}
+                      onClick={() => openLightbox(item)}
+                      className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-white/10 text-left group"
+                    >
+                      <MediaImage
+                        src={item.src}
+                        alt={item.title}
+                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                      <p className="absolute bottom-3 left-3 text-[10px] uppercase tracking-[0.16em] text-white/85">
+                        {item.category}
+                      </p>
+                    </motion.button>
+                  ))}
+                  {!overflowCats.length && (
+                    <p className="col-span-full text-sm text-white/40 py-4">
+                      Add more services in admin to show extra categories here.
+                    </p>
+                  )}
+                </div>
               </div>
             )}
           </div>

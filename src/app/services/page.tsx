@@ -9,7 +9,7 @@ import QuoteCta from '@/components/QuoteCta';
 import MediaImage from '@/components/MediaImage';
 import CinematicPageHero from '@/components/CinematicPageHero';
 import { useAuth } from '@/context/AuthContext';
-import { STAGE_IMAGES, resolveGallerySrc } from '@/utils/media';
+import { STAGE_IMAGES } from '@/utils/media';
 import {
   DEFAULT_SERVICE_BLOCKS,
   mergePublicServices,
@@ -35,18 +35,7 @@ export default function ServicesPage() {
         if (!res.ok) return;
         const data = await res.json();
         if (!data.services?.length) return;
-        const merged = mergePublicServices(data.services).map((service) => {
-          const match = data.services.find(
-            (s: { id: number; image_url: string }) => s.id === service.id
-          );
-          if (!match) return service;
-          const nextHero = resolveGallerySrc(match.image_url, service.hero);
-          return {
-            ...service,
-            hero: nextHero,
-            gallery: [nextHero, service.gallery[1], service.gallery[2]],
-          };
-        });
+        const merged = mergePublicServices(data.services);
         setServices(merged);
         if (merged[0]) setActiveId(merged[0].id);
       } catch {

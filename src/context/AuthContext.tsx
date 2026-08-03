@@ -7,6 +7,15 @@ interface SiteSettings {
   phone_1: string;
   phone_2: string;
   address: string;
+  map_query?: string;
+  hours_label?: string;
+  hours_text?: string;
+  base_city?: string;
+  studio_label?: string;
+  contact_eyebrow?: string;
+  contact_title?: string;
+  contact_italic?: string;
+  contact_description?: string;
   smtp_host?: string;
   smtp_port?: string;
   smtp_user?: string;
@@ -31,17 +40,28 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const DEFAULT_SETTINGS: SiteSettings = {
+  email: 'parthproduction123@gmail.com',
+  phone_1: '9537330003',
+  phone_2: '8866655651',
+  address: 'Gaurav Path Road, Palanpur, Surat, Gujarat',
+  map_query: 'Gaurav Path Road, Palanpur, Surat, Gujarat',
+  hours_label: 'Hours',
+  hours_text: 'Open for bookings',
+  base_city: 'Surat, Gujarat',
+  studio_label: 'Parth Production Studio',
+  contact_eyebrow: 'Book the floor',
+  contact_title: 'Tell us the',
+  contact_italic: 'date & the vibe.',
+  contact_description:
+    'Share venue, guest count, and energy — sound, light, SFX, truss, fireworks, DJ. One crew. One system.',
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<CustomUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const [siteSettings, setSiteSettings] = useState<SiteSettings>({
-    email: 'parthproduction123@gmail.com',
-    phone_1: '9537330003',
-    phone_2: '8866655651',
-    address: 'Gaurav Path Road, Palanpur, Surat, Gujarat',
-  });
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
 
   useEffect(() => {
     async function checkSession() {
@@ -49,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const res = await fetch('/api/public/data');
         if (res.ok) {
           const data = await res.json();
-          if (data.settings) setSiteSettings(data.settings);
+          if (data.settings) setSiteSettings({ ...DEFAULT_SETTINGS, ...data.settings });
         }
       } catch (err) {
         console.error('Failed to load site settings:', err);
@@ -61,7 +81,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const session = await sessionRes.json();
           if (session.authenticated && session.user) {
             setUser(session.user);
-            // Cookie is HttpOnly — keep a non-secret session marker for admin API bodies that still expect `token`
             setToken('cookie-session');
           }
         }
