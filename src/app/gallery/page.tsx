@@ -9,7 +9,7 @@ import QuoteCta from '@/components/QuoteCta';
 import MediaImage from '@/components/MediaImage';
 import CinematicPageHero from '@/components/CinematicPageHero';
 import { STAGE_IMAGES, resolveGallerySrc } from '@/utils/media';
-import { toGalleryCategory } from '@/utils/servicesCatalog';
+import { canonicalizeCategory } from '@/utils/servicesCatalog';
 
 type GalleryItem = {
   id: string | number;
@@ -20,17 +20,36 @@ type GalleryItem = {
 
 const defaults: GalleryItem[] = STAGE_IMAGES.slice(0, 5).map((img, i) => ({
   id: i + 1,
-  category: img.title,
+  category: canonicalizeCategory(img.title),
   title: img.tag,
   src: img.src,
 }));
 
-const DEFAULT_CATS = ['Weddings', 'Festivals', 'Concerts', 'Road Shows', 'Corporate'];
+const DEFAULT_CATS = [
+  'Weddings',
+  'Festivals',
+  'Concerts',
+  'Road Shows',
+  'Corporate Events',
+];
 
 function firstOfCategory(items: GalleryItem[], cat: string): GalleryItem | null {
   return (
-    items.find((i) => i.category.toLowerCase() === cat.toLowerCase()) || null
+    items.find((i) => canonicalizeCategory(i.category) === canonicalizeCategory(cat)) || null
   );
+}
+
+function uniqueCategories(list: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of list) {
+    const cat = canonicalizeCategory(raw);
+    const key = cat.toLowerCase();
+    if (!cat || seen.has(key)) continue;
+    seen.add(key);
+    out.push(cat);
+  }
+  return out;
 }
 
 export default function GalleryPage() {
@@ -48,23 +67,15 @@ export default function GalleryPage() {
         if (!res.ok) return;
         const data = await res.json();
 
+        // Services are the source of truth for gallery categories
         const serviceCats: string[] =
           data.services?.length > 0
             ? data.services.map((s: { service_title: string }) =>
-                toGalleryCategory(s.service_title)
+                canonicalizeCategory(s.service_title)
               )
             : DEFAULT_CATS;
 
-        // Always include defaults so Weddings etc. never disappear
-        const uniqueCats = [
-          ...new Set([...serviceCats, ...DEFAULT_CATS].filter(Boolean)),
-        ];
-        // Prefer service order first
-        const ordered = [
-          ...serviceCats.filter(Boolean),
-          ...uniqueCats.filter((c) => !serviceCats.includes(c)),
-        ];
-        const finalCats = [...new Set(ordered)];
+        const finalCats = uniqueCategories(serviceCats);
         setCategories(finalCats.length ? finalCats : DEFAULT_CATS);
 
         let mapped: GalleryItem[] = [];
@@ -72,7 +83,7 @@ export default function GalleryPage() {
           mapped = data.images.map(
             (item: { id: string; category: string; image_url: string }, idx: number) => {
               const fallback = defaults[idx % defaults.length].src;
-              const cat = toGalleryCategory(item.category || 'Events');
+              const cat = canonicalizeCategory(item.category || 'Events');
               return {
                 id: item.id || idx,
                 category: cat,
@@ -83,13 +94,21 @@ export default function GalleryPage() {
           );
         }
 
-        // Ensure every service category has at least one visible frame
-        const ensured = [...mapped];
+        // Keep only images for known service categories (drops orphan "Corporate")
+        const serviceKeys = new Set(finalCats.map((c) => c.toLowerCase()));
+        const ensured = mapped.filter((img) =>
+          serviceKeys.has(canonicalizeCategory(img.category).toLowerCase())
+        );
+
         finalCats.forEach((cat, i) => {
-          if (!ensured.some((img) => img.category.toLowerCase() === cat.toLowerCase())) {
+          if (
+            !ensured.some(
+              (img) => canonicalizeCategory(img.category).toLowerCase() === cat.toLowerCase()
+            )
+          ) {
             const serviceMatch = data.services?.find(
               (s: { service_title: string; image_url: string }) =>
-                toGalleryCategory(s.service_title).toLowerCase() === cat.toLowerCase()
+                canonicalizeCategory(s.service_title).toLowerCase() === cat.toLowerCase()
             );
             const src = serviceMatch?.image_url
               ? resolveGallerySrc(serviceMatch.image_url, defaults[i % defaults.length].src)
@@ -122,15 +141,18 @@ export default function GalleryPage() {
 
   const featuredPool = useMemo(() => {
     return items.filter((item) =>
-      featuredCats.some((c) => c.toLowerCase() === item.category.toLowerCase())
+      featuredCats.some(
+        (c) => canonicalizeCategory(c) === canonicalizeCategory(item.category)
+      )
     );
   }, [items, featuredCats]);
 
-  const overflowItems = useMemo(() => {
-    return items.filter((item) =>
-      overflowCats.some((c) => c.toLowerCase() === item.category.toLowerCase())
-    );
-  }, [items, overflowCats]);
+  // One representative card per overflow category (no Road Shows twice)
+  const overflowCards = useMemo(() => {
+    return overflowCats
+      .map((cat) => firstOfCategory(items, cat))
+      .filter(Boolean) as GalleryItem[];
+  }, [overflowCats, items]);
 
   useEffect(() => {
     if (!featuredPool.length) return;
@@ -145,17 +167,17 @@ export default function GalleryPage() {
 
   const openLightbox = (item: GalleryItem) => {
     const catItems = items.filter(
-      (f) => f.category.toLowerCase() === item.category.toLowerCase()
+      (f) => canonicalizeCategory(f.category) === canonicalizeCategory(item.category)
     );
     const idx = catItems.findIndex((f) => f.id === item.id);
-    setSlideCategory(item.category);
+    setSlideCategory(canonicalizeCategory(item.category));
     setActive(idx >= 0 ? idx : 0);
   };
 
   const slideItems = useMemo(() => {
     if (!slideCategory) return items;
     return items.filter(
-      (f) => f.category.toLowerCase() === slideCategory.toLowerCase()
+      (f) => canonicalizeCategory(f.category) === canonicalizeCategory(slideCategory)
     );
   }, [items, slideCategory]);
 
@@ -200,8 +222,11 @@ export default function GalleryPage() {
                 const count =
                   cat === 'All'
                     ? items.length
-                    : items.filter((i) => i.category.toLowerCase() === cat.toLowerCase())
-                        .length;
+                    : items.filter(
+                        (i) =>
+                          canonicalizeCategory(i.category).toLowerCase() ===
+                          canonicalizeCategory(cat).toLowerCase()
+                      ).length;
                 return (
                   <button
                     key={cat}
@@ -297,7 +322,11 @@ export default function GalleryPage() {
             {filter !== 'All' && (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 mb-10">
                 {items
-                  .filter((item) => item.category.toLowerCase() === filter.toLowerCase())
+                  .filter(
+                    (item) =>
+                      canonicalizeCategory(item.category).toLowerCase() ===
+                      canonicalizeCategory(filter).toLowerCase()
+                  )
                   .map((item, i) => (
                     <motion.button
                       key={`filter-${item.id}-${i}`}
@@ -336,9 +365,9 @@ export default function GalleryPage() {
                   </div>
                 )}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-                  {overflowItems.map((item, i) => (
+                  {overflowCards.map((item, i) => (
                     <motion.button
-                      key={`overflow-${item.id}-${i}`}
+                      key={`overflow-${canonicalizeCategory(item.category)}`}
                       type="button"
                       initial={{ opacity: 0, y: 12 }}
                       whileInView={{ opacity: 1, y: 0 }}
@@ -354,7 +383,7 @@ export default function GalleryPage() {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                       <p className="absolute bottom-3 left-3 text-[10px] uppercase tracking-[0.16em] text-white/85">
-                        {item.category}
+                        {canonicalizeCategory(item.category)}
                       </p>
                     </motion.button>
                   ))}

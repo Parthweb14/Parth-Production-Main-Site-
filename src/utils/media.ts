@@ -55,7 +55,7 @@ export const STAGE_IMAGES = [
   { title: 'Weddings', src: `${ASSET_BASE}/Image%206%20Weddings.png`, tag: 'Sound & Light' },
   { title: 'Concerts', src: `${ASSET_BASE}/Image%201%20Concert%20.png`, tag: 'Truss & Arrays' },
   { title: 'Festivals', src: `${ASSET_BASE}/Image%203%20Festivals.png`, tag: 'Full Production' },
-  { title: 'Corporate', src: `${ASSET_BASE}/Image%202%20Corporate%20events.png`, tag: 'LED & Stage' },
+  { title: 'Corporate Events', src: `${ASSET_BASE}/Image%202%20Corporate%20events.png`, tag: 'LED & Stage' },
   { title: 'Road Shows', src: `${ASSET_BASE}/Image%204%20Road%20show.png`, tag: 'Mobile Rigs' },
   { title: 'Reception', src: `${ASSET_BASE}/Image%207%20Weddings.png`, tag: 'DJ Artistic' },
   { title: 'Laser Arena', src: `${ASSET_BASE}/image%2010%20.png`, tag: 'SFX & Lights' },

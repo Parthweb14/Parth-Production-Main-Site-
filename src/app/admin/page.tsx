@@ -9,7 +9,7 @@ import {
   defaultShowcaseVideos,
   defaultStageGallery,
 } from '@/utils/media';
-import { toGalleryCategory, DEFAULT_ABOUT } from '@/utils/servicesCatalog';
+import { canonicalizeCategory, DEFAULT_ABOUT } from '@/utils/servicesCatalog';
 import { DEFAULT_CRAFT, type CraftContent } from '@/utils/craftDefaults';
 import { normalizeIdentity, sanitizePassword } from '@/utils/credentialSanitize';
 
@@ -126,7 +126,7 @@ const DEFAULT_SERVICES: DBServiceImage[] = [
   { id: 2, service_title: 'CONCERTS', image_url: STAGE_IMAGES[1].src, gallery_images: [STAGE_IMAGES[1].src, STAGE_IMAGES[7].src, STAGE_IMAGES[6].src] },
   { id: 1, service_title: 'WEDDINGS', image_url: STAGE_IMAGES[0].src, gallery_images: [STAGE_IMAGES[0].src, STAGE_IMAGES[5].src, STAGE_IMAGES[6].src] },
   { id: 3, service_title: 'FESTIVALS', image_url: STAGE_IMAGES[2].src, gallery_images: [STAGE_IMAGES[2].src, STAGE_IMAGES[8].src, STAGE_IMAGES[6].src] },
-  { id: 4, service_title: 'CORPORATE', image_url: STAGE_IMAGES[3].src, gallery_images: [STAGE_IMAGES[3].src, STAGE_IMAGES[7].src, STAGE_IMAGES[4].src] },
+  { id: 4, service_title: 'CORPORATE EVENTS', image_url: STAGE_IMAGES[3].src, gallery_images: [STAGE_IMAGES[3].src, STAGE_IMAGES[7].src, STAGE_IMAGES[4].src] },
   { id: 5, service_title: 'ROAD SHOWS', image_url: STAGE_IMAGES[4].src, gallery_images: [STAGE_IMAGES[4].src, STAGE_IMAGES[8].src, STAGE_IMAGES[2].src] },
 ];
 
@@ -239,7 +239,10 @@ export default function AdminPage() {
       if (!res.ok) throw new Error('Failed to load database.');
       const data = await res.json();
 
-      const loadedImages = data.images || [];
+      const loadedImages = (data.images || []).map((img: DBImage) => ({
+        ...img,
+        category: canonicalizeCategory(img.category || 'Events'),
+      }));
       setImages(loadedImages);
       setInitialImages(JSON.stringify(loadedImages));
 
@@ -305,9 +308,10 @@ export default function AdminPage() {
               ? galleryUrl
               : galleryFallbacks[index] || STAGE_IMAGES[index].src;
           });
+          const rawTitle = match.service_title || def?.service_title || 'SERVICE';
           return {
             id: match.id,
-            service_title: match.service_title || def?.service_title || 'SERVICE',
+            service_title: canonicalizeCategory(rawTitle).toUpperCase(),
             image_url: broken ? (def?.image_url || STAGE_IMAGES[0].src) : url,
             gallery_images: galleryImages,
             subtitle: match.subtitle,
@@ -315,9 +319,25 @@ export default function AdminPage() {
             detail: match.detail,
           };
         });
-        // Keep defaults missing from DB
+
+        // Drop duplicate Corporate if Corporate Events already exists
+        const seenCats = new Set<string>();
+        mergedServices = mergedServices.filter((s) => {
+          const key = canonicalizeCategory(s.service_title).toLowerCase();
+          if (seenCats.has(key)) return false;
+          seenCats.add(key);
+          return true;
+        });
+
+        // Keep defaults missing from DB (by id + category)
         for (const def of DEFAULT_SERVICES) {
-          if (!mergedServices.some((s) => s.id === def.id)) {
+          const defCat = canonicalizeCategory(def.service_title).toLowerCase();
+          if (
+            !mergedServices.some((s) => s.id === def.id) &&
+            !mergedServices.some(
+              (s) => canonicalizeCategory(s.service_title).toLowerCase() === defCat
+            )
+          ) {
             mergedServices.push(def);
           }
         }
@@ -549,7 +569,7 @@ export default function AdminPage() {
 
     // Reorder within one category without scrambling other categories' global indices
     const catSorted = images
-      .filter((img) => toGalleryCategory(img.category) === selectedGalleryCat)
+      .filter((img) => canonicalizeCategory(img.category) === selectedGalleryCat)
       .sort((a, b) => a.order_index - b.order_index);
     if (endIndex >= catSorted.length) return;
 
@@ -599,7 +619,7 @@ export default function AdminPage() {
       return;
     }
 
-    const catImages = images.filter(img => toGalleryCategory(img.category) === selectedGalleryCat);
+    const catImages = images.filter(img => canonicalizeCategory(img.category) === selectedGalleryCat);
     if (catImages.length >= 5) {
       alert(`Limit reached! Max 5 images in "${selectedGalleryCat}" category.`);
       return;
@@ -624,9 +644,9 @@ export default function AdminPage() {
         setDeletedUrls(prev => [...prev, imgToDelete.image_url]);
       }
       const remaining = images.filter(img => img.id !== imgToDelete.id);
-      const delCat = toGalleryCategory(imgToDelete.category);
-      const nonCat = remaining.filter(img => toGalleryCategory(img.category) !== delCat);
-      const cat = remaining.filter(img => toGalleryCategory(img.category) === delCat)
+      const delCat = canonicalizeCategory(imgToDelete.category);
+      const nonCat = remaining.filter(img => canonicalizeCategory(img.category) !== delCat);
+      const cat = remaining.filter(img => canonicalizeCategory(img.category) === delCat)
                            .map((img, idx) => ({ ...img, order_index: idx }));
       setImages([...nonCat, ...cat]);
     }
@@ -668,7 +688,7 @@ export default function AdminPage() {
   };
 
   const handleCategoryChange = (imageToEdit: DBImage, newCategory: string) => {
-    const targetCount = images.filter(img => toGalleryCategory(img.category) === newCategory).length;
+    const targetCount = images.filter(img => canonicalizeCategory(img.category) === newCategory).length;
     if (targetCount >= 5) {
       alert(`Cannot change category: "${newCategory}" already has 5 images.`);
       return;
@@ -676,7 +696,7 @@ export default function AdminPage() {
 
     setImages(prev => prev.map(img => {
       if (img.id === imageToEdit.id) {
-        const targetCatImages = prev.filter(i => toGalleryCategory(i.category) === newCategory);
+        const targetCatImages = prev.filter(i => canonicalizeCategory(i.category) === newCategory);
         return {
           ...img,
           category: newCategory,
@@ -711,14 +731,14 @@ export default function AdminPage() {
   const handleServiceTitleChange = (serviceId: number, newTitle: string) => {
     const service = serviceImages.find((item) => item.id === serviceId);
     if (!service) return;
-    const oldCategory = toGalleryCategory(service.service_title);
-    const newCategory = toGalleryCategory(newTitle);
+    const oldCategory = canonicalizeCategory(service.service_title);
+    const newCategory = canonicalizeCategory(newTitle);
     setServiceImages((prev) =>
       prev.map((item) => item.id === serviceId ? { ...item, service_title: newTitle } : item)
     );
     setImages((prev) =>
       prev.map((image) =>
-        toGalleryCategory(image.category) === oldCategory
+        canonicalizeCategory(image.category) === oldCategory
           ? { ...image, category: newCategory }
           : image
       )
@@ -773,12 +793,12 @@ export default function AdminPage() {
   };
 
   const handleAddService = () => {
-    const title = toGalleryCategory(newServiceTitle);
+    const title = canonicalizeCategory(newServiceTitle);
     if (!title) {
       alert('Enter a service name.');
       return;
     }
-    if (serviceImages.some((s) => toGalleryCategory(s.service_title).toLowerCase() === title.toLowerCase())) {
+    if (serviceImages.some((s) => canonicalizeCategory(s.service_title).toLowerCase() === title.toLowerCase())) {
       alert('A service with this name already exists.');
       return;
     }
@@ -797,7 +817,7 @@ export default function AdminPage() {
 
     // Seed gallery category with the same cover image (max 5)
     const cat = title;
-    const catCount = images.filter((img) => toGalleryCategory(img.category) === cat).length;
+    const catCount = images.filter((img) => canonicalizeCategory(img.category) === cat).length;
     if (catCount < 5) {
       const seed: DBImage = {
         id: Math.random().toString(36).substring(7),
@@ -822,7 +842,7 @@ export default function AdminPage() {
       alert('Default services cannot be deleted. You can still replace their cover image.');
       return;
     }
-    if (!window.confirm(`Remove service "${toGalleryCategory(service.service_title)}"? Gallery images for this category will stay until you remove them in Gallery.`)) {
+    if (!window.confirm(`Remove service "${canonicalizeCategory(service.service_title)}"? Gallery images for this category will stay until you remove them in Gallery.`)) {
       return;
     }
     if (!service.isLocal && service.image_url.startsWith('http')) {
@@ -977,14 +997,14 @@ export default function AdminPage() {
           const publicUrl = await uploadToBlob(img.localFile);
           processedImages.push({
             id: img.id,
-            category: toGalleryCategory(img.category),
+            category: canonicalizeCategory(img.category),
             image_url: publicUrl,
             order_index: img.order_index
           });
         } else {
           processedImages.push({
             id: img.id,
-            category: toGalleryCategory(img.category),
+            category: canonicalizeCategory(img.category),
             image_url: img.image_url,
             order_index: img.order_index
           });
@@ -1042,7 +1062,7 @@ export default function AdminPage() {
 
         processedServices.push({
           id: s.id,
-          service_title: s.service_title,
+          service_title: canonicalizeCategory(s.service_title).toUpperCase(),
           image_url: coverUrl,
           gallery_images: galleryImages,
           subtitle: s.subtitle,
@@ -1050,6 +1070,17 @@ export default function AdminPage() {
           detail: s.detail,
         });
       }
+
+      // Drop accidental Corporate duplicate rows before save
+      const seenServiceCats = new Set<string>();
+      const dedupedServices = processedServices.filter((s) => {
+        const key = canonicalizeCategory(s.service_title).toLowerCase();
+        if (seenServiceCats.has(key)) return false;
+        seenServiceCats.add(key);
+        return true;
+      });
+      processedServices.length = 0;
+      processedServices.push(...dedupedServices);
 
       // 3b. About image upload
       let processedAbout = {
@@ -1248,21 +1279,16 @@ export default function AdminPage() {
 
   const serviceCategories = [
     ...new Set(
-      serviceImages.map((s) => toGalleryCategory(s.service_title)).filter(Boolean)
+      serviceImages.map((s) => canonicalizeCategory(s.service_title)).filter(Boolean)
     ),
   ];
-  const imageCategories = [
-    ...new Set(images.map((img) => toGalleryCategory(img.category)).filter(Boolean)),
-  ];
-  const galleryCategories = [
-    'All Events',
-    ...[...new Set([...serviceCategories, ...imageCategories])],
-  ];
+  // Gallery tabs follow services only so orphan legacy categories don't reappear
+  const galleryCategories = ['All Events', ...serviceCategories];
 
   const categoryImages = selectedGalleryCat === 'All Events' 
     ? [...images].sort((a, b) => a.order_index - b.order_index)
     : images
-        .filter((img) => toGalleryCategory(img.category) === selectedGalleryCat)
+        .filter((img) => canonicalizeCategory(img.category) === selectedGalleryCat)
         .sort((a, b) => a.order_index - b.order_index);
   const contactFields = [
     { key: 'email', label: 'Email', type: 'email' },
@@ -1588,7 +1614,7 @@ export default function AdminPage() {
                     }
                   `}
                 >
-                  {cat === 'All Events' ? `All Events (${images.length})` : `${cat} (${images.filter(img => toGalleryCategory(img.category) === cat).length}/5)`}
+                  {cat === 'All Events' ? `All Events (${images.length})` : `${cat} (${images.filter(img => canonicalizeCategory(img.category) === cat).length}/5)`}
                 </button>
               ))}
             </div>
@@ -1634,7 +1660,7 @@ export default function AdminPage() {
                       {editingImageId === image.id ? (
                         <div className="flex items-center gap-1 relative z-10">
                           <select
-                            value={toGalleryCategory(image.category)}
+                            value={canonicalizeCategory(image.category)}
                             onChange={(e) => handleCategoryChange(image, e.target.value)}
                             className="h-10 px-2 rounded-xl border border-[#3A8FB8] bg-black text-[10px] font-bold text-white focus:outline-none cursor-pointer"
                           >
@@ -1963,7 +1989,7 @@ export default function AdminPage() {
                         className="w-full h-10 px-3 mb-2 rounded-lg border border-white/10 bg-black/40 text-xs font-bold text-white uppercase focus:border-[#3A8FB8] focus:outline-none"
                       />
                       <p className="text-[10px] text-zinc-550 uppercase tracking-widest font-bold font-space-grotesk">
-                        Gallery: {toGalleryCategory(service.service_title)}
+                        Gallery: {canonicalizeCategory(service.service_title)}
                       </p>
                     </div>
                     <div className="mt-4 flex gap-2">

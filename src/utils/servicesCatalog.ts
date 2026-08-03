@@ -11,8 +11,21 @@ export function toGalleryCategory(title: string): string {
     .join(' ');
 }
 
+/**
+ * Collapse near-duplicate labels so "Corporate" and "Corporate Events"
+ * resolve to one gallery/service category.
+ */
+export function canonicalizeCategory(title: string): string {
+  const base = toGalleryCategory(title);
+  const key = base.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  if (key === 'corporate' || key === 'corporate event' || key === 'corporate events') {
+    return 'Corporate Events';
+  }
+  return base;
+}
+
 export function serviceSlug(title: string): string {
-  return toGalleryCategory(title).toLowerCase().replace(/\s+/g, '-');
+  return canonicalizeCategory(title).toLowerCase().replace(/\s+/g, '-');
 }
 
 export type PublicServiceBlock = {
@@ -70,7 +83,7 @@ export const DEFAULT_SERVICE_BLOCKS: PublicServiceBlock[] = [
   },
   {
     id: 4,
-    title: 'Corporate',
+    title: 'Corporate Events',
     badge: '04',
     subtitle: 'Keynotes & Launches',
     summary: 'Clean speech, LED canvases, and polished stages for launches and keynotes.',
@@ -121,7 +134,7 @@ export function mergePublicServices(rows: DbServiceRow[]): PublicServiceBlock[] 
 
   for (const row of rows) {
     usedIds.add(row.id);
-    const title = toGalleryCategory(row.service_title || 'Service');
+    const title = canonicalizeCategory(row.service_title || 'Service');
     const base = byId.get(row.id);
     const heroFallback = base?.hero || STAGE_IMAGES[row.id % STAGE_IMAGES.length].src;
     const hero = resolveServiceUrl(row.image_url, heroFallback);
@@ -167,12 +180,21 @@ export function mergePublicServices(rows: DbServiceRow[]): PublicServiceBlock[] 
   }
 
   for (const def of DEFAULT_SERVICE_BLOCKS) {
-    if (!usedIds.has(def.id) && !rows.some((r) => toGalleryCategory(r.service_title) === def.title)) {
+    if (
+      !usedIds.has(def.id) &&
+      !rows.some((r) => canonicalizeCategory(r.service_title) === def.title)
+    ) {
       result.push(def);
     }
   }
 
-  return result;
+  // Drop accidental Corporate duplicate if Corporate Events already exists
+  const hasCorporateEvents = result.some((s) => canonicalizeCategory(s.title) === 'Corporate Events');
+  return result.filter((s) => {
+    if (!hasCorporateEvents) return true;
+    const key = s.title.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    return key !== 'corporate';
+  });
 }
 
 export const DEFAULT_ABOUT = {

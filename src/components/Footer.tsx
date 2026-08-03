@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { LOGO_PNG } from '@/utils/media';
-import { serviceSlug, toGalleryCategory } from '@/utils/servicesCatalog';
+import { serviceSlug, canonicalizeCategory } from '@/utils/servicesCatalog';
 
 type FooterService = { id: number; service_title: string };
 
@@ -14,7 +14,7 @@ const DEFAULT_FOOTER_SERVICES: FooterService[] = [
   { id: 2, service_title: 'Concerts' },
   { id: 1, service_title: 'Weddings' },
   { id: 3, service_title: 'Festivals' },
-  { id: 4, service_title: 'Corporate' },
+  { id: 4, service_title: 'Corporate Events' },
   { id: 5, service_title: 'Road Shows' },
 ];
 
@@ -44,7 +44,7 @@ export default function Footer() {
           setServices(
             data.services.map((s: FooterService) => ({
               id: s.id,
-              service_title: toGalleryCategory(s.service_title),
+              service_title: canonicalizeCategory(s.service_title),
             }))
           );
         }
@@ -120,7 +120,7 @@ export default function Footer() {
                 href={`/services#${serviceSlug(s.service_title)}`}
                 className="hover:text-accent transition-colors"
               >
-                {toGalleryCategory(s.service_title)}
+                {canonicalizeCategory(s.service_title)}
               </Link>
             ))}
           </div>
