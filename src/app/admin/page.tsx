@@ -54,6 +54,7 @@ interface DBVideo {
   id: string;
   title: string;
   video_url: string;
+  webm_url?: string;
   order_index: number;
   isLocal?: boolean;
   localFile?: File;
@@ -485,11 +486,13 @@ export default function AdminPage() {
     const currentVideosSerialized = JSON.stringify(videos.map(vid => ({
       id: vid.id,
       video_url: vid.video_url,
+      webm_url: vid.webm_url || '',
       order_index: vid.order_index
     })));
     const cleanInitialVideos = JSON.stringify(JSON.parse(initialVideos || '[]').map((vid: any) => ({
       id: vid.id,
       video_url: vid.video_url,
+      webm_url: vid.webm_url || '',
       order_index: vid.order_index
     })));
     if (currentVideosSerialized !== cleanInitialVideos) return true;
@@ -685,7 +688,11 @@ export default function AdminPage() {
   const deleteVideoItem = (vidToDelete: DBVideo) => {
     if (window.confirm('Are you sure you want to remove this video?')) {
       if (!vidToDelete.isLocal) {
-        setDeletedUrls(prev => [...prev, vidToDelete.video_url]);
+        setDeletedUrls((prev) => {
+          const next = [...prev, vidToDelete.video_url];
+          if (vidToDelete.webm_url) next.push(vidToDelete.webm_url);
+          return next;
+        });
       }
       const remaining = videos.filter(vid => vid.id !== vidToDelete.id)
                             .map((vid, idx) => ({ ...vid, order_index: idx }));
@@ -959,6 +966,13 @@ export default function AdminPage() {
 
   // R2 file uploader via local route
   const uploadToBlob = async (file: File): Promise<string> => {
+    const result = await uploadMedia(file);
+    return result.url;
+  };
+
+  const uploadMedia = async (
+    file: File
+  ): Promise<{ url: string; webmUrl?: string }> => {
     const cleanFilename = encodeURIComponent(file.name.replace(/\s+/g, '_'));
     const response = await fetch(`/api/upload?filename=${cleanFilename}`, {
       method: 'POST',
@@ -970,7 +984,7 @@ export default function AdminPage() {
       throw new Error(errData.error || 'Cloudflare R2 upload failed.');
     }
     const data = await response.json();
-    return data.url;
+    return { url: data.url as string, webmUrl: data.webmUrl as string | undefined };
   };
 
   // Database Save
@@ -1017,22 +1031,30 @@ export default function AdminPage() {
         }
       }
 
-      // 2. Staged videos uploads
+      // 2. Staged videos uploads — auto MP4 + WebM compression from /api/upload
       const processedVideos = [];
       for (const vid of videos) {
         if (vid.isLocal && vid.localFile) {
-          const publicUrl = await uploadToBlob(vid.localFile);
+          const uploaded = await uploadMedia(vid.localFile);
           processedVideos.push({
             id: vid.id,
             title: vid.title,
-            video_url: publicUrl,
+            video_url: uploaded.url,
+            webm_url: uploaded.webmUrl || undefined,
             order_index: vid.order_index
           });
+          if (vid.video_url?.startsWith('http') && !vid.video_url.includes('blob:')) {
+            urlsToDelete.push(vid.video_url);
+          }
+          if (vid.webm_url?.startsWith('http')) {
+            urlsToDelete.push(vid.webm_url);
+          }
         } else {
           processedVideos.push({
             id: vid.id,
             title: vid.title,
             video_url: vid.video_url,
+            webm_url: vid.webm_url,
             order_index: vid.order_index
           });
         }
@@ -1768,7 +1790,8 @@ export default function AdminPage() {
               <span>
                 <strong>How it works:</strong> Cards stay light until you tap <strong>Preview</strong>.
                 Reorder with the arrows, then click <strong>Save Changes</strong>.
-                The homepage video section updates immediately after save. Use vertical MP4s under 25 seconds (9:16).
+                New uploads are auto-compressed to MP4 + WebM for faster homepage playback.
+                Use vertical clips under ~25 seconds (9:16). Max 6 videos.
               </span>
             </div>
 
@@ -1877,14 +1900,14 @@ export default function AdminPage() {
                   <div>
                     <h4 className="text-xs font-bold text-zinc-300 tracking-wider uppercase mb-1">Add Stage Video</h4>
                     <p className="text-[10px] text-zinc-550 max-w-[200px] leading-relaxed mx-auto">
-                      Supports MP4 format. Max total limit 6 videos.
+                Supports MP4 / MOV. On save, videos are auto-compressed to MP4 + WebM for the homepage.
                     </p>
                   </div>
                   <input 
                     type="file"
                     ref={videoInputRef}
                     onChange={handleVideoFileChange}
-                    accept="video/mp4"
+                    accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm"
                     className="hidden"
                   />
                 </div>

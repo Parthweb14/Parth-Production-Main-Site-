@@ -14,7 +14,7 @@ const RESUME_AFTER_MS = 2800;
 
 /**
  * Editorial craft strip — featured wide image + three tall panels.
- * Mobile: vertical page scroll always works on card images; horizontal swipe is direction-locked.
+ * Mobile: swipe images left/right between cards; drag up/down scrolls the page.
  * Admin tab: Bringing
  */
 export default function HomeServicesGrid() {
@@ -119,10 +119,10 @@ export default function HomeServicesGrid() {
   }, [reduceMotion, cards.length, scrollToCard, clearTimers]);
 
   /**
-   * Mobile gesture lock:
-   * - Vertical drag on Sound/Lighting/DJ cards must scroll the PAGE (never get stuck)
-   * - Horizontal drag still slides between cards
-   * touch-action: pan-y hands vertical to the browser; we only hijack clear horizontal swipes.
+   * Mobile gesture lock on the card strip:
+   * touch-action:none — we own the gesture, then:
+   * - horizontal → swipe Sound / Lighting / DJ
+   * - vertical → scroll the page (so images never trap up/down)
    */
   useEffect(() => {
     const el = scrollerRef.current;
@@ -130,6 +130,7 @@ export default function HomeServicesGrid() {
 
     let startX = 0;
     let startY = 0;
+    let lastY = 0;
     let startScroll = 0;
     let mode: 'undecided' | 'h' | 'v' = 'undecided';
     let settleTimer: number | null = null;
@@ -168,6 +169,7 @@ export default function HomeServicesGrid() {
       if (!t) return;
       startX = t.clientX;
       startY = t.clientY;
+      lastY = t.clientY;
       startScroll = el.scrollLeft;
       mode = 'undecided';
       markUserActive();
@@ -181,23 +183,38 @@ export default function HomeServicesGrid() {
       const dy = t.clientY - startY;
 
       if (mode === 'undecided') {
-        if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
-        mode = Math.abs(dx) > Math.abs(dy) * 1.15 ? 'h' : 'v';
+        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+        // Slight bias to horizontal so image swipes feel responsive
+        mode = Math.abs(dx) >= Math.abs(dy) * 0.85 ? 'h' : 'v';
       }
 
       if (mode === 'h') {
-        // Own the horizontal gesture so cards can slide
         e.preventDefault();
         const max = Math.max(0, el.scrollWidth - el.clientWidth);
         el.scrollLeft = Math.min(max, Math.max(0, startScroll - dx));
+        return;
       }
-      // mode === 'v': do nothing — touch-action:pan-y lets the page scroll
+
+      // Vertical: manually scroll the page so the card images never trap the gesture
+      e.preventDefault();
+      const frameDy = t.clientY - lastY;
+      lastY = t.clientY;
+      window.scrollBy({ top: -frameDy, left: 0, behavior: 'auto' });
     };
 
-    const onTouchEnd = () => {
+    const onTouchEnd = (e: TouchEvent) => {
       if (window.innerWidth >= 768) return;
       if (mode === 'h') {
-        scrollToCard(nearestIndex(), 'smooth');
+        const t = e.changedTouches[0];
+        const dx = t ? t.clientX - startX : 0;
+        let target = nearestIndex();
+        // Flick: jump a card when swipe was decisive
+        if (Math.abs(dx) > 48) {
+          target = dx < 0
+            ? Math.min(cardRefs.current.filter(Boolean).length - 1, activeCardRef.current + 1)
+            : Math.max(0, activeCardRef.current - 1);
+        }
+        scrollToCard(target, 'smooth');
       }
       mode = 'undecided';
     };
@@ -311,12 +328,8 @@ export default function HomeServicesGrid() {
 
         <div
           ref={scrollerRef}
-          className="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain px-1 pb-2 scrollbar-none md:mx-0 md:grid md:grid-cols-3 md:gap-5 md:overflow-visible md:overscroll-auto md:px-0 md:pb-0 lg:gap-6"
-          style={{
-            // Vertical page scroll always wins on the card images; horizontal is handled in JS
-            touchAction: 'pan-y',
-            WebkitOverflowScrolling: 'touch',
-          }}
+          className="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain px-1 pb-2 scrollbar-none [touch-action:none] md:mx-0 md:grid md:grid-cols-3 md:gap-5 md:overflow-visible md:overscroll-auto md:px-0 md:pb-0 md:[touch-action:auto] lg:gap-6"
+          style={{ WebkitOverflowScrolling: 'touch' }}
         >
           {cards.map((service, i) => (
             <article

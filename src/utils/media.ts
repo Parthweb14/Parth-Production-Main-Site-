@@ -35,6 +35,18 @@ export function resolveVideoSrc(pathOrUrl: string, fallback = ''): string {
   return abs.includes(' ') ? abs.replace(/ /g, '%20') : abs;
 }
 
+/** Prefer explicit webm_url; auto-pair only for compressed /uploads/*.mp4 siblings. */
+export function resolveWebmSrc(mp4OrAny: string, webmUrl?: string | null): string {
+  if (webmUrl) return resolveVideoSrc(webmUrl, '');
+  const src = resolveVideoSrc(mp4OrAny, '');
+  if (!src) return '';
+  if (/\.webm($|\?)/i.test(src)) return src;
+  if (/\/uploads\/.+\.mp4($|\?)/i.test(src)) {
+    return src.replace(/\.mp4(?=$|\?)/i, '.webm');
+  }
+  return '';
+}
+
 export const HERO_VIDEO = '/videos/optimized/hero.mp4';
 export const HERO_VIDEO_FALLBACK = `${ASSET_BASE}/Hero%20Background%20video%20-%20Trim.mp4`;
 export const HERO_POSTER = '/videos/optimized/hero-poster.jpg';

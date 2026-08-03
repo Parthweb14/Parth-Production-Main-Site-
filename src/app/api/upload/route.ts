@@ -19,6 +19,12 @@ const ALLOWED_EXT = new Set([
   '.mov',
 ]);
 const MAX_BYTES = 80 * 1024 * 1024;
+/** Tall showcase clips — keep detail, cap height for faster loads */
+const VIDEO_MAX_H = 1280;
+/** H.264 quality (~visually lossless for web, still much smaller than phone dumps) */
+const MP4_CRF = '26';
+/** VP9 quality — moderate; lower number = bigger/better. 32–34 is a good web balance */
+const WEBM_CRF = '33';
 
 function getFFmpegPath() {
   const cwd = process.cwd();
@@ -29,11 +35,103 @@ function getFFmpegPath() {
   return 'ffmpeg';
 }
 
-function safeKey(originalName: string): string {
+function safeKey(originalName: string, forceExt?: string): string {
   const base = path.basename(originalName).replace(/\s+/g, '_');
-  const ext = path.extname(base).toLowerCase();
-  const stem = path.basename(base, ext).replace(/[^a-zA-Z0-9._-]/g, '').slice(0, 80) || 'file';
+  const ext = (forceExt || path.extname(base).toLowerCase()) || '.bin';
+  const stem = path.basename(base, path.extname(base)).replace(/[^a-zA-Z0-9._-]/g, '').slice(0, 80) || 'file';
   return `uploads/${crypto.randomUUID()}-${stem}${ext}`;
+}
+
+function cleanup(...files: string[]) {
+  for (const f of files) {
+    try {
+      if (f && fs.existsSync(f)) fs.unlinkSync(f);
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+/**
+ * Compress showcase videos to optimized MP4 + WebM (muted, max 1280px tall).
+ * Same settings for every admin upload so homepage clips stay consistent.
+ */
+function compressShowcaseVideo(inputBuffer: Buffer, inputExt: string): {
+  mp4: Buffer;
+  webm: Buffer;
+} | null {
+  try {
+    const ffmpegPath = getFFmpegPath();
+    const tempDir = os.tmpdir();
+    const randId = crypto.randomBytes(8).toString('hex');
+    const localInput = path.join(tempDir, `input_${randId}${inputExt || '.mp4'}`);
+    const localOptMp4 = path.join(tempDir, `opt_${randId}.mp4`);
+    const localOptWebm = path.join(tempDir, `opt_${randId}.webm`);
+
+    fs.writeFileSync(localInput, inputBuffer);
+
+    const scaleFilter = `scale=-2:'min(${VIDEO_MAX_H},ih)'`;
+
+    execFileSync(
+      ffmpegPath,
+      [
+        '-y',
+        '-i',
+        localInput,
+        '-vf',
+        scaleFilter,
+        '-c:v',
+        'libx264',
+        '-profile:v',
+        'high',
+        '-level:v',
+        '4.1',
+        '-preset',
+        'veryfast',
+        '-crf',
+        MP4_CRF,
+        '-an',
+        '-pix_fmt',
+        'yuv420p',
+        '-movflags',
+        '+faststart',
+        localOptMp4,
+      ],
+      { stdio: 'ignore', timeout: 90000 }
+    );
+
+    execFileSync(
+      ffmpegPath,
+      [
+        '-y',
+        '-i',
+        localInput,
+        '-vf',
+        scaleFilter,
+        '-c:v',
+        'libvpx-vp9',
+        '-crf',
+        WEBM_CRF,
+        '-b:v',
+        '0',
+        '-row-mt',
+        '1',
+        '-cpu-used',
+        '3',
+        '-an',
+        localOptWebm,
+      ],
+      { stdio: 'ignore', timeout: 120000 }
+    );
+
+    const mp4 = fs.readFileSync(localOptMp4);
+    const webm = fs.readFileSync(localOptWebm);
+    cleanup(localInput, localOptMp4, localOptWebm);
+    return { mp4, webm };
+  } catch (err) {
+    console.warn('Video compression skipped:', err);
+    return null;
+  }
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
@@ -66,7 +164,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (['.png', '.jpg', '.jpeg'].includes(ext) && buffer.length > 200 * 1024) {
       try {
         const sharp = (await import('sharp')).default;
-        let pipeline = sharp(buffer).resize({ width: 1920, withoutEnlargement: true });
+        const pipeline = sharp(buffer).resize({ width: 1920, withoutEnlargement: true });
         if (ext === '.png') {
           buffer = await pipeline.png({ quality: 80, compressionLevel: 9 }).toBuffer();
           contentType = 'image/png';
@@ -82,41 +180,27 @@ export async function POST(request: Request): Promise<NextResponse> {
     let webmBuffer: Buffer | null = null;
     let webmKey = '';
 
-    if (ext === '.mp4') {
-      try {
-        const ffmpegPath = getFFmpegPath();
-        const tempDir = os.tmpdir();
-        const randId = crypto.randomBytes(8).toString('hex');
-        const localInput = path.join(tempDir, `input_${randId}.mp4`);
-        const localOptMp4 = path.join(tempDir, `opt_${randId}.mp4`);
-        const localOptWebm = path.join(tempDir, `opt_${randId}.webm`);
-
-        fs.writeFileSync(localInput, buffer);
-        execFileSync(
-          ffmpegPath,
-          ['-y', '-i', localInput, '-c:v', 'libx264', '-profile:v', 'high', '-level:v', '4.1', '-crf', '23', '-an', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', localOptMp4],
-          { stdio: 'ignore', timeout: 45000 }
-        );
-        execFileSync(
-          ffmpegPath,
-          ['-y', '-i', localInput, '-c:v', 'libvpx-vp9', '-crf', '32', '-b:v', '800k', '-an', localOptWebm],
-          { stdio: 'ignore', timeout: 45000 }
-        );
-
-        buffer = fs.readFileSync(localOptMp4);
-        webmBuffer = fs.readFileSync(localOptWebm);
+    if (['.mp4', '.mov', '.webm'].includes(ext)) {
+      const compressed = compressShowcaseVideo(buffer, ext);
+      if (compressed) {
+        buffer = compressed.mp4;
+        webmBuffer = compressed.webm;
         contentType = 'video/mp4';
+        objectKey = safeKey(rawName, '.mp4');
         webmKey = objectKey.replace(/\.mp4$/i, '.webm');
-
-        fs.unlinkSync(localInput);
-        fs.unlinkSync(localOptMp4);
-        fs.unlinkSync(localOptWebm);
-      } catch (videoError: unknown) {
-        console.warn('Video compression skipped:', videoError);
+      } else if (ext === '.mov') {
+        // Keep original if ffmpeg unavailable — still upload as-is
+        contentType = 'video/quicktime';
+      } else if (ext === '.webm') {
+        contentType = 'video/webm';
+      } else {
+        contentType = 'video/mp4';
       }
     }
 
     const useR2 = !!process.env.R2_BUCKET_NAME && !!process.env.R2_PUBLIC_URL;
+    let publicUrl = '';
+    let webmUrl: string | undefined;
 
     if (useR2) {
       if (webmBuffer && webmKey) {
@@ -128,6 +212,7 @@ export async function POST(request: Request): Promise<NextResponse> {
             ContentType: 'video/webm',
           })
         );
+        webmUrl = `${process.env.R2_PUBLIC_URL}/${webmKey}`;
       }
 
       await s3.send(
@@ -139,7 +224,8 @@ export async function POST(request: Request): Promise<NextResponse> {
         })
       );
 
-      return NextResponse.json({ url: `${process.env.R2_PUBLIC_URL}/${objectKey}` });
+      publicUrl = `${process.env.R2_PUBLIC_URL}/${objectKey}`;
+      return NextResponse.json({ url: publicUrl, webmUrl });
     }
 
     const uploadDir = path.join(process.cwd(), 'public', 'uploads');
@@ -147,11 +233,15 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     const localName = path.basename(objectKey);
     fs.writeFileSync(path.join(uploadDir, localName), buffer);
+    publicUrl = `/uploads/${localName}`;
+
     if (webmBuffer && webmKey) {
-      fs.writeFileSync(path.join(uploadDir, path.basename(webmKey)), webmBuffer);
+      const webmName = path.basename(webmKey);
+      fs.writeFileSync(path.join(uploadDir, webmName), webmBuffer);
+      webmUrl = `/uploads/${webmName}`;
     }
 
-    return NextResponse.json({ url: `/uploads/${localName}` });
+    return NextResponse.json({ url: publicUrl, webmUrl });
   } catch (err: unknown) {
     console.error('Upload error:', err);
     return NextResponse.json({ error: safeErrorMessage(err, 'Upload failed.') }, { status: 500 });
@@ -159,4 +249,4 @@ export async function POST(request: Request): Promise<NextResponse> {
 }
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
+export const maxDuration = 120;

@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { SHOW_VIDEOS, resolveVideoSrc } from '@/utils/media';
+import { SHOW_VIDEOS, resolveVideoSrc, resolveWebmSrc } from '@/utils/media';
 import MediaLightbox, { type LightboxMedia } from '@/components/MediaLightbox';
 
-type Clip = { title: string; src: string };
+type Clip = { title: string; src: string; webmSrc?: string };
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -74,6 +74,7 @@ export default function VideoShowcaseCarousel() {
   const rafRef = useRef<number | null>(null);
   const lastTs = useRef<number | null>(null);
   const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
+  const lastPlayedIndex = useRef<number | null>(null);
   const pointerStart = useRef<{ x: number; y: number; id: number } | null>(null);
   const resumeTimer = useRef<number | null>(null);
   const total = clips.length;
@@ -105,11 +106,21 @@ export default function VideoShowcaseCarousel() {
         const data = await res.json();
         if (!data.videos?.length) return;
         const mapped: Clip[] = data.videos
-          .map((v: { title?: string; video_url?: string }, i: number) => {
-            const fallback = SHOW_VIDEOS[i % SHOW_VIDEOS.length]?.src || '';
-            const src = resolveVideoSrc(v.video_url || '', fallback);
-            return { title: v.title || SHOW_VIDEOS[i % SHOW_VIDEOS.length]?.title || 'Show', src };
-          })
+          .map(
+            (
+              v: { title?: string; video_url?: string; webm_url?: string },
+              i: number
+            ) => {
+              const fallback = SHOW_VIDEOS[i % SHOW_VIDEOS.length]?.src || '';
+              const src = resolveVideoSrc(v.video_url || '', fallback);
+              const webmSrc = resolveWebmSrc(v.video_url || src, v.webm_url) || undefined;
+              return {
+                title: v.title || SHOW_VIDEOS[i % SHOW_VIDEOS.length]?.title || 'Show',
+                src,
+                webmSrc,
+              };
+            }
+          )
           .filter((c: Clip) => Boolean(c.src));
         if (!cancelled && mapped.length) setClips(mapped);
       } catch {
@@ -188,22 +199,33 @@ export default function VideoShowcaseCarousel() {
     };
   }, [total, reduceMotion]);
 
+  const activeIndex = ((Math.round(progress) % total) + total) % total;
+
+  // Play ONLY the active clip — never pause/resume the same clip every animation frame
   useEffect(() => {
     if (total === 0 || !inView) {
       videoRefs.current.forEach((video) => video.pause());
+      lastPlayedIndex.current = null;
       return;
     }
+
+    if (lastPlayedIndex.current === activeIndex) {
+      const current = videoRefs.current.get(activeIndex);
+      if (current && current.paused) {
+        void current.play().catch(() => undefined);
+      }
+      return;
+    }
+
     videoRefs.current.forEach((video, index) => {
-      const offset = Math.abs(wrapOffset(index - progress, total));
-      if (offset < 0.9 && video.src) {
+      if (index === activeIndex) {
         void video.play().catch(() => undefined);
       } else {
         video.pause();
       }
     });
-  }, [progress, total, clips, inView]);
-
-  const activeIndex = ((Math.round(progress) % total) + total) % total;
+    lastPlayedIndex.current = activeIndex;
+  }, [activeIndex, total, clips, inView]);
 
   const goTo = useCallback(
     (index: number) => {
@@ -227,16 +249,19 @@ export default function VideoShowcaseCarousel() {
       const src = resolveVideoSrc(clip.src, clip.src);
       if (!src) return;
       goTo(index);
-      setLightbox({ type: 'video', src, title: clip.title });
+      setLightbox({
+        type: 'video',
+        src,
+        webmSrc: clip.webmSrc,
+        title: clip.title,
+      });
     },
     [goTo]
   );
 
   const closeLightbox = useCallback(() => setLightbox(null), []);
 
-  // Pointer-based tap detection — reliable on iOS/Android (click often fails on 3D transforms)
   const onStagePointerDown = (e: React.PointerEvent) => {
-    // Keep autoplay running on hover / mouse down — only track pointer for tap/swipe.
     pointerStart.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
   };
 
@@ -252,7 +277,6 @@ export default function VideoShowcaseCarousel() {
     const dist = Math.hypot(dx, dy);
 
     if (dist > 36) {
-      // Horizontal swipe → nudge; vertical scroll → ignore (page scroll)
       if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 36) {
         setPaused(true);
         nudge(dx < 0 ? 1 : -1);
@@ -341,7 +365,6 @@ export default function VideoShowcaseCarousel() {
         }}
         style={{ touchAction: 'pan-y' }}
       >
-        {/* Film-frame marks */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-x-4 top-3 z-20 hidden h-3 items-center justify-between sm:flex md:inset-x-10"
@@ -374,6 +397,9 @@ export default function VideoShowcaseCarousel() {
 
               const t = laneTransform(offset, isMobile, progress);
               const isCenter = i === activeIndex;
+              // Mount active ± 1 only (integer) — avoids src thrash / stop-resume flicker
+              const distFromActive = Math.abs(wrapOffset(i - activeIndex, total));
+              const shouldMount = inView && distFromActive <= 1;
 
               return (
                 <article
@@ -408,20 +434,27 @@ export default function VideoShowcaseCarousel() {
                   }}
                   aria-current={isCenter ? 'true' : undefined}
                 >
-                  <video
-                    ref={(el) => {
-                      if (el) videoRefs.current.set(i, el);
-                      else videoRefs.current.delete(i);
-                    }}
-                    // Only attach src for near-center clips — far cards stay lightweight
-                    src={inView && Math.abs(offset) < 1.35 ? clip.src : undefined}
-                    muted
-                    loop
-                    playsInline
-                    preload={isCenter ? 'metadata' : 'none'}
-                    className="pointer-events-none absolute inset-0 h-full w-full object-cover bg-zinc-950"
-                    style={{ filter: `brightness(${t.brightness})` }}
-                  />
+                  {shouldMount ? (
+                    <video
+                      ref={(el) => {
+                        if (el) videoRefs.current.set(i, el);
+                        else videoRefs.current.delete(i);
+                      }}
+                      muted
+                      loop
+                      playsInline
+                      preload={isCenter ? 'auto' : 'metadata'}
+                      className="pointer-events-none absolute inset-0 h-full w-full object-cover bg-zinc-950"
+                      style={{ filter: `brightness(${t.brightness})` }}
+                    >
+                      {clip.webmSrc ? (
+                        <source src={clip.webmSrc} type="video/webm" />
+                      ) : null}
+                      <source src={clip.src} type="video/mp4" />
+                    </video>
+                  ) : (
+                    <div className="absolute inset-0 bg-zinc-950" />
+                  )}
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/25" />
 
                   {isCenter && (

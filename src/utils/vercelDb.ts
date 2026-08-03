@@ -37,6 +37,8 @@ export interface DBVideo {
   id: string;
   title: string;
   video_url: string;
+  /** Optimized VP9 companion from admin upload (preferred on homepage) */
+  webm_url?: string;
   order_index: number;
 }
 
