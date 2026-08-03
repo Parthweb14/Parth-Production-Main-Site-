@@ -14,7 +14,7 @@ const RESUME_AFTER_MS = 2800;
 
 /**
  * Editorial craft strip — featured wide image + three tall panels.
- * Mobile: native CSS scroll-snap only (no per-frame scrollLeft) so swipes stay smooth.
+ * Mobile: vertical page scroll always works on card images; horizontal swipe is direction-locked.
  * Admin tab: Bringing
  */
 export default function HomeServicesGrid() {
@@ -105,8 +105,6 @@ export default function HomeServicesGrid() {
   // Idle auto-advance: snap to next card with scrollTo — never write scrollLeft per frame
   useEffect(() => {
     if (reduceMotion) return;
-    const el = scrollerRef.current;
-    if (!el) return;
 
     const advance = () => {
       if (userActiveRef.current || document.hidden) return;
@@ -120,14 +118,23 @@ export default function HomeServicesGrid() {
     return () => clearTimers();
   }, [reduceMotion, cards.length, scrollToCard, clearTimers]);
 
-  // Track nearest card while user scrolls (no forced scrollLeft)
+  /**
+   * Mobile gesture lock:
+   * - Vertical drag on Sound/Lighting/DJ cards must scroll the PAGE (never get stuck)
+   * - Horizontal drag still slides between cards
+   * touch-action: pan-y hands vertical to the browser; we only hijack clear horizontal swipes.
+   */
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
 
+    let startX = 0;
+    let startY = 0;
+    let startScroll = 0;
+    let mode: 'undecided' | 'h' | 'v' = 'undecided';
     let settleTimer: number | null = null;
 
-    const syncActive = () => {
+    const nearestIndex = () => {
       const mid = el.scrollLeft + el.clientWidth / 2;
       let best = 0;
       let bestDist = Infinity;
@@ -140,6 +147,11 @@ export default function HomeServicesGrid() {
           best = i;
         }
       });
+      return best;
+    };
+
+    const syncActive = () => {
+      const best = nearestIndex();
       activeCardRef.current = best;
       setActiveCard(best);
     };
@@ -150,12 +162,61 @@ export default function HomeServicesGrid() {
       settleTimer = window.setTimeout(syncActive, 80);
     };
 
+    const onTouchStart = (e: TouchEvent) => {
+      if (window.innerWidth >= 768) return;
+      const t = e.touches[0];
+      if (!t) return;
+      startX = t.clientX;
+      startY = t.clientY;
+      startScroll = el.scrollLeft;
+      mode = 'undecided';
+      markUserActive();
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (window.innerWidth >= 768) return;
+      const t = e.touches[0];
+      if (!t) return;
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+
+      if (mode === 'undecided') {
+        if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+        mode = Math.abs(dx) > Math.abs(dy) * 1.15 ? 'h' : 'v';
+      }
+
+      if (mode === 'h') {
+        // Own the horizontal gesture so cards can slide
+        e.preventDefault();
+        const max = Math.max(0, el.scrollWidth - el.clientWidth);
+        el.scrollLeft = Math.min(max, Math.max(0, startScroll - dx));
+      }
+      // mode === 'v': do nothing — touch-action:pan-y lets the page scroll
+    };
+
+    const onTouchEnd = () => {
+      if (window.innerWidth >= 768) return;
+      if (mode === 'h') {
+        scrollToCard(nearestIndex(), 'smooth');
+      }
+      mode = 'undecided';
+    };
+
     el.addEventListener('scroll', onScroll, { passive: true });
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchmove', onTouchMove, { passive: false });
+    el.addEventListener('touchend', onTouchEnd, { passive: true });
+    el.addEventListener('touchcancel', onTouchEnd, { passive: true });
+
     return () => {
       el.removeEventListener('scroll', onScroll);
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchmove', onTouchMove);
+      el.removeEventListener('touchend', onTouchEnd);
+      el.removeEventListener('touchcancel', onTouchEnd);
       if (settleTimer != null) window.clearTimeout(settleTimer);
     };
-  }, [markUserActive, cards.length]);
+  }, [markUserActive, scrollToCard, cards.length]);
 
   return (
     <section className="relative w-full overflow-x-clip bg-black py-14 sm:py-16 md:py-24">
@@ -250,11 +311,10 @@ export default function HomeServicesGrid() {
 
         <div
           ref={scrollerRef}
-          onPointerDown={markUserActive}
-          onTouchStart={markUserActive}
           className="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain px-1 pb-2 scrollbar-none md:mx-0 md:grid md:grid-cols-3 md:gap-5 md:overflow-visible md:overscroll-auto md:px-0 md:pb-0 lg:gap-6"
           style={{
-            touchAction: 'pan-x',
+            // Vertical page scroll always wins on the card images; horizontal is handled in JS
+            touchAction: 'pan-y',
             WebkitOverflowScrolling: 'touch',
           }}
         >
@@ -270,19 +330,19 @@ export default function HomeServicesGrid() {
               <MediaImage
                 src={service.image_url}
                 alt={service.title}
-                className="absolute inset-0 h-full w-full object-cover md:transition-transform md:duration-700 md:ease-out md:group-hover:scale-[1.05]"
+                className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover [-webkit-user-drag:none] md:transition-transform md:duration-700 md:ease-out md:group-hover:scale-[1.05]"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/10" />
-              <div className="absolute inset-0 bg-gradient-to-br from-[#3A8FB8]/10 via-transparent to-transparent opacity-0 transition-opacity duration-500 md:group-hover:opacity-100" />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/10" />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#3A8FB8]/10 via-transparent to-transparent opacity-0 transition-opacity duration-500 md:group-hover:opacity-100" />
 
-              <div className="absolute inset-x-0 top-0 flex items-center justify-between p-5 md:p-6">
+              <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between p-5 md:p-6">
                 <p className="font-display text-sm font-semibold tabular-nums tracking-[0.2em] text-white/35">
                   0{i + 1}
                 </p>
                 <span className="h-px w-10 bg-[#3A8FB8]/60" aria-hidden />
               </div>
 
-              <div className="absolute inset-x-0 bottom-0 p-5 md:p-6">
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 p-5 md:p-6">
                 <h3 className="font-display text-2xl font-bold uppercase tracking-tight text-white md:text-[1.65rem]">
                   {service.title}
                 </h3>
