@@ -28,7 +28,8 @@ export async function POST(request: Request) {
     const auth = await requireAdmin(request);
     if (!auth.ok) return auth.response;
 
-    const { settings, images, videos, serviceImages, vibrants, about, deletedUrls } = await request.json();
+    const { settings, images, videos, serviceImages, vibrants, about, craft, deletedUrls } =
+      await request.json();
 
     if (settings) await vercelDb.setSettings(settings);
     if (images) await vercelDb.setImages(images);
@@ -36,6 +37,7 @@ export async function POST(request: Request) {
     if (serviceImages) await vercelDb.setServices(serviceImages);
     if (vibrants) await vercelDb.setVibrants(vibrants);
     if (about) await vercelDb.setAbout(about);
+    if (craft) await vercelDb.setCraft(craft);
 
     if (deletedUrls && Array.isArray(deletedUrls) && deletedUrls.length > 0) {
       for (const url of deletedUrls) {

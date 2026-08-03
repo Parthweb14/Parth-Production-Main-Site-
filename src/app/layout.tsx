@@ -170,6 +170,8 @@ export default function RootLayout({
     >
       <head>
         <link rel="preload" href="/Parth logo .png" as="image" />
+        <link rel="preload" href="/videos/optimized/hero-poster.jpg" as="image" />
+        <link rel="preload" href="/videos/optimized/hero.mp4" as="video" type="video/mp4" />
         <link rel="icon" href="/favicon.ico?v=8" sizes="any" />
         <link rel="icon" href="/favicon-96x96.png?v=8" type="image/png" sizes="96x96" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=8" />

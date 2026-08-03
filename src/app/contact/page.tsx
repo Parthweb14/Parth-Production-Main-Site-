@@ -13,7 +13,8 @@ export default function ContactPage() {
   const { siteSettings } = useAuth();
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
   const address = siteSettings.address || 'Gaurav Path Road, Palanpur, Surat, Gujarat';
-  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+  const mapQuery = siteSettings.map_query || address;
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
 
   const { scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 28 });
@@ -56,14 +57,16 @@ export default function ContactPage() {
 
       <main className="relative overflow-x-hidden bg-black">
         <CinematicPageHero
-          eyebrow="Book the floor"
-          title="Tell us the"
-          italicLine="date & the vibe."
-          description="Share venue, guest count, and energy — sound, light, SFX, truss, fireworks, DJ. One crew. One system."
+          eyebrow={siteSettings.contact_eyebrow || 'Book the floor'}
+          title={siteSettings.contact_title || 'Tell us the'}
+          italicLine={siteSettings.contact_italic || 'date & the vibe.'}
+          description={
+            siteSettings.contact_description ||
+            'Share venue, guest count, and energy — sound, light, SFX, truss, fireworks, DJ. One crew. One system.'
+          }
           image={STAGE_IMAGES[3].src}
         />
 
-        {/* Command center */}
         <section id="connect" className="relative border-b border-white/10 py-14 md:py-20 scroll-mt-28">
           <div className="pointer-events-none absolute right-0 top-0 h-72 w-72 rounded-full bg-[#3A8FB8]/10 blur-3xl" />
           <div className="relative max-w-7xl mx-auto px-6 md:px-10 grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
@@ -100,13 +103,19 @@ export default function ContactPage() {
               <div className="mt-8 grid grid-cols-2 gap-3">
                 <div className="rounded-2xl border border-white/10 bg-black/40 p-4">
                   <Clock3 className="h-4 w-4 text-[#3A8FB8] mb-2" />
-                  <p className="text-xs uppercase tracking-[0.16em] text-white/45 mb-1">Hours</p>
-                  <p className="text-sm text-white font-semibold">Open for bookings</p>
+                  <p className="text-xs uppercase tracking-[0.16em] text-white/45 mb-1">
+                    {siteSettings.hours_label || 'Hours'}
+                  </p>
+                  <p className="text-sm text-white font-semibold">
+                    {siteSettings.hours_text || 'Open for bookings'}
+                  </p>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-black/40 p-4">
                   <Navigation className="h-4 w-4 text-[#3A8FB8] mb-2" />
                   <p className="text-xs uppercase tracking-[0.16em] text-white/45 mb-1">Base</p>
-                  <p className="text-sm text-white font-semibold">Surat, Gujarat</p>
+                  <p className="text-sm text-white font-semibold">
+                    {siteSettings.base_city || 'Surat, Gujarat'}
+                  </p>
                 </div>
               </div>
             </motion.div>
@@ -147,7 +156,6 @@ export default function ContactPage() {
           </div>
         </section>
 
-        {/* Map theater */}
         <section id="studio-map" className="relative py-14 md:py-20 px-6 md:px-10 scroll-mt-28">
           <div className="max-w-7xl mx-auto">
             <div className="mb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
@@ -178,7 +186,7 @@ export default function ContactPage() {
             >
               <div className="relative overflow-hidden rounded-[22px] border border-white/10 min-h-[360px] md:min-h-[480px]">
                 <iframe
-                  src={`https://maps.google.com/maps?q=${encodeURIComponent(address)}&t=&z=16&ie=UTF8&iwloc=&output=embed`}
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&t=&z=16&ie=UTF8&iwloc=&output=embed`}
                   width="100%"
                   height="100%"
                   style={{ border: 0, minHeight: 360 }}
@@ -191,7 +199,7 @@ export default function ContactPage() {
                 <div className="absolute top-4 left-4 right-4 flex items-center justify-between gap-3 pointer-events-none">
                   <span className="inline-flex items-center gap-2 rounded-full border border-[#3A8FB8]/35 bg-black/70 backdrop-blur px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-[#3A8FB8] font-semibold">
                     <span className="h-1.5 w-1.5 rounded-full bg-[#3A8FB8] animate-pulse" />
-                    Parth Production Studio
+                    {siteSettings.studio_label || 'Parth Production Studio'}
                   </span>
                 </div>
               </div>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { ChevronDown } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { LOGO_PNG } from '@/utils/media';
 import { serviceSlug, toGalleryCategory } from '@/utils/servicesCatalog';
@@ -17,11 +18,20 @@ const DEFAULT_FOOTER_SERVICES: FooterService[] = [
   { id: 5, service_title: 'Road Shows' },
 ];
 
+const exploreLinks = [
+  { href: '/services', label: 'Services' },
+  { href: '/gallery', label: 'Gallery' },
+  { href: '/about', label: 'About Us' },
+  { href: '/contact', label: 'Contact Us' },
+];
+
 export default function Footer() {
   const year = new Date().getFullYear();
   const { siteSettings } = useAuth();
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
   const [services, setServices] = useState<FooterService[]>(DEFAULT_FOOTER_SERVICES);
+  const [exploreOpen, setExploreOpen] = useState(false);
+  const [servicesOpen, setServicesOpen] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -46,7 +56,7 @@ export default function Footer() {
 
   return (
     <footer className="relative z-20 border-t border-white/10 bg-black pt-16 pb-10 px-6 md:px-10">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10 mb-12 relative">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-10 mb-12 relative">
         <div>
           <Link href="/" className="inline-flex items-center gap-3">
             <img src={LOGO_PNG} alt="Parth Production" className="h-11 object-contain" />
@@ -56,34 +66,82 @@ export default function Footer() {
             One stop solution for sound, light, SFX, truss, fireworks, and DJ artistry.
           </p>
         </div>
-        <div className="flex flex-col gap-3 text-sm text-white/55">
-          <h4 className="font-display text-base text-white">Explore</h4>
-          <Link href="/services" className="hover:text-accent transition-colors">Services</Link>
-          <Link href="/gallery" className="hover:text-accent transition-colors">Gallery</Link>
-          <Link href="/about" className="hover:text-accent transition-colors">About Us</Link>
-          <Link href="/contact" className="hover:text-accent transition-colors">Contact Us</Link>
+
+        <div className="border-t border-white/10 pt-4 md:border-0 md:pt-0">
+          <button
+            type="button"
+            className="flex w-full items-center justify-between md:cursor-default"
+            onClick={() => setExploreOpen((o) => !o)}
+            aria-expanded={exploreOpen}
+          >
+            <h4 className="font-display text-base text-white">Explore</h4>
+            <ChevronDown
+              className={`h-4 w-4 text-white/50 transition-transform md:hidden ${
+                exploreOpen ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+          <div
+            className={`mt-3 flex-col gap-3 text-sm text-white/55 ${
+              exploreOpen ? 'flex' : 'hidden'
+            } md:flex`}
+          >
+            {exploreLinks.map((l) => (
+              <Link key={l.href} href={l.href} className="hover:text-accent transition-colors">
+                {l.label}
+              </Link>
+            ))}
+          </div>
         </div>
-        <div className="flex flex-col gap-3 text-sm text-white/55">
-          <h4 className="font-display text-base text-white">Services</h4>
-          {services.map((s) => (
-            <Link
-              key={s.id}
-              href={`/services#${serviceSlug(s.service_title)}`}
-              className="hover:text-accent transition-colors"
-            >
-              {toGalleryCategory(s.service_title)}
-            </Link>
-          ))}
+
+        <div className="border-t border-white/10 pt-4 md:border-0 md:pt-0">
+          <button
+            type="button"
+            className="flex w-full items-center justify-between md:cursor-default"
+            onClick={() => setServicesOpen((o) => !o)}
+            aria-expanded={servicesOpen}
+          >
+            <h4 className="font-display text-base text-white">Services</h4>
+            <ChevronDown
+              className={`h-4 w-4 text-white/50 transition-transform md:hidden ${
+                servicesOpen ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+          <div
+            className={`mt-3 flex-col gap-3 text-sm text-white/55 ${
+              servicesOpen ? 'flex' : 'hidden'
+            } md:flex`}
+          >
+            {services.map((s) => (
+              <Link
+                key={s.id}
+                href={`/services#${serviceSlug(s.service_title)}`}
+                className="hover:text-accent transition-colors"
+              >
+                {toGalleryCategory(s.service_title)}
+              </Link>
+            ))}
+          </div>
         </div>
-        <div className="flex flex-col gap-3 text-sm text-white/55">
+
+        <div className="border-t border-white/10 pt-4 md:border-0 md:pt-0 flex flex-col gap-3 text-sm text-white/55">
           <h4 className="font-display text-base text-white">Connect</h4>
-          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-accent transition-colors"
+          >
             WhatsApp {siteSettings.phone_1}
           </a>
           <a href={`tel:+91${siteSettings.phone_2}`} className="hover:text-accent transition-colors">
             Call {siteSettings.phone_2}
           </a>
-          <a href={`mailto:${siteSettings.email}`} className="hover:text-accent transition-colors break-all">
+          <a
+            href={`mailto:${siteSettings.email}`}
+            className="hover:text-accent transition-colors break-all"
+          >
             {siteSettings.email}
           </a>
         </div>

@@ -100,10 +100,17 @@ export type DbServiceRow = {
   id: number;
   service_title: string;
   image_url: string;
+  gallery_images?: string[];
   subtitle?: string;
   summary?: string;
   detail?: string;
 };
+
+function resolveServiceUrl(url: string | undefined, fallback: string): string {
+  if (!url || url.startsWith('/images/')) return fallback;
+  if (url.startsWith('http') || url.startsWith('/')) return url;
+  return fallback;
+}
 
 export function mergePublicServices(rows: DbServiceRow[]): PublicServiceBlock[] {
   if (!rows?.length) return DEFAULT_SERVICE_BLOCKS;
@@ -117,12 +124,15 @@ export function mergePublicServices(rows: DbServiceRow[]): PublicServiceBlock[] 
     const title = toGalleryCategory(row.service_title || 'Service');
     const base = byId.get(row.id);
     const heroFallback = base?.hero || STAGE_IMAGES[row.id % STAGE_IMAGES.length].src;
-    const hero =
-      row.image_url && !row.image_url.startsWith('/images/')
-        ? row.image_url.startsWith('http') || row.image_url.startsWith('/')
-          ? row.image_url
-          : heroFallback
-        : heroFallback;
+    const hero = resolveServiceUrl(row.image_url, heroFallback);
+    const fallbackGallery = base?.gallery || [
+      STAGE_IMAGES[0].src,
+      STAGE_IMAGES[1].src,
+      STAGE_IMAGES[2].src,
+    ];
+    const g0 = resolveServiceUrl(row.gallery_images?.[0], fallbackGallery[0]);
+    const g1 = resolveServiceUrl(row.gallery_images?.[1], fallbackGallery[1]);
+    const g2 = resolveServiceUrl(row.gallery_images?.[2], fallbackGallery[2]);
 
     if (base) {
       result.push({
@@ -132,7 +142,7 @@ export function mergePublicServices(rows: DbServiceRow[]): PublicServiceBlock[] 
         subtitle: row.subtitle || base.subtitle,
         summary: row.summary || base.summary,
         detail: row.detail || base.detail,
-        gallery: [hero, base.gallery[1], base.gallery[2]],
+        gallery: [g0, g1, g2],
         bookLabel: title.replace(/s$/i, '') || title,
       });
     } else {
@@ -149,14 +159,13 @@ export function mergePublicServices(rows: DbServiceRow[]): PublicServiceBlock[] 
           row.detail ||
           `Parth Production delivers full-stack live production for ${title} — sound, light, SFX, and crew under one plan.`,
         hero,
-        gallery: [hero, STAGE_IMAGES[0].src, STAGE_IMAGES[1].src],
+        gallery: [g0, g1, g2],
         bookLabel: title,
         highlights: ['Sound', 'Lighting', 'SFX', 'Crew'],
       });
     }
   }
 
-  // Keep any default not yet in DB (first-run / partial DB)
   for (const def of DEFAULT_SERVICE_BLOCKS) {
     if (!usedIds.has(def.id) && !rows.some((r) => toGalleryCategory(r.service_title) === def.title)) {
       result.push(def);

@@ -131,10 +131,21 @@ export async function readServerSession(): Promise<{ username: string } | null> 
   }
 }
 
-export function publicSettings<T extends Record<string, unknown>>(settings: T): Omit<T, 'smtp_pass' | 'smtp_user'> {
-  const safe = { ...settings } as T & { smtp_pass?: string; smtp_user?: string };
+export function publicSettings<T extends Record<string, unknown>>(
+  settings: T
+): Omit<T, 'smtp_pass' | 'smtp_user' | 'smtp_host' | 'smtp_port' | 'from_email'> {
+  const safe = { ...settings } as T & {
+    smtp_pass?: string;
+    smtp_user?: string;
+    smtp_host?: string;
+    smtp_port?: string;
+    from_email?: string;
+  };
   delete safe.smtp_pass;
   delete safe.smtp_user;
+  delete safe.smtp_host;
+  delete safe.smtp_port;
+  delete safe.from_email;
   return safe;
 }
 

@@ -1,12 +1,24 @@
 import { turso } from './turso';
 import { hashPassword, hashRecoveryKey } from './password';
 import { OWNER_IMAGE } from './media';
+import { DEFAULT_CRAFT, type CraftCard, type CraftContent } from './craftDefaults';
+
+export type { CraftCard, CraftContent };
 
 export interface SiteSettings {
   email: string;
   phone_1: string;
   phone_2: string;
   address: string;
+  map_query?: string;
+  hours_label?: string;
+  hours_text?: string;
+  base_city?: string;
+  studio_label?: string;
+  contact_eyebrow?: string;
+  contact_title?: string;
+  contact_italic?: string;
+  contact_description?: string;
   smtp_host?: string;
   smtp_port?: string;
   smtp_user?: string;
@@ -32,6 +44,8 @@ export interface DBServiceImage {
   id: number;
   service_title: string;
   image_url: string;
+  /** Exactly 3 supporting images under the cover */
+  gallery_images?: string[];
   subtitle?: string;
   summary?: string;
   detail?: string;
@@ -78,6 +92,16 @@ const DEFAULT_SETTINGS: SiteSettings = {
   phone_1: '9537330003',
   phone_2: '8866655651',
   address: 'Gaurav Path Road, Palanpur, Surat, Gujarat',
+  map_query: 'Gaurav Path Road, Palanpur, Surat, Gujarat',
+  hours_label: 'Hours',
+  hours_text: 'Open for bookings',
+  base_city: 'Surat, Gujarat',
+  studio_label: 'Parth Production Studio',
+  contact_eyebrow: 'Book the floor',
+  contact_title: 'Tell us the',
+  contact_italic: 'date & the vibe.',
+  contact_description:
+    'Share venue, guest count, and energy — sound, light, SFX, truss, fireworks, DJ. One crew. One system.',
 };
 
 const DEFAULT_ABOUT: AboutContent = {
@@ -144,7 +168,9 @@ async function setValue(key: string, value: unknown): Promise<void> {
 
 export const vercelDb = {
   async getSettings(): Promise<SiteSettings> {
-    return (await getValue('settings', DEFAULT_SETTINGS)) as SiteSettings;
+    const stored = (await getValue('settings', null)) as SiteSettings | null;
+    if (!stored) return { ...DEFAULT_SETTINGS };
+    return { ...DEFAULT_SETTINGS, ...stored };
   },
   async setSettings(settings: SiteSettings): Promise<void> {
     await setValue('settings', settings);
@@ -178,6 +204,22 @@ export const vercelDb = {
   },
   async setAbout(about: AboutContent): Promise<void> {
     await setValue('about', about);
+  },
+  async getCraft(): Promise<CraftContent> {
+    const stored = (await getValue('craft', null)) as CraftContent | null;
+    if (!stored) return { ...DEFAULT_CRAFT, cards: [...DEFAULT_CRAFT.cards] };
+    return {
+      ...DEFAULT_CRAFT,
+      ...stored,
+      featured_image_url: stored.featured_image_url || DEFAULT_CRAFT.featured_image_url,
+      cards:
+        Array.isArray(stored.cards) && stored.cards.length
+          ? stored.cards
+          : [...DEFAULT_CRAFT.cards],
+    };
+  },
+  async setCraft(craft: CraftContent): Promise<void> {
+    await setValue('craft', craft);
   },
   async getVibrants(): Promise<DBVibrant[]> {
     return (await getValue('vibrants', [])) as DBVibrant[];

@@ -10,7 +10,13 @@ type Props = {
 };
 
 /** Plain img with one fallback hop — avoids next/image wipe on bad remote URLs. */
-export default function MediaImage({ src, alt, className, fallback }: Props) {
+export default function MediaImage({
+  src,
+  alt,
+  className,
+  fallback,
+  priority = false,
+}: Props & { priority?: boolean }) {
   const [current, setCurrent] = useState(src);
 
   return (
@@ -19,8 +25,9 @@ export default function MediaImage({ src, alt, className, fallback }: Props) {
       src={current}
       alt={alt}
       className={className}
-      loading="lazy"
+      loading={priority ? 'eager' : 'lazy'}
       decoding="async"
+      fetchPriority={priority ? 'high' : 'auto'}
       onError={() => {
         if (fallback && current !== fallback) setCurrent(fallback);
       }}
