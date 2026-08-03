@@ -10,6 +10,7 @@ import {
   defaultStageGallery,
 } from '@/utils/media';
 import { toGalleryCategory, DEFAULT_ABOUT } from '@/utils/servicesCatalog';
+import { DEFAULT_CRAFT, type CraftContent } from '@/utils/craftDefaults';
 import { normalizeIdentity, sanitizePassword } from '@/utils/credentialSanitize';
 
 import { 
@@ -61,6 +62,9 @@ interface DBServiceImage {
   id: number;
   service_title: string;
   image_url: string;
+  gallery_images?: string[];
+  galleryLocalFiles?: (File | null)[];
+  galleryIsLocal?: boolean[];
   subtitle?: string;
   summary?: string;
   detail?: string;
@@ -93,6 +97,15 @@ interface SiteSettings {
   phone_1: string;
   phone_2: string;
   address: string;
+  map_query?: string;
+  hours_label?: string;
+  hours_text?: string;
+  base_city?: string;
+  studio_label?: string;
+  contact_eyebrow?: string;
+  contact_title?: string;
+  contact_italic?: string;
+  contact_description?: string;
   smtp_host?: string;
   smtp_port?: string;
   smtp_user?: string;
@@ -100,12 +113,21 @@ interface SiteSettings {
   from_email?: string;
 }
 
+type AdminCraftContent = Omit<CraftContent, 'cards'> & {
+  featuredIsLocal?: boolean;
+  featuredLocalFile?: File;
+  cards: Array<CraftContent['cards'][number] & {
+    isLocal?: boolean;
+    localFile?: File;
+  }>;
+};
+
 const DEFAULT_SERVICES: DBServiceImage[] = [
-  { id: 2, service_title: 'CONCERTS', image_url: STAGE_IMAGES[1].src },
-  { id: 1, service_title: 'WEDDINGS', image_url: STAGE_IMAGES[0].src },
-  { id: 3, service_title: 'FESTIVALS', image_url: STAGE_IMAGES[2].src },
-  { id: 4, service_title: 'CORPORATE', image_url: STAGE_IMAGES[3].src },
-  { id: 5, service_title: 'ROAD SHOWS', image_url: STAGE_IMAGES[4].src },
+  { id: 2, service_title: 'CONCERTS', image_url: STAGE_IMAGES[1].src, gallery_images: [STAGE_IMAGES[1].src, STAGE_IMAGES[7].src, STAGE_IMAGES[6].src] },
+  { id: 1, service_title: 'WEDDINGS', image_url: STAGE_IMAGES[0].src, gallery_images: [STAGE_IMAGES[0].src, STAGE_IMAGES[5].src, STAGE_IMAGES[6].src] },
+  { id: 3, service_title: 'FESTIVALS', image_url: STAGE_IMAGES[2].src, gallery_images: [STAGE_IMAGES[2].src, STAGE_IMAGES[8].src, STAGE_IMAGES[6].src] },
+  { id: 4, service_title: 'CORPORATE', image_url: STAGE_IMAGES[3].src, gallery_images: [STAGE_IMAGES[3].src, STAGE_IMAGES[7].src, STAGE_IMAGES[4].src] },
+  { id: 5, service_title: 'ROAD SHOWS', image_url: STAGE_IMAGES[4].src, gallery_images: [STAGE_IMAGES[4].src, STAGE_IMAGES[8].src, STAGE_IMAGES[2].src] },
 ];
 
 export default function AdminPage() {
@@ -113,7 +135,7 @@ export default function AdminPage() {
   const { user, token, loading: authLoading, logout } = useAuth();
 
   // Navigation tabs state
-  const [activeTab, setActiveTab] = useState<'gallery' | 'videos' | 'services' | 'vibrants' | 'about' | 'settings'>('gallery');
+  const [activeTab, setActiveTab] = useState<'gallery' | 'videos' | 'services' | 'vibrants' | 'about' | 'bringing' | 'contact' | 'settings'>('gallery');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Core Data States
@@ -126,7 +148,12 @@ export default function AdminPage() {
     ...DEFAULT_ABOUT,
     image_url: OWNER_IMAGE,
   });
+  const [craft, setCraft] = useState<AdminCraftContent>({
+    ...DEFAULT_CRAFT,
+    cards: DEFAULT_CRAFT.cards.map((card) => ({ ...card })),
+  });
   const [initialAbout, setInitialAbout] = useState<string>('');
+  const [initialCraft, setInitialCraft] = useState<string>('');
   const [newServiceTitle, setNewServiceTitle] = useState('');
   const [newServiceSummary, setNewServiceSummary] = useState('');
   
@@ -184,13 +211,17 @@ export default function AdminPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const serviceInputRef = useRef<HTMLInputElement>(null);
+  const serviceGalleryInputRef = useRef<HTMLInputElement>(null);
   const vibrantInputRef = useRef<HTMLInputElement>(null);
   const aboutInputRef = useRef<HTMLInputElement>(null);
+  const craftInputRef = useRef<HTMLInputElement>(null);
   const newServiceInputRef = useRef<HTMLInputElement>(null);
   const [pendingNewServiceFile, setPendingNewServiceFile] = useState<File | null>(null);
   const [pendingNewServicePreview, setPendingNewServicePreview] = useState<string | null>(null);
   
   const [activeServiceIdToChange, setActiveServiceIdToChange] = useState<number | null>(null);
+  const [activeServiceGallerySlot, setActiveServiceGallerySlot] = useState<{ serviceId: number; slot: number } | null>(null);
+  const [activeCraftImage, setActiveCraftImage] = useState<'featured' | number | null>(null);
   const [activeVibrantIdToChange, setActiveVibrantIdToChange] = useState<string | null>(null);
 
   // Verify auth on mount
@@ -263,10 +294,22 @@ export default function AdminPage() {
           const def = byId.get(match.id);
           const url = match.image_url || '';
           const broken = !url || url.startsWith('/images/');
+          const galleryFallbacks = def?.gallery_images || [
+            STAGE_IMAGES[match.id % STAGE_IMAGES.length].src,
+            STAGE_IMAGES[(match.id + 1) % STAGE_IMAGES.length].src,
+            STAGE_IMAGES[(match.id + 2) % STAGE_IMAGES.length].src,
+          ];
+          const galleryImages = Array.from({ length: 3 }, (_, index) => {
+            const galleryUrl = match.gallery_images?.[index];
+            return galleryUrl && !galleryUrl.startsWith('/images/')
+              ? galleryUrl
+              : galleryFallbacks[index] || STAGE_IMAGES[index].src;
+          });
           return {
             id: match.id,
             service_title: match.service_title || def?.service_title || 'SERVICE',
             image_url: broken ? (def?.image_url || STAGE_IMAGES[0].src) : url,
+            gallery_images: galleryImages,
             subtitle: match.subtitle,
             summary: match.summary,
             detail: match.detail,
@@ -283,6 +326,24 @@ export default function AdminPage() {
       }
       setServiceImages(mergedServices);
       setInitialServiceImages(JSON.stringify(mergedServices));
+
+      const loadedCraft = data.craft as CraftContent | undefined;
+      const normalizedCraft: AdminCraftContent = {
+        ...DEFAULT_CRAFT,
+        ...loadedCraft,
+        featured_image_url: loadedCraft?.featured_image_url || DEFAULT_CRAFT.featured_image_url,
+        cards: Array.from({ length: 3 }, (_, index) => ({
+          ...DEFAULT_CRAFT.cards[index],
+          ...(loadedCraft?.cards?.[index] || {}),
+          order_index: index,
+          image_url:
+            loadedCraft?.cards?.[index]?.image_url ||
+            DEFAULT_CRAFT.cards[index]?.image_url ||
+            STAGE_IMAGES[index].src,
+        })),
+      };
+      setCraft(normalizedCraft);
+      setInitialCraft(JSON.stringify(normalizedCraft));
 
       if (data.about) {
         const loadedAbout: AboutContent = {
@@ -411,6 +472,7 @@ export default function AdminPage() {
       id: s.id,
       service_title: s.service_title,
       image_url: s.image_url,
+      gallery_images: s.gallery_images || [],
       subtitle: s.subtitle || '',
       summary: s.summary || '',
       detail: s.detail || '',
@@ -419,6 +481,7 @@ export default function AdminPage() {
       id: s.id,
       service_title: s.service_title,
       image_url: s.image_url,
+      gallery_images: s.gallery_images || [],
       subtitle: s.subtitle || '',
       summary: s.summary || '',
       detail: s.detail || '',
@@ -435,6 +498,24 @@ export default function AdminPage() {
     });
     const cleanInitialAbout = JSON.stringify(JSON.parse(initialAbout || '{}'));
     if (currentAboutSerialized !== cleanInitialAbout) return true;
+
+    const currentCraftSerialized = JSON.stringify({
+      eyebrow: craft.eyebrow,
+      heading: craft.heading,
+      italic_line: craft.italic_line,
+      description: craft.description,
+      featured_image_url: craft.featured_image_url,
+      featured_title: craft.featured_title,
+      featured_badge: craft.featured_badge,
+      cards: craft.cards.map(({ id, title, copy, image_url, order_index }) => ({
+        id,
+        title,
+        copy,
+        image_url,
+        order_index,
+      })),
+    });
+    if (currentCraftSerialized !== JSON.stringify(JSON.parse(initialCraft || '{}'))) return true;
 
     const currentVibrantsSerialized = JSON.stringify(vibrants.map(v => ({
       id: v.id,
@@ -627,6 +708,62 @@ export default function AdminPage() {
     }));
   };
 
+  const handleServiceTitleChange = (serviceId: number, newTitle: string) => {
+    const service = serviceImages.find((item) => item.id === serviceId);
+    if (!service) return;
+    const oldCategory = toGalleryCategory(service.service_title);
+    const newCategory = toGalleryCategory(newTitle);
+    setServiceImages((prev) =>
+      prev.map((item) => item.id === serviceId ? { ...item, service_title: newTitle } : item)
+    );
+    setImages((prev) =>
+      prev.map((image) =>
+        toGalleryCategory(image.category) === oldCategory
+          ? { ...image, category: newCategory }
+          : image
+      )
+    );
+  };
+
+  const triggerServiceGalleryImageChange = (serviceId: number, slot: number) => {
+    setActiveServiceGallerySlot({ serviceId, slot });
+    serviceGalleryInputRef.current?.click();
+  };
+
+  const handleServiceGalleryImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !activeServiceGallerySlot) return;
+    const { serviceId, slot } = activeServiceGallerySlot;
+    const localUrl = URL.createObjectURL(file);
+    setServiceImages((prev) =>
+      prev.map((service) => {
+        if (service.id !== serviceId) return service;
+        const galleryImages = Array.from(
+          { length: 3 },
+          (_, index) => service.gallery_images?.[index] || STAGE_IMAGES[index].src
+        );
+        const galleryLocalFiles = Array.from(
+          { length: 3 },
+          (_, index) => service.galleryLocalFiles?.[index] || null
+        );
+        const galleryIsLocal = Array.from(
+          { length: 3 },
+          (_, index) => service.galleryIsLocal?.[index] || false
+        );
+        galleryImages[slot] = localUrl;
+        galleryLocalFiles[slot] = file;
+        galleryIsLocal[slot] = true;
+        return {
+          ...service,
+          gallery_images: galleryImages,
+          galleryLocalFiles,
+          galleryIsLocal,
+        };
+      })
+    );
+    e.target.value = '';
+  };
+
   const handleNewServiceFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -651,6 +788,7 @@ export default function AdminPage() {
       id: nextId,
       service_title: title.toUpperCase(),
       image_url: imageUrl,
+      gallery_images: [imageUrl, imageUrl, imageUrl],
       summary: newServiceSummary || undefined,
       isLocal: Boolean(pendingNewServiceFile),
       localFile: pendingNewServiceFile || undefined,
@@ -690,6 +828,12 @@ export default function AdminPage() {
     if (!service.isLocal && service.image_url.startsWith('http')) {
       setDeletedUrls((prev) => [...prev, service.image_url]);
     }
+    const oldGalleryUrls = (service.gallery_images || []).filter(
+      (url) => typeof url === 'string' && url.startsWith('http')
+    );
+    if (oldGalleryUrls.length) {
+      setDeletedUrls((prev) => [...prev, ...oldGalleryUrls]);
+    }
     setServiceImages(serviceImages.filter((s) => s.id !== service.id));
   };
 
@@ -699,6 +843,36 @@ export default function AdminPage() {
     const file = files[0];
     const localUrl = URL.createObjectURL(file);
     setAbout((prev) => ({ ...prev, image_url: localUrl, isLocal: true, localFile: file }));
+  };
+
+  const triggerCraftImageChange = (target: 'featured' | number) => {
+    setActiveCraftImage(target);
+    craftInputRef.current?.click();
+  };
+
+  const handleCraftImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || activeCraftImage === null) return;
+    const localUrl = URL.createObjectURL(file);
+    if (activeCraftImage === 'featured') {
+      setCraft((prev) => ({
+        ...prev,
+        featured_image_url: localUrl,
+        featuredIsLocal: true,
+        featuredLocalFile: file,
+      }));
+    } else {
+      const cardIndex = activeCraftImage;
+      setCraft((prev) => ({
+        ...prev,
+        cards: prev.cards.map((card, index) =>
+          index === cardIndex
+            ? { ...card, image_url: localUrl, isLocal: true, localFile: file }
+            : card
+        ),
+      }));
+    }
+    e.target.value = '';
   };
 
   // Vibrants Slide Replacer
@@ -776,6 +950,18 @@ export default function AdminPage() {
   // Database Save
   const handleSaveAllChanges = async () => {
     if (!token) return;
+    const hasInvalidService = serviceImages.some(
+      (service) =>
+        !service.image_url ||
+        !Array.isArray(service.gallery_images) ||
+        service.gallery_images.length !== 3 ||
+        service.gallery_images.some((url) => !url?.trim())
+    );
+    if (hasInvalidService) {
+      setShowConfirmModal(false);
+      setErrorMsg('Each service needs 1 cover + 3 images before saving.');
+      return;
+    }
     setShowConfirmModal(false);
     setSaveLoading(true);
     setErrorMsg(null);
@@ -828,33 +1014,41 @@ export default function AdminPage() {
 
       // 3. Staged services uploads
       const processedServices = [];
+      const initialServices = JSON.parse(initialServiceImages || '[]') as DBServiceImage[];
       for (const s of serviceImages) {
+        const oldItem = initialServices.find((item) => item.id === s.id);
+        let coverUrl = s.image_url;
         if (s.isLocal && s.localFile) {
-          const publicUrl = await uploadToBlob(s.localFile);
-          processedServices.push({
-            id: s.id,
-            service_title: s.service_title,
-            image_url: publicUrl,
-            subtitle: s.subtitle,
-            summary: s.summary,
-            detail: s.detail,
-          });
-          const oldItem = JSON.parse(initialServiceImages || '[]').find(
-            (item: { id: number; image_url?: string }) => item.id === s.id
-          );
+          coverUrl = await uploadToBlob(s.localFile);
           if (oldItem?.image_url && !oldItem.image_url.startsWith('/images/') && oldItem.image_url.startsWith('http')) {
             urlsToDelete.push(oldItem.image_url);
           }
-        } else {
-          processedServices.push({
-            id: s.id,
-            service_title: s.service_title,
-            image_url: s.image_url,
-            subtitle: s.subtitle,
-            summary: s.summary,
-            detail: s.detail,
-          });
         }
+
+        const galleryImages = [];
+        for (let index = 0; index < 3; index += 1) {
+          const localGalleryFile = s.galleryLocalFiles?.[index];
+          let galleryUrl =
+            s.isLocal && s.localFile && s.gallery_images?.[index] === s.image_url
+              ? coverUrl
+              : s.gallery_images?.[index] || '';
+          if (s.galleryIsLocal?.[index] && localGalleryFile) {
+            galleryUrl = await uploadToBlob(localGalleryFile);
+            const oldGalleryUrl = oldItem?.gallery_images?.[index];
+            if (oldGalleryUrl?.startsWith('http')) urlsToDelete.push(oldGalleryUrl);
+          }
+          galleryImages.push(galleryUrl);
+        }
+
+        processedServices.push({
+          id: s.id,
+          service_title: s.service_title,
+          image_url: coverUrl,
+          gallery_images: galleryImages,
+          subtitle: s.subtitle,
+          summary: s.summary,
+          detail: s.detail,
+        });
       }
 
       // 3b. About image upload
@@ -873,6 +1067,42 @@ export default function AdminPage() {
           urlsToDelete.push(oldAbout.image_url);
         }
         processedAbout = { ...processedAbout, image_url: publicUrl };
+      }
+
+      // 3c. Bringing section image uploads
+      const initialCraftValue = JSON.parse(initialCraft || '{}') as CraftContent;
+      let featuredImageUrl = craft.featured_image_url;
+      if (craft.featuredIsLocal && craft.featuredLocalFile) {
+        featuredImageUrl = await uploadToBlob(craft.featuredLocalFile);
+        if (initialCraftValue.featured_image_url?.startsWith('http')) {
+          urlsToDelete.push(initialCraftValue.featured_image_url);
+        }
+      }
+      const processedCraft: CraftContent = {
+        eyebrow: craft.eyebrow,
+        heading: craft.heading,
+        italic_line: craft.italic_line,
+        description: craft.description,
+        featured_image_url: featuredImageUrl,
+        featured_title: craft.featured_title,
+        featured_badge: craft.featured_badge,
+        cards: [],
+      };
+      for (let index = 0; index < craft.cards.length; index += 1) {
+        const card = craft.cards[index];
+        let cardImageUrl = card.image_url;
+        if (card.isLocal && card.localFile) {
+          cardImageUrl = await uploadToBlob(card.localFile);
+          const oldCardImageUrl = initialCraftValue.cards?.[index]?.image_url;
+          if (oldCardImageUrl?.startsWith('http')) urlsToDelete.push(oldCardImageUrl);
+        }
+        processedCraft.cards.push({
+          id: card.id,
+          title: card.title,
+          copy: card.copy,
+          image_url: cardImageUrl,
+          order_index: index,
+        });
       }
 
       // 4. Staged stage gallery uploads
@@ -919,6 +1149,7 @@ export default function AdminPage() {
             .map((vid, idx) => ({ ...vid, order_index: idx })),
           serviceImages: processedServices,
           about: processedAbout,
+          craft: processedCraft,
           vibrants: processedVibrants
             .slice()
             .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
@@ -1033,6 +1264,21 @@ export default function AdminPage() {
     : images
         .filter((img) => toGalleryCategory(img.category) === selectedGalleryCat)
         .sort((a, b) => a.order_index - b.order_index);
+  const contactFields = [
+    { key: 'email', label: 'Email', type: 'email' },
+    { key: 'phone_1', label: 'WhatsApp Number' },
+    { key: 'phone_2', label: 'Secondary Number' },
+    { key: 'address', label: 'Address', multiline: true },
+    { key: 'map_query', label: 'Map Search Query' },
+    { key: 'hours_label', label: 'Hours Label' },
+    { key: 'hours_text', label: 'Hours Text' },
+    { key: 'base_city', label: 'Base City' },
+    { key: 'studio_label', label: 'Studio Label' },
+    { key: 'contact_eyebrow', label: 'Contact Eyebrow' },
+    { key: 'contact_title', label: 'Contact Title' },
+    { key: 'contact_italic', label: 'Contact Italic Line' },
+    { key: 'contact_description', label: 'Contact Description', multiline: true },
+  ] as const;
 
   return (
     <div className="min-h-screen bg-black text-white font-space-grotesk flex flex-col md:flex-row select-none">
@@ -1109,6 +1355,8 @@ export default function AdminPage() {
             <img 
               src="/logo.png" 
               alt="Parth Production Logo" 
+              loading="lazy"
+              decoding="async"
               className="w-16 h-16 rounded-full border border-white/10 object-cover flex-shrink-0"
             />
             <div>
@@ -1184,6 +1432,22 @@ export default function AdminPage() {
 
             <button
               onClick={() => {
+                setActiveTab('bringing');
+                setSidebarOpen(false);
+              }}
+              className={`w-full h-12 px-4 rounded-xl flex items-center gap-3 text-sm font-bold tracking-wide transition duration-200 cursor-pointer
+                ${activeTab === 'bringing'
+                  ? 'bg-[#3A8FB8]/10 border border-[#3A8FB8]/30 text-white'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent'
+                }
+              `}
+            >
+              <Sparkles className="w-4 h-4" />
+              Bringing
+            </button>
+
+            <button
+              onClick={() => {
                 setActiveTab('about');
                 setSidebarOpen(false);
               }}
@@ -1196,6 +1460,22 @@ export default function AdminPage() {
             >
               <User className="w-4 h-4" />
               About Us
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab('contact');
+                setSidebarOpen(false);
+              }}
+              className={`w-full h-12 px-4 rounded-xl flex items-center gap-3 text-sm font-bold tracking-wide transition duration-200 cursor-pointer
+                ${activeTab === 'contact'
+                  ? 'bg-[#3A8FB8]/10 border border-[#3A8FB8]/30 text-white'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent'
+                }
+              `}
+            >
+              <Mail className="w-4 h-4" />
+              Contact Us
             </button>
 
             <button
@@ -1253,6 +1533,8 @@ export default function AdminPage() {
               {activeTab === 'videos' && 'Videos'}
               {activeTab === 'services' && 'Services'}
               {activeTab === 'vibrants' && 'Stage Gallery'}
+              {activeTab === 'bringing' && 'Bringing'}
+              {activeTab === 'contact' && 'Contact Us'}
               {activeTab === 'settings' && 'Settings'}
             </h1>
             <p className="text-[10px] md:text-xs text-zinc-550 tracking-wider mt-1 uppercase">
@@ -1261,7 +1543,9 @@ export default function AdminPage() {
               {activeTab === 'videos' && 'Change homepage videos (up to 6) and their order'}
               {activeTab === 'services' && 'Manage services — covers sync to Gallery & Footer'}
               {activeTab === 'vibrants' && 'Change Stage Gallery images on the homepage'}
-              {activeTab === 'settings' && 'Update contact profiles & credentials'}
+              {activeTab === 'bringing' && 'Edit the homepage celebration craft section'}
+              {activeTab === 'contact' && 'Update public contact details and page copy'}
+              {activeTab === 'settings' && 'Update SMTP and console credentials'}
             </p>
           </div>
 
@@ -1319,6 +1603,8 @@ export default function AdminPage() {
                     <img 
                       src={image.image_url} 
                       alt="Gallery Asset" 
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover brightness-[0.75]" 
                     />
                     <div className="absolute top-3 left-3 px-3 py-1 rounded-xl bg-black/60 border border-white/10 text-[10px] font-bold text-zinc-400 tracking-wider flex items-center gap-1.5 backdrop-blur-md">
@@ -1464,9 +1750,8 @@ export default function AdminPage() {
                     <video 
                       src={vid.video_url.startsWith('/videos/') ? `https://assets.parthproduction.in${vid.video_url}` : vid.video_url} 
                       muted 
-                      loop
                       playsInline
-                      autoPlay
+                      controls={false}
                       preload="none"
                       className="w-full h-full object-cover brightness-[0.7]" 
                     />
@@ -1595,7 +1880,7 @@ export default function AdminPage() {
                   {pendingNewServicePreview ? 'Change Cover Image' : 'Choose Cover Image'}
                 </button>
                 {pendingNewServicePreview && (
-                  <img src={pendingNewServicePreview} alt="New service preview" className="h-11 w-16 rounded-lg object-cover border border-white/10" />
+                  <img src={pendingNewServicePreview} alt="New service preview" loading="lazy" decoding="async" className="h-11 w-16 rounded-lg object-cover border border-white/10" />
                 )}
                 <button
                   type="button"
@@ -1625,6 +1910,8 @@ export default function AdminPage() {
                     <img 
                       src={service.image_url} 
                       alt={service.service_title} 
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover" 
                     />
                     {service.isLocal && (
@@ -1634,11 +1921,47 @@ export default function AdminPage() {
                       </div>
                     )}
                   </div>
+                  <div className="grid grid-cols-3 gap-2 mb-4">
+                    {Array.from({ length: 3 }, (_, slot) => {
+                      const galleryUrl = service.gallery_images?.[slot] || '';
+                      return (
+                        <div key={slot} className="space-y-2">
+                          <div className="relative aspect-square rounded-xl overflow-hidden border border-white/10 bg-black">
+                            <img
+                              src={galleryUrl}
+                              alt={`${service.service_title} supporting image ${slot + 1}`}
+                              loading="lazy"
+                              decoding="async"
+                              className="w-full h-full object-cover"
+                            />
+                            {service.galleryIsLocal?.[slot] && (
+                              <span className="absolute top-1 right-1 rounded-md bg-amber-500/80 px-1.5 py-0.5 text-[8px] font-bold text-black">
+                                Staged
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => triggerServiceGalleryImageChange(service.id, slot)}
+                            className="w-full h-8 rounded-lg border border-white/10 hover:bg-white/5 text-[9px] font-bold uppercase tracking-wider cursor-pointer"
+                          >
+                            Replace {slot + 1}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
                   <div className="flex-1 flex flex-col justify-between">
                     <div>
-                      <h4 className="font-bold text-sm tracking-wide text-white uppercase mb-1">
-                        {service.service_title}
-                      </h4>
+                      <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">
+                        Service name
+                      </label>
+                      <input
+                        type="text"
+                        value={service.service_title}
+                        onChange={(e) => handleServiceTitleChange(service.id, e.target.value)}
+                        className="w-full h-10 px-3 mb-2 rounded-lg border border-white/10 bg-black/40 text-xs font-bold text-white uppercase focus:border-[#3A8FB8] focus:outline-none"
+                      />
                       <p className="text-[10px] text-zinc-550 uppercase tracking-widest font-bold font-space-grotesk">
                         Gallery: {toGalleryCategory(service.service_title)}
                       </p>
@@ -1648,7 +1971,7 @@ export default function AdminPage() {
                         onClick={() => triggerServiceImageChange(service.id)}
                         className="flex-1 h-11 rounded-xl border border-white/10 hover:bg-white/5 hover:border-white/20 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition"
                       >
-                        Replace Image
+                        Replace Cover
                       </button>
                       {!DEFAULT_SERVICES.some((d) => d.id === service.id) && (
                         <button
@@ -1672,6 +1995,13 @@ export default function AdminPage() {
               accept="image/*"
               className="hidden"
             />
+            <input
+              type="file"
+              ref={serviceGalleryInputRef}
+              onChange={handleServiceGalleryImageChange}
+              accept="image/*"
+              className="hidden"
+            />
           </div>
         )}
 
@@ -1688,7 +2018,7 @@ export default function AdminPage() {
             <div className="rounded-3xl border border-white/10 bg-zinc-950/40 p-6 md:p-8 space-y-5">
               <div className="flex flex-col sm:flex-row gap-5 items-start">
                 <div className="relative w-full sm:w-40 aspect-[4/5] rounded-2xl overflow-hidden border border-white/10 bg-black flex-shrink-0">
-                  <img src={about.image_url} alt={about.name} className="absolute inset-0 w-full h-full object-cover" />
+                  <img src={about.image_url} alt={about.name} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover" />
                   {about.isLocal && (
                     <div className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[9px] font-bold text-amber-500">
                       Staged
@@ -1796,6 +2126,8 @@ export default function AdminPage() {
                     <img 
                       src={v.image_url} 
                       alt={v.title} 
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover" 
                     />
                     <div className="absolute top-3 left-3 px-3 py-1 rounded-xl bg-black/60 border border-white/10 text-[10px] font-bold text-zinc-450 backdrop-blur-md">
@@ -1875,10 +2207,187 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* -------------------- BRINGING TAB CONTENT -------------------- */}
+        {activeTab === 'bringing' && (
+          <div className="space-y-6 max-w-5xl">
+            <div className="rounded-3xl border border-white/10 bg-zinc-950/40 p-6 md:p-8 space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">Eyebrow</label>
+                  <input
+                    value={craft.eyebrow}
+                    onChange={(e) => setCraft({ ...craft, eyebrow: e.target.value })}
+                    className="w-full h-11 px-4 rounded-xl border border-white/10 bg-black/40 text-sm text-white focus:border-[#3A8FB8] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">Heading</label>
+                  <input
+                    value={craft.heading}
+                    onChange={(e) => setCraft({ ...craft, heading: e.target.value })}
+                    className="w-full h-11 px-4 rounded-xl border border-white/10 bg-black/40 text-sm text-white focus:border-[#3A8FB8] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">Italic line</label>
+                  <input
+                    value={craft.italic_line}
+                    onChange={(e) => setCraft({ ...craft, italic_line: e.target.value })}
+                    className="w-full h-11 px-4 rounded-xl border border-white/10 bg-black/40 text-sm text-white focus:border-[#3A8FB8] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">Description</label>
+                  <textarea
+                    rows={3}
+                    value={craft.description}
+                    onChange={(e) => setCraft({ ...craft, description: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-white/10 bg-black/40 text-sm text-white focus:border-[#3A8FB8] focus:outline-none resize-y"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-5 border-t border-white/10">
+                <h3 className="font-bold text-sm tracking-wide text-white uppercase mb-4">Featured block</h3>
+                <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-5">
+                  <div>
+                    <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-white/10 bg-black">
+                      <img
+                        src={craft.featured_image_url}
+                        alt={craft.featured_title}
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => triggerCraftImageChange('featured')}
+                      className="mt-3 w-full h-10 rounded-xl border border-white/10 hover:bg-white/5 text-xs font-bold uppercase tracking-wider cursor-pointer"
+                    >
+                      Replace Featured Image
+                    </button>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">Featured title</label>
+                      <input
+                        value={craft.featured_title}
+                        onChange={(e) => setCraft({ ...craft, featured_title: e.target.value })}
+                        className="w-full h-11 px-4 rounded-xl border border-white/10 bg-black/40 text-sm text-white focus:border-[#3A8FB8] focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">Featured badge</label>
+                      <input
+                        value={craft.featured_badge}
+                        onChange={(e) => setCraft({ ...craft, featured_badge: e.target.value })}
+                        className="w-full h-11 px-4 rounded-xl border border-white/10 bg-black/40 text-sm text-white focus:border-[#3A8FB8] focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {craft.cards.slice(0, 3).map((card, index) => (
+                <div key={card.id} className="rounded-3xl border border-white/10 bg-zinc-950/40 p-4 space-y-4">
+                  <div className="aspect-[4/3] rounded-2xl overflow-hidden border border-white/10 bg-black">
+                    <img
+                      src={card.image_url}
+                      alt={card.title}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => triggerCraftImageChange(index)}
+                    className="w-full h-10 rounded-xl border border-white/10 hover:bg-white/5 text-xs font-bold uppercase tracking-wider cursor-pointer"
+                  >
+                    Replace Card Image
+                  </button>
+                  <div>
+                    <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">Title</label>
+                    <input
+                      value={card.title}
+                      onChange={(e) => setCraft((prev) => ({
+                        ...prev,
+                        cards: prev.cards.map((item, itemIndex) =>
+                          itemIndex === index ? { ...item, title: e.target.value } : item
+                        ),
+                      }))}
+                      className="w-full h-10 px-3 rounded-lg border border-white/10 bg-black/40 text-sm text-white focus:border-[#3A8FB8] focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">Copy</label>
+                    <textarea
+                      rows={5}
+                      value={card.copy}
+                      onChange={(e) => setCraft((prev) => ({
+                        ...prev,
+                        cards: prev.cards.map((item, itemIndex) =>
+                          itemIndex === index ? { ...item, copy: e.target.value } : item
+                        ),
+                      }))}
+                      className="w-full px-3 py-2 rounded-lg border border-white/10 bg-black/40 text-sm text-white focus:border-[#3A8FB8] focus:outline-none resize-y"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <input
+              type="file"
+              ref={craftInputRef}
+              onChange={handleCraftImageChange}
+              accept="image/*"
+              className="hidden"
+            />
+          </div>
+        )}
+
+        {/* -------------------- CONTACT TAB CONTENT -------------------- */}
+        {activeTab === 'contact' && (
+          <div className="max-w-4xl rounded-3xl border border-white/10 bg-zinc-950/40 p-6 md:p-8 shadow-xl">
+            <h3 className="font-bold text-md text-white mb-6 uppercase tracking-wider">Public Contact Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {contactFields.map((field) => (
+                <div
+                  key={field.key}
+                  className={'multiline' in field && field.multiline ? 'md:col-span-2' : ''}
+                >
+                  <label className="block text-xs font-bold tracking-widest text-zinc-400 uppercase mb-2">
+                    {field.label}
+                  </label>
+                  {'multiline' in field && field.multiline ? (
+                    <textarea
+                      rows={3}
+                      value={settings[field.key] || ''}
+                      onChange={(e) => setSettings({ ...settings, [field.key]: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border border-white/10 bg-black/40 text-sm text-white focus:border-[#3A8FB8] focus:outline-none resize-y"
+                    />
+                  ) : (
+                    <input
+                      type={'type' in field ? field.type : 'text'}
+                      value={settings[field.key] || ''}
+                      onChange={(e) => setSettings({ ...settings, [field.key]: e.target.value })}
+                      className="w-full h-12 px-4 rounded-xl border border-white/10 bg-black/40 text-sm text-white focus:border-[#3A8FB8] focus:outline-none"
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* -------------------- SITE SETTINGS TAB CONTENT -------------------- */}
         {activeTab === 'settings' && (
           <div className="max-w-[600px] rounded-3xl border border-white/10 bg-zinc-950/40 p-6 md:p-8 shadow-xl">
-            <h3 className="font-bold text-md text-white mb-6 uppercase tracking-wider">Contact & Profile Settings</h3>
+            <h3 className="font-bold text-md text-white mb-2 uppercase tracking-wider">Site Settings</h3>
+            <p className="text-xs text-zinc-500 mb-6">Contact details are managed in the Contact Us tab. The shared fields below remain synchronized.</p>
             
             <div className="space-y-6">
               <div>
