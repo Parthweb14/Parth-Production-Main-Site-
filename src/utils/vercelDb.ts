@@ -1,5 +1,6 @@
 import { turso } from './turso';
 import { hashPassword, hashRecoveryKey } from './password';
+import { OWNER_IMAGE } from './media';
 
 export interface SiteSettings {
   email: string;
@@ -30,6 +31,18 @@ export interface DBVideo {
 export interface DBServiceImage {
   id: number;
   service_title: string;
+  image_url: string;
+  subtitle?: string;
+  summary?: string;
+  detail?: string;
+}
+
+export interface AboutContent {
+  name: string;
+  role: string;
+  badge: string;
+  quote: string;
+  description: string;
   image_url: string;
 }
 
@@ -65,6 +78,17 @@ const DEFAULT_SETTINGS: SiteSettings = {
   phone_1: '9537330003',
   phone_2: '8866655651',
   address: 'Gaurav Path Road, Palanpur, Surat, Gujarat',
+};
+
+const DEFAULT_ABOUT: AboutContent = {
+  name: 'Parth Panchal',
+  role: 'Lead DJ & Creative Director',
+  badge: 'Founder & CEO',
+  quote:
+    "Music is not just what I do — it's who I am. Every event is a canvas, and together we paint memories.",
+  description:
+    'Built from late-night sets and early load-ins in Surat, Parth Production grew from a single DJ desk into a full crew for sound, light, SFX, truss, and finales.',
+  image_url: OWNER_IMAGE,
 };
 
 function bootstrapCredentials(): AdminCredentials {
@@ -142,6 +166,18 @@ export const vercelDb = {
   },
   async setServices(services: DBServiceImage[]): Promise<void> {
     await setValue('services', services);
+  },
+  async getAbout(): Promise<AboutContent> {
+    const stored = (await getValue('about', null)) as AboutContent | null;
+    if (!stored) return { ...DEFAULT_ABOUT };
+    return {
+      ...DEFAULT_ABOUT,
+      ...stored,
+      image_url: stored.image_url || DEFAULT_ABOUT.image_url,
+    };
+  },
+  async setAbout(about: AboutContent): Promise<void> {
+    await setValue('about', about);
   },
   async getVibrants(): Promise<DBVibrant[]> {
     return (await getValue('vibrants', [])) as DBVibrant[];

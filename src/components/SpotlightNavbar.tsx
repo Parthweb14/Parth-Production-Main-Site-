@@ -12,8 +12,8 @@ const navItems = [
   { label: 'Home', href: '/' },
   { label: 'Services', href: '/services' },
   { label: 'Gallery', href: '/gallery' },
-  { label: 'About', href: '/about' },
-  { label: 'Contact', href: '/contact' },
+  { label: 'About Us', href: '/about' },
+  { label: 'Contact Us', href: '/contact' },
 ];
 
 export default function SpotlightNavbar() {

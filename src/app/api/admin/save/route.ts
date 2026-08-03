@@ -28,13 +28,14 @@ export async function POST(request: Request) {
     const auth = await requireAdmin(request);
     if (!auth.ok) return auth.response;
 
-    const { settings, images, videos, serviceImages, vibrants, deletedUrls } = await request.json();
+    const { settings, images, videos, serviceImages, vibrants, about, deletedUrls } = await request.json();
 
     if (settings) await vercelDb.setSettings(settings);
     if (images) await vercelDb.setImages(images);
     if (videos) await vercelDb.setVideos(videos);
     if (serviceImages) await vercelDb.setServices(serviceImages);
     if (vibrants) await vercelDb.setVibrants(vibrants);
+    if (about) await vercelDb.setAbout(about);
 
     if (deletedUrls && Array.isArray(deletedUrls) && deletedUrls.length > 0) {
       for (const url of deletedUrls) {

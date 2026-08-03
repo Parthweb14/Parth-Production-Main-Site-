@@ -7,6 +7,7 @@ import {
   isHashedPassword,
   normalizeIdentity,
   safeErrorMessage,
+  sanitizePassword,
   sessionCookieOptions,
   verifyPasswordAntiEnum,
 } from '@/utils/auth';
@@ -19,8 +20,10 @@ export async function POST(request: Request) {
   const started = Date.now();
   try {
     const body = await request.json();
-    const email = typeof body.email === 'string' ? body.email : '';
-    const password = typeof body.password === 'string' ? body.password : '';
+    const email =
+      typeof body.email === 'string' ? normalizeIdentity(body.email) : '';
+    const password =
+      typeof body.password === 'string' ? sanitizePassword(body.password) : '';
     const captchaToken = typeof body.captchaToken === 'string' ? body.captchaToken : null;
 
     const limited = await enforceRateLimit(request, 'login', {
@@ -46,7 +49,7 @@ export async function POST(request: Request) {
 
     const credentials = await vercelDb.getCredentials();
     const userMatched =
-      normalizeIdentity(email) === normalizeIdentity(credentials.username);
+      email === normalizeIdentity(credentials.username);
 
     // Always run slow verify (dummy hash if user unknown) — kills timing enumeration
     const passwordOk = verifyPasswordAntiEnum(password, credentials.passwordHash, userMatched);

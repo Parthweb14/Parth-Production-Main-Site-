@@ -7,12 +7,13 @@ export async function GET(request: Request) {
     const auth = await requireAdmin(request);
     if (!auth.ok) return auth.response;
 
-    const [settings, images, videos, services, vibrants] = await Promise.all([
+    const [settings, images, videos, services, vibrants, about] = await Promise.all([
       vercelDb.getSettings(),
       vercelDb.getImages(),
       vercelDb.getVideos(),
       vercelDb.getServices(),
       vercelDb.getVibrants(),
+      vercelDb.getAbout(),
     ]);
 
     return NextResponse.json({
@@ -20,6 +21,7 @@ export async function GET(request: Request) {
       images: [...images].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)),
       videos: [...videos].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)),
       services,
+      about,
       vibrants: [...vibrants].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)),
       stage_gallery: [...vibrants].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)),
     });

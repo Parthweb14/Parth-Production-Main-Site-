@@ -5,6 +5,7 @@ import {
   passwordMeetsPolicy,
   PASSWORD_POLICY_MSG,
   safeErrorMessage,
+  sanitizePassword,
   verifyRecoveryKey,
 } from '@/utils/auth';
 import { enforceRateLimit, rateLimitResponse } from '@/utils/rateLimit';
@@ -43,7 +44,8 @@ export async function POST(request: Request) {
       return NextResponse.json(GENERIC_FAIL, { status: 401 });
     }
 
-    if (!passwordMeetsPolicy(newPassword)) {
+    const cleanPassword = sanitizePassword(newPassword);
+    if (!passwordMeetsPolicy(cleanPassword)) {
       return NextResponse.json({ error: PASSWORD_POLICY_MSG }, { status: 400 });
     }
 
@@ -54,7 +56,7 @@ export async function POST(request: Request) {
       return NextResponse.json(GENERIC_FAIL, { status: 401 });
     }
 
-    credentials.passwordHash = hashPassword(newPassword);
+    credentials.passwordHash = hashPassword(cleanPassword);
     credentials.resetToken = null;
     credentials.resetTokenExpiry = null;
     credentials.otpCode = null;

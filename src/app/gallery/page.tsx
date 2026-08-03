@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import SpotlightNavbar from '@/components/SpotlightNavbar';
@@ -9,6 +9,7 @@ import QuoteCta from '@/components/QuoteCta';
 import MediaImage from '@/components/MediaImage';
 import CinematicPageHero from '@/components/CinematicPageHero';
 import { STAGE_IMAGES, resolveGallerySrc } from '@/utils/media';
+import { toGalleryCategory } from '@/utils/servicesCatalog';
 
 type GalleryItem = {
   id: string | number;
@@ -17,16 +18,21 @@ type GalleryItem = {
   src: string;
 };
 
-const defaults: GalleryItem[] = STAGE_IMAGES.map((img, i) => ({
+const defaults: GalleryItem[] = STAGE_IMAGES.slice(0, 5).map((img, i) => ({
   id: i + 1,
   category: img.title,
   title: img.tag,
   src: img.src,
 }));
 
+const DEFAULT_CATS = ['Weddings', 'Festivals', 'Concerts', 'Road Shows', 'Corporate'];
+
 export default function GalleryPage() {
   const [items, setItems] = useState<GalleryItem[]>(defaults);
+  const [categories, setCategories] = useState<string[]>(DEFAULT_CATS);
+  const [filter, setFilter] = useState<string>('All');
   const [active, setActive] = useState<number | null>(null);
+  const [slideCategory, setSlideCategory] = useState<string | null>(null);
   const [featured, setFeatured] = useState(0);
 
   useEffect(() => {
@@ -35,14 +41,36 @@ export default function GalleryPage() {
         const res = await fetch('/api/public/data');
         if (!res.ok) return;
         const data = await res.json();
-        if (!data.images?.length) return;
+
+        const serviceCats: string[] =
+          data.services?.length > 0
+            ? data.services.map((s: { service_title: string }) =>
+                toGalleryCategory(s.service_title)
+              )
+            : DEFAULT_CATS;
+        const uniqueCats = [...new Set(serviceCats.filter(Boolean))];
+        setCategories(uniqueCats.length ? uniqueCats : DEFAULT_CATS);
+
+        if (!data.images?.length) {
+          setItems(
+            uniqueCats.map((cat, i) => ({
+              id: i + 1,
+              category: cat,
+              title: cat,
+              src: defaults[i % defaults.length].src,
+            }))
+          );
+          return;
+        }
+
         const mapped: GalleryItem[] = data.images.map(
           (item: { id: string; category: string; image_url: string }, idx: number) => {
             const fallback = defaults[idx % defaults.length].src;
+            const cat = toGalleryCategory(item.category || 'Events');
             return {
               id: item.id || idx,
-              category: item.category || 'Events',
-              title: item.category || 'Live stage',
+              category: cat,
+              title: cat,
               src: resolveGallerySrc(item.image_url, fallback),
             };
           }
@@ -55,16 +83,44 @@ export default function GalleryPage() {
     load();
   }, []);
 
+  const filtered = useMemo(() => {
+    if (filter === 'All') return items;
+    return items.filter(
+      (item) => item.category.toLowerCase() === filter.toLowerCase()
+    );
+  }, [items, filter]);
+
   useEffect(() => {
-    if (!items.length) return;
+    if (!filtered.length) return;
     const id = window.setInterval(() => {
-      setFeatured((i) => (i + 1) % Math.min(items.length, 6));
+      setFeatured((i) => (i + 1) % Math.min(filtered.length, 6));
     }, 3200);
     return () => window.clearInterval(id);
-  }, [items.length]);
+  }, [filtered.length, filter]);
 
-  const spotlight = items[featured % Math.max(items.length, 1)] || items[0];
-  const reel = [...items, ...items].slice(0, Math.max(12, items.length * 2));
+  const spotlight = filtered[featured % Math.max(filtered.length, 1)] || filtered[0];
+  const reel = [...filtered, ...filtered].slice(0, Math.max(12, filtered.length * 2));
+
+  const openLightbox = (item: GalleryItem) => {
+    const catItems = items.filter(
+      (f) => f.category.toLowerCase() === item.category.toLowerCase()
+    );
+    const idx = catItems.findIndex((f) => f.id === item.id);
+    setSlideCategory(item.category);
+    setActive(idx >= 0 ? idx : 0);
+  };
+
+  const slideItems = useMemo(() => {
+    if (!slideCategory) return items;
+    return items.filter(
+      (f) => f.category.toLowerCase() === slideCategory.toLowerCase()
+    );
+  }, [items, slideCategory]);
+
+  const closeLightbox = () => {
+    setActive(null);
+    setSlideCategory(null);
+  };
 
   return (
     <>
@@ -79,11 +135,10 @@ export default function GalleryPage() {
           image={STAGE_IMAGES[1].src}
         />
 
-        {/* Motion from the floor — only gallery content section */}
         <section className="relative border-b border-white/10 py-12 md:py-16 overflow-hidden">
           <div className="pointer-events-none absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#3A8FB8]/08 blur-[120px]" />
           <div className="relative max-w-7xl mx-auto px-6 md:px-10">
-            <div className="mb-8 flex items-end justify-between gap-4">
+            <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
               <div>
                 <p className="text-[11px] uppercase tracking-[0.28em] text-[#3A8FB8] font-semibold mb-2">
                   Spotlight reel
@@ -93,24 +148,50 @@ export default function GalleryPage() {
                 </h2>
               </div>
               <p className="hidden md:block text-sm text-white/45 max-w-xs text-right">
-                Auto-cycling featured frames with an infinite image ribbon underneath.
+                Browse by service category — open any frame to slide through that category.
               </p>
+            </div>
+
+            <div className="mb-8 flex flex-wrap gap-2">
+              {['All', ...categories].map((cat) => {
+                const activeChip = filter === cat;
+                const count =
+                  cat === 'All'
+                    ? items.length
+                    : items.filter((i) => i.category.toLowerCase() === cat.toLowerCase())
+                        .length;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => {
+                      setFilter(cat);
+                      setFeatured(0);
+                    }}
+                    className={`rounded-full border px-4 py-2 text-[11px] uppercase tracking-[0.14em] font-semibold transition-all ${
+                      activeChip
+                        ? 'border-[#3A8FB8] bg-[#3A8FB8]/15 text-white'
+                        : 'border-white/15 bg-white/5 text-white/70 hover:border-white/35 hover:text-white'
+                    }`}
+                  >
+                    {cat}
+                    <span className="ml-1.5 text-white/40">{count}</span>
+                  </button>
+                );
+              })}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-6 mb-8">
               <AnimatePresence mode="wait">
                 {spotlight && (
                   <motion.button
-                    key={String(spotlight.id) + spotlight.src}
+                    key={String(spotlight.id) + spotlight.src + filter}
                     type="button"
                     initial={{ opacity: 0, scale: 0.98 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 1.02 }}
                     transition={{ duration: 0.45 }}
-                    onClick={() => {
-                      const idx = items.findIndex((f) => f.id === spotlight.id);
-                      setActive(idx >= 0 ? idx : 0);
-                    }}
+                    onClick={() => openLightbox(spotlight)}
                     className="relative lg:col-span-8 aspect-[16/10] overflow-hidden rounded-[28px] border border-white/10 text-left group"
                   >
                     <MediaImage
@@ -132,7 +213,7 @@ export default function GalleryPage() {
               </AnimatePresence>
 
               <div className="lg:col-span-4 grid grid-cols-2 lg:grid-cols-1 gap-3 md:gap-4">
-                {items.slice(0, 4).map((item, i) => (
+                {filtered.slice(0, 4).map((item, i) => (
                   <motion.button
                     key={`side-${item.id}`}
                     type="button"
@@ -142,11 +223,10 @@ export default function GalleryPage() {
                     transition={{ delay: i * 0.06 }}
                     onClick={() => {
                       setFeatured(i);
-                      const idx = items.findIndex((f) => f.id === item.id);
-                      setActive(idx >= 0 ? idx : 0);
+                      openLightbox(item);
                     }}
                     className={`relative aspect-[16/10] lg:aspect-auto lg:min-h-[92px] overflow-hidden rounded-2xl border text-left transition-all ${
-                      featured % Math.max(items.length, 1) === i
+                      featured % Math.max(filtered.length, 1) === i
                         ? 'border-[#3A8FB8]/60 shadow-[0_0_24px_rgba(58,143,184,0.25)]'
                         : 'border-white/10 hover:border-white/30'
                     }`}
@@ -167,31 +247,60 @@ export default function GalleryPage() {
               </div>
             </div>
 
-            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] py-4">
-              <motion.div
-                className="flex w-max gap-3"
-                animate={{ x: ['0%', '-50%'] }}
-                transition={{ duration: 28, repeat: Infinity, ease: 'linear' }}
-              >
-                {reel.map((item, i) => (
-                  <button
-                    key={`reel-${item.id}-${i}`}
-                    type="button"
-                    onClick={() => {
-                      const idx = items.findIndex((f) => f.id === item.id);
-                      setActive(idx >= 0 ? idx : 0);
-                    }}
-                    className="relative h-24 w-40 flex-shrink-0 overflow-hidden rounded-xl border border-white/10 md:h-28 md:w-48"
-                  >
-                    <MediaImage
-                      src={item.src}
-                      alt={item.title}
-                      className="absolute inset-0 h-full w-full object-cover"
-                    />
-                  </button>
-                ))}
-              </motion.div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 mb-8">
+              {filtered.map((item, i) => (
+                <motion.button
+                  key={`grid-${item.id}-${i}`}
+                  type="button"
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: Math.min(i * 0.03, 0.3) }}
+                  onClick={() => openLightbox(item)}
+                  className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-white/10 text-left group"
+                >
+                  <MediaImage
+                    src={item.src}
+                    alt={item.title}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                  <p className="absolute bottom-3 left-3 text-[10px] uppercase tracking-[0.16em] text-white/85">
+                    {item.category}
+                  </p>
+                </motion.button>
+              ))}
+              {!filtered.length && (
+                <p className="col-span-full text-center text-sm text-white/45 py-10">
+                  No images in this category yet.
+                </p>
+              )}
             </div>
+
+            {reel.length > 0 && (
+              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] py-4">
+                <motion.div
+                  className="flex w-max gap-3"
+                  animate={{ x: ['0%', '-50%'] }}
+                  transition={{ duration: 28, repeat: Infinity, ease: 'linear' }}
+                >
+                  {reel.map((item, i) => (
+                    <button
+                      key={`reel-${item.id}-${i}`}
+                      type="button"
+                      onClick={() => openLightbox(item)}
+                      className="relative h-24 w-40 flex-shrink-0 overflow-hidden rounded-xl border border-white/10 md:h-28 md:w-48"
+                    >
+                      <MediaImage
+                        src={item.src}
+                        alt={item.title}
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </motion.div>
+              </div>
+            )}
           </div>
         </section>
 
@@ -199,7 +308,7 @@ export default function GalleryPage() {
       </main>
 
       <AnimatePresence>
-        {active !== null && items[active] && (
+        {active !== null && slideItems[active] && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -207,46 +316,61 @@ export default function GalleryPage() {
             className="fixed inset-0 z-[10000] bg-black/95 flex items-center justify-center px-4"
           >
             <button
-              onClick={() => setActive(null)}
+              onClick={closeLightbox}
               className="absolute top-6 right-6 p-2 border border-white/15 hover:border-white min-h-[44px] min-w-[44px] rounded-full"
               aria-label="Close"
             >
               <X className="w-6 h-6" />
             </button>
-            <button
-              onClick={() =>
-                setActive((i) => (i === null ? i : (i - 1 + items.length) % items.length))
-              }
-              className="absolute left-4 md:left-8 p-3 border border-white/15 hover:border-[#3A8FB8] min-h-[44px] min-w-[44px] rounded-full"
-              aria-label="Previous"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
+            {slideItems.length > 1 && (
+              <button
+                onClick={() =>
+                  setActive((i) =>
+                    i === null ? i : (i - 1 + slideItems.length) % slideItems.length
+                  )
+                }
+                className="absolute left-4 md:left-8 p-3 border border-white/15 hover:border-[#3A8FB8] min-h-[44px] min-w-[44px] rounded-full"
+                aria-label="Previous"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+            )}
             <motion.div
-              key={items[active].src}
+              key={slideItems[active].src + String(active)}
               initial={{ opacity: 0, y: 16, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               className="relative max-w-5xl w-full"
             >
               <img
-                src={items[active].src}
-                alt={items[active].title}
+                src={slideItems[active].src}
+                alt={slideItems[active].title}
                 className="max-w-full max-h-[78vh] mx-auto object-contain rounded-2xl"
               />
               <div className="mt-4 text-center">
                 <p className="text-[11px] uppercase tracking-[0.2em] text-[#3A8FB8]">
-                  {items[active].category}
+                  {slideItems[active].category}
                 </p>
-                <p className="font-display text-xl text-white mt-1">{items[active].title}</p>
+                <p className="font-display text-xl text-white mt-1">
+                  {slideItems[active].title}
+                </p>
+                {slideItems.length > 1 && (
+                  <p className="mt-2 text-xs text-white/40">
+                    {active + 1} / {slideItems.length}
+                  </p>
+                )}
               </div>
             </motion.div>
-            <button
-              onClick={() => setActive((i) => (i === null ? i : (i + 1) % items.length))}
-              className="absolute right-4 md:right-8 p-3 border border-white/15 hover:border-[#3A8FB8] min-h-[44px] min-w-[44px] rounded-full"
-              aria-label="Next"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
+            {slideItems.length > 1 && (
+              <button
+                onClick={() =>
+                  setActive((i) => (i === null ? i : (i + 1) % slideItems.length))
+                }
+                className="absolute right-4 md:right-8 p-3 border border-white/15 hover:border-[#3A8FB8] min-h-[44px] min-w-[44px] rounded-full"
+                aria-label="Next"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

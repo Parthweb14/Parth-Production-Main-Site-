@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { motion, useScroll, useSpring } from 'framer-motion';
 import { Users, Sparkles, Settings2 } from 'lucide-react';
 import SpotlightNavbar from '@/components/SpotlightNavbar';
@@ -7,7 +8,8 @@ import Footer from '@/components/Footer';
 import QuoteCta from '@/components/QuoteCta';
 import MediaImage from '@/components/MediaImage';
 import CinematicPageHero from '@/components/CinematicPageHero';
-import { OWNER_IMAGE, STAGE_IMAGES } from '@/utils/media';
+import { OWNER_IMAGE, STAGE_IMAGES, resolveGallerySrc } from '@/utils/media';
+import { DEFAULT_ABOUT } from '@/utils/servicesCatalog';
 
 const journey = [
   {
@@ -54,9 +56,44 @@ const values = [
   },
 ];
 
+type AboutState = {
+  name: string;
+  role: string;
+  badge: string;
+  quote: string;
+  description: string;
+  image_url: string;
+};
+
 export default function AboutPage() {
   const { scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 28 });
+  const [about, setAbout] = useState<AboutState>({
+    ...DEFAULT_ABOUT,
+    image_url: OWNER_IMAGE,
+  });
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch('/api/public/data');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.about) return;
+        setAbout({
+          name: data.about.name || DEFAULT_ABOUT.name,
+          role: data.about.role || DEFAULT_ABOUT.role,
+          badge: data.about.badge || DEFAULT_ABOUT.badge,
+          quote: data.about.quote || DEFAULT_ABOUT.quote,
+          description: data.about.description || DEFAULT_ABOUT.description,
+          image_url: resolveGallerySrc(data.about.image_url || '', OWNER_IMAGE),
+        });
+      } catch {
+        // keep defaults
+      }
+    }
+    load();
+  }, []);
 
   return (
     <>
@@ -114,7 +151,6 @@ export default function AboutPage() {
               Our Journey
             </motion.h2>
 
-            {/* MOBILE — cinematic stacked chapters (PC keeps alternating timeline below) */}
             <div className="space-y-5 md:hidden">
               {journey.map((item, i) => (
                 <motion.article
@@ -150,7 +186,6 @@ export default function AboutPage() {
               ))}
             </div>
 
-            {/* DESKTOP — alternating timeline (unchanged structure, polished) */}
             <div className="relative hidden md:block">
               <div
                 className="absolute bottom-0 left-1/2 top-0 w-px -translate-x-1/2"
@@ -219,8 +254,8 @@ export default function AboutPage() {
               <div className="relative rounded-3xl overflow-hidden border border-white/25 shadow-[0_0_40px_rgba(58,143,184,0.12)] group">
                 <div className="relative aspect-[4/5]">
                   <MediaImage
-                    src={OWNER_IMAGE}
-                    alt="Parth Panchal — Founder of Parth Production"
+                    src={about.image_url}
+                    alt={`${about.name} — ${about.badge} of Parth Production`}
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />
@@ -236,19 +271,17 @@ export default function AboutPage() {
               className="text-center lg:text-left"
             >
               <span className="inline-flex items-center min-h-[32px] px-3 py-1 rounded-full bg-[#3A8FB8] text-white text-[10px] uppercase tracking-[0.2em] font-bold mb-5">
-                Founder & CEO
+                {about.badge}
               </span>
               <h2 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-white">
-                Parth Panchal
+                {about.name}
               </h2>
-              <p className="mt-2 text-lg text-white/70">Lead DJ & Creative Director</p>
+              <p className="mt-2 text-lg text-white/70">{about.role}</p>
               <p className="font-serif italic text-xl md:text-2xl text-white/90 mt-6 leading-snug">
-                “Music is not just what I do — it&apos;s who I am. Every event is a canvas, and
-                together we paint memories.”
+                “{about.quote}”
               </p>
               <p className="mt-6 text-base md:text-lg leading-relaxed text-white/80 max-w-xl mx-auto lg:mx-0">
-                Built from late-night sets and early load-ins in Surat, Parth Production grew from a
-                single DJ desk into a full crew for sound, light, SFX, truss, and finales.
+                {about.description}
               </p>
             </motion.div>
           </div>

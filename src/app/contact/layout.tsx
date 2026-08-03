@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Contact',
+  title: 'Contact Us',
   description:
     'Contact Parth Production in Surat for quotes on sound, lighting, SFX, and full event production. Call or WhatsApp to book your stage.',
   alternates: { canonical: '/contact' },

@@ -5,9 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import {
   STAGE_IMAGES,
+  OWNER_IMAGE,
   defaultShowcaseVideos,
   defaultStageGallery,
 } from '@/utils/media';
+import { toGalleryCategory, DEFAULT_ABOUT } from '@/utils/servicesCatalog';
+import { normalizeIdentity, sanitizePassword } from '@/utils/credentialSanitize';
 
 import { 
   Image as ImageIcon, 
@@ -32,7 +35,8 @@ import {
   Mail,
   Send,
   Eye,
-  EyeOff
+  EyeOff,
+  User
 } from 'lucide-react';
 
 interface DBImage {
@@ -56,6 +60,20 @@ interface DBVideo {
 interface DBServiceImage {
   id: number;
   service_title: string;
+  image_url: string;
+  subtitle?: string;
+  summary?: string;
+  detail?: string;
+  isLocal?: boolean;
+  localFile?: File;
+}
+
+interface AboutContent {
+  name: string;
+  role: string;
+  badge: string;
+  quote: string;
+  description: string;
   image_url: string;
   isLocal?: boolean;
   localFile?: File;
@@ -82,8 +100,6 @@ interface SiteSettings {
   from_email?: string;
 }
 
-const CATEGORIES = ['All Events', 'Weddings', 'Festivals', 'Concerts', 'Road Shows', 'Corporate'];
-
 const DEFAULT_SERVICES: DBServiceImage[] = [
   { id: 2, service_title: 'CONCERTS', image_url: STAGE_IMAGES[1].src },
   { id: 1, service_title: 'WEDDINGS', image_url: STAGE_IMAGES[0].src },
@@ -97,7 +113,7 @@ export default function AdminPage() {
   const { user, token, loading: authLoading, logout } = useAuth();
 
   // Navigation tabs state
-  const [activeTab, setActiveTab] = useState<'gallery' | 'videos' | 'services' | 'vibrants' | 'settings'>('gallery');
+  const [activeTab, setActiveTab] = useState<'gallery' | 'videos' | 'services' | 'vibrants' | 'about' | 'settings'>('gallery');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Core Data States
@@ -106,6 +122,13 @@ export default function AdminPage() {
   const [serviceImages, setServiceImages] = useState<DBServiceImage[]>([]);
   const [vibrants, setVibrants] = useState<DBVibrant[]>([]);
   const [settings, setSettings] = useState<SiteSettings>({ email: '', phone_1: '', phone_2: '', address: '' });
+  const [about, setAbout] = useState<AboutContent>({
+    ...DEFAULT_ABOUT,
+    image_url: OWNER_IMAGE,
+  });
+  const [initialAbout, setInitialAbout] = useState<string>('');
+  const [newServiceTitle, setNewServiceTitle] = useState('');
+  const [newServiceSummary, setNewServiceSummary] = useState('');
   
   // Admin credentials states
   const [adminUsername, setAdminUsername] = useState('admin');
@@ -162,6 +185,10 @@ export default function AdminPage() {
   const videoInputRef = useRef<HTMLInputElement>(null);
   const serviceInputRef = useRef<HTMLInputElement>(null);
   const vibrantInputRef = useRef<HTMLInputElement>(null);
+  const aboutInputRef = useRef<HTMLInputElement>(null);
+  const newServiceInputRef = useRef<HTMLInputElement>(null);
+  const [pendingNewServiceFile, setPendingNewServiceFile] = useState<File | null>(null);
+  const [pendingNewServicePreview, setPendingNewServicePreview] = useState<string | null>(null);
   
   const [activeServiceIdToChange, setActiveServiceIdToChange] = useState<number | null>(null);
   const [activeVibrantIdToChange, setActiveVibrantIdToChange] = useState<string | null>(null);
@@ -172,13 +199,6 @@ export default function AdminPage() {
       router.push('/admin/login');
     }
   }, [user, authLoading, router]);
-
-  // Load database items on mount
-  useEffect(() => {
-    if (token) {
-      fetchData();
-    }
-  }, [token]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -234,22 +254,52 @@ export default function AdminPage() {
       }
 
       const loadedServices = data.services || [];
-      const mergedServices =
-        loadedServices.length > 0
-          ? DEFAULT_SERVICES.map((def) => {
-              const match = loadedServices.find((s: DBServiceImage) => s.id === def.id);
-              if (!match) return def;
-              const url = match.image_url || '';
-              const broken = !url || url.startsWith('/images/');
-              return {
-                ...def,
-                service_title: match.service_title || def.service_title,
-                image_url: broken ? def.image_url : url,
-              };
-            })
-          : DEFAULT_SERVICES;
+      let mergedServices: DBServiceImage[];
+      if (loadedServices.length > 0) {
+        const byId = new Map<number, DBServiceImage>(
+          DEFAULT_SERVICES.map((d) => [d.id, d])
+        );
+        mergedServices = loadedServices.map((match: DBServiceImage) => {
+          const def = byId.get(match.id);
+          const url = match.image_url || '';
+          const broken = !url || url.startsWith('/images/');
+          return {
+            id: match.id,
+            service_title: match.service_title || def?.service_title || 'SERVICE',
+            image_url: broken ? (def?.image_url || STAGE_IMAGES[0].src) : url,
+            subtitle: match.subtitle,
+            summary: match.summary,
+            detail: match.detail,
+          };
+        });
+        // Keep defaults missing from DB
+        for (const def of DEFAULT_SERVICES) {
+          if (!mergedServices.some((s) => s.id === def.id)) {
+            mergedServices.push(def);
+          }
+        }
+      } else {
+        mergedServices = DEFAULT_SERVICES;
+      }
       setServiceImages(mergedServices);
       setInitialServiceImages(JSON.stringify(mergedServices));
+
+      if (data.about) {
+        const loadedAbout: AboutContent = {
+          name: data.about.name || DEFAULT_ABOUT.name,
+          role: data.about.role || DEFAULT_ABOUT.role,
+          badge: data.about.badge || DEFAULT_ABOUT.badge,
+          quote: data.about.quote || DEFAULT_ABOUT.quote,
+          description: data.about.description || DEFAULT_ABOUT.description,
+          image_url: data.about.image_url || OWNER_IMAGE,
+        };
+        setAbout(loadedAbout);
+        setInitialAbout(JSON.stringify(loadedAbout));
+      } else {
+        const fallbackAbout = { ...DEFAULT_ABOUT, image_url: OWNER_IMAGE };
+        setAbout(fallbackAbout);
+        setInitialAbout(JSON.stringify(fallbackAbout));
+      }
 
       const loadedVibrants = data.stage_gallery?.length
         ? data.stage_gallery
@@ -280,6 +330,15 @@ export default function AdminPage() {
       setLoading(false);
     }
   };
+
+  // Load database items on mount
+  useEffect(() => {
+    if (!token) return;
+    const timer = window.setTimeout(() => {
+      void fetchData();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [token]);
 
   const handleSendTestEmail = async () => {
     if (!testEmailAddress) {
@@ -350,13 +409,32 @@ export default function AdminPage() {
 
     const currentServiceImagesSerialized = JSON.stringify(serviceImages.map(s => ({
       id: s.id,
-      image_url: s.image_url
+      service_title: s.service_title,
+      image_url: s.image_url,
+      subtitle: s.subtitle || '',
+      summary: s.summary || '',
+      detail: s.detail || '',
     })));
     const cleanInitialServiceImages = JSON.stringify(JSON.parse(initialServiceImages || '[]').map((s: any) => ({
       id: s.id,
-      image_url: s.image_url
+      service_title: s.service_title,
+      image_url: s.image_url,
+      subtitle: s.subtitle || '',
+      summary: s.summary || '',
+      detail: s.detail || '',
     })));
     if (currentServiceImagesSerialized !== cleanInitialServiceImages) return true;
+
+    const currentAboutSerialized = JSON.stringify({
+      name: about.name,
+      role: about.role,
+      badge: about.badge,
+      quote: about.quote,
+      description: about.description,
+      image_url: about.image_url,
+    });
+    const cleanInitialAbout = JSON.stringify(JSON.parse(initialAbout || '{}'));
+    if (currentAboutSerialized !== cleanInitialAbout) return true;
 
     const currentVibrantsSerialized = JSON.stringify(vibrants.map(v => ({
       id: v.id,
@@ -390,7 +468,7 @@ export default function AdminPage() {
 
     // Reorder within one category without scrambling other categories' global indices
     const catSorted = images
-      .filter((img) => img.category === selectedGalleryCat)
+      .filter((img) => toGalleryCategory(img.category) === selectedGalleryCat)
       .sort((a, b) => a.order_index - b.order_index);
     if (endIndex >= catSorted.length) return;
 
@@ -440,7 +518,7 @@ export default function AdminPage() {
       return;
     }
 
-    const catImages = images.filter(img => img.category === selectedGalleryCat);
+    const catImages = images.filter(img => toGalleryCategory(img.category) === selectedGalleryCat);
     if (catImages.length >= 5) {
       alert(`Limit reached! Max 5 images in "${selectedGalleryCat}" category.`);
       return;
@@ -465,8 +543,9 @@ export default function AdminPage() {
         setDeletedUrls(prev => [...prev, imgToDelete.image_url]);
       }
       const remaining = images.filter(img => img.id !== imgToDelete.id);
-      const nonCat = remaining.filter(img => img.category !== imgToDelete.category);
-      const cat = remaining.filter(img => img.category === imgToDelete.category)
+      const delCat = toGalleryCategory(imgToDelete.category);
+      const nonCat = remaining.filter(img => toGalleryCategory(img.category) !== delCat);
+      const cat = remaining.filter(img => toGalleryCategory(img.category) === delCat)
                            .map((img, idx) => ({ ...img, order_index: idx }));
       setImages([...nonCat, ...cat]);
     }
@@ -508,7 +587,7 @@ export default function AdminPage() {
   };
 
   const handleCategoryChange = (imageToEdit: DBImage, newCategory: string) => {
-    const targetCount = images.filter(img => img.category === newCategory).length;
+    const targetCount = images.filter(img => toGalleryCategory(img.category) === newCategory).length;
     if (targetCount >= 5) {
       alert(`Cannot change category: "${newCategory}" already has 5 images.`);
       return;
@@ -516,7 +595,7 @@ export default function AdminPage() {
 
     setImages(prev => prev.map(img => {
       if (img.id === imageToEdit.id) {
-        const targetCatImages = prev.filter(i => i.category === newCategory);
+        const targetCatImages = prev.filter(i => toGalleryCategory(i.category) === newCategory);
         return {
           ...img,
           category: newCategory,
@@ -546,6 +625,80 @@ export default function AdminPage() {
       }
       return s;
     }));
+  };
+
+  const handleNewServiceFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    setPendingNewServiceFile(file);
+    setPendingNewServicePreview(URL.createObjectURL(file));
+  };
+
+  const handleAddService = () => {
+    const title = toGalleryCategory(newServiceTitle);
+    if (!title) {
+      alert('Enter a service name.');
+      return;
+    }
+    if (serviceImages.some((s) => toGalleryCategory(s.service_title).toLowerCase() === title.toLowerCase())) {
+      alert('A service with this name already exists.');
+      return;
+    }
+    const nextId = Math.max(0, ...serviceImages.map((s) => s.id)) + 1;
+    const imageUrl = pendingNewServicePreview || STAGE_IMAGES[nextId % STAGE_IMAGES.length].src;
+    const newService: DBServiceImage = {
+      id: nextId,
+      service_title: title.toUpperCase(),
+      image_url: imageUrl,
+      summary: newServiceSummary || undefined,
+      isLocal: Boolean(pendingNewServiceFile),
+      localFile: pendingNewServiceFile || undefined,
+    };
+    setServiceImages([...serviceImages, newService]);
+
+    // Seed gallery category with the same cover image (max 5)
+    const cat = title;
+    const catCount = images.filter((img) => toGalleryCategory(img.category) === cat).length;
+    if (catCount < 5) {
+      const seed: DBImage = {
+        id: Math.random().toString(36).substring(7),
+        category: cat,
+        image_url: imageUrl,
+        order_index: catCount,
+        isLocal: Boolean(pendingNewServiceFile),
+        localFile: pendingNewServiceFile || undefined,
+      };
+      setImages([...images, seed]);
+    }
+
+    setNewServiceTitle('');
+    setNewServiceSummary('');
+    setPendingNewServiceFile(null);
+    setPendingNewServicePreview(null);
+    if (newServiceInputRef.current) newServiceInputRef.current.value = '';
+  };
+
+  const handleDeleteService = (service: DBServiceImage) => {
+    if (DEFAULT_SERVICES.some((d) => d.id === service.id)) {
+      alert('Default services cannot be deleted. You can still replace their cover image.');
+      return;
+    }
+    if (!window.confirm(`Remove service "${toGalleryCategory(service.service_title)}"? Gallery images for this category will stay until you remove them in Gallery.`)) {
+      return;
+    }
+    if (!service.isLocal && service.image_url.startsWith('http')) {
+      setDeletedUrls((prev) => [...prev, service.image_url]);
+    }
+    setServiceImages(serviceImages.filter((s) => s.id !== service.id));
+  };
+
+  const handleAboutImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const localUrl = URL.createObjectURL(file);
+    setAbout((prev) => ({ ...prev, image_url: localUrl, isLocal: true, localFile: file }));
   };
 
   // Vibrants Slide Replacer
@@ -638,14 +791,14 @@ export default function AdminPage() {
           const publicUrl = await uploadToBlob(img.localFile);
           processedImages.push({
             id: img.id,
-            category: img.category,
+            category: toGalleryCategory(img.category),
             image_url: publicUrl,
             order_index: img.order_index
           });
         } else {
           processedImages.push({
             id: img.id,
-            category: img.category,
+            category: toGalleryCategory(img.category),
             image_url: img.image_url,
             order_index: img.order_index
           });
@@ -681,7 +834,10 @@ export default function AdminPage() {
           processedServices.push({
             id: s.id,
             service_title: s.service_title,
-            image_url: publicUrl
+            image_url: publicUrl,
+            subtitle: s.subtitle,
+            summary: s.summary,
+            detail: s.detail,
           });
           const oldItem = JSON.parse(initialServiceImages || '[]').find(
             (item: { id: number; image_url?: string }) => item.id === s.id
@@ -693,9 +849,30 @@ export default function AdminPage() {
           processedServices.push({
             id: s.id,
             service_title: s.service_title,
-            image_url: s.image_url
+            image_url: s.image_url,
+            subtitle: s.subtitle,
+            summary: s.summary,
+            detail: s.detail,
           });
         }
+      }
+
+      // 3b. About image upload
+      let processedAbout = {
+        name: about.name,
+        role: about.role,
+        badge: about.badge,
+        quote: about.quote,
+        description: about.description,
+        image_url: about.image_url,
+      };
+      if (about.isLocal && about.localFile) {
+        const publicUrl = await uploadToBlob(about.localFile);
+        const oldAbout = JSON.parse(initialAbout || '{}');
+        if (oldAbout?.image_url && oldAbout.image_url.startsWith('http') && !oldAbout.image_url.includes('assets.parthproduction.in/Owner')) {
+          urlsToDelete.push(oldAbout.image_url);
+        }
+        processedAbout = { ...processedAbout, image_url: publicUrl };
       }
 
       // 4. Staged stage gallery uploads
@@ -741,6 +918,7 @@ export default function AdminPage() {
             .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
             .map((vid, idx) => ({ ...vid, order_index: idx })),
           serviceImages: processedServices,
+          about: processedAbout,
           vibrants: processedVibrants
             .slice()
             .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
@@ -806,8 +984,8 @@ export default function AdminPage() {
         credentials: 'include',
         body: JSON.stringify({
           otp: credsOtp,
-          newUsername,
-          newPassword
+          newUsername: normalizeIdentity(newUsername),
+          newPassword: sanitizePassword(newPassword)
         })
       });
       const data = await res.json();
@@ -837,9 +1015,24 @@ export default function AdminPage() {
     );
   }
 
+  const serviceCategories = [
+    ...new Set(
+      serviceImages.map((s) => toGalleryCategory(s.service_title)).filter(Boolean)
+    ),
+  ];
+  const imageCategories = [
+    ...new Set(images.map((img) => toGalleryCategory(img.category)).filter(Boolean)),
+  ];
+  const galleryCategories = [
+    'All Events',
+    ...[...new Set([...serviceCategories, ...imageCategories])],
+  ];
+
   const categoryImages = selectedGalleryCat === 'All Events' 
     ? [...images].sort((a, b) => a.order_index - b.order_index)
-    : images.filter(img => img.category === selectedGalleryCat).sort((a, b) => a.order_index - b.order_index);
+    : images
+        .filter((img) => toGalleryCategory(img.category) === selectedGalleryCat)
+        .sort((a, b) => a.order_index - b.order_index);
 
   return (
     <div className="min-h-screen bg-black text-white font-space-grotesk flex flex-col md:flex-row select-none">
@@ -991,6 +1184,22 @@ export default function AdminPage() {
 
             <button
               onClick={() => {
+                setActiveTab('about');
+                setSidebarOpen(false);
+              }}
+              className={`w-full h-12 px-4 rounded-xl flex items-center gap-3 text-sm font-bold tracking-wide transition duration-200 cursor-pointer
+                ${activeTab === 'about' 
+                  ? 'bg-[#3A8FB8]/10 border border-[#3A8FB8]/30 text-white' 
+                  : 'text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent'
+                }
+              `}
+            >
+              <User className="w-4 h-4" />
+              About Us
+            </button>
+
+            <button
+              onClick={() => {
                 setActiveTab('settings');
                 setSidebarOpen(false);
               }}
@@ -1040,6 +1249,7 @@ export default function AdminPage() {
           <div>
             <h1 className="text-xl md:text-2xl font-bold tracking-wide text-white uppercase">
               {activeTab === 'gallery' && 'Gallery'}
+              {activeTab === 'about' && 'About Us'}
               {activeTab === 'videos' && 'Videos'}
               {activeTab === 'services' && 'Services'}
               {activeTab === 'vibrants' && 'Stage Gallery'}
@@ -1047,8 +1257,9 @@ export default function AdminPage() {
             </h1>
             <p className="text-[10px] md:text-xs text-zinc-550 tracking-wider mt-1 uppercase">
               {activeTab === 'gallery' && 'Change all Gallery page images'}
+              {activeTab === 'about' && 'Edit founder name, description, and photo'}
               {activeTab === 'videos' && 'Change homepage videos (up to 6) and their order'}
-              {activeTab === 'services' && 'Change Services page cover images'}
+              {activeTab === 'services' && 'Manage services — covers sync to Gallery & Footer'}
               {activeTab === 'vibrants' && 'Change Stage Gallery images on the homepage'}
               {activeTab === 'settings' && 'Update contact profiles & credentials'}
             </p>
@@ -1082,7 +1293,7 @@ export default function AdminPage() {
         {activeTab === 'gallery' && (
           <div className="space-y-6">
             <div className="flex flex-wrap gap-2 p-1 rounded-2xl bg-zinc-950 border border-white/5 w-fit">
-              {CATEGORIES.map(cat => (
+              {galleryCategories.map(cat => (
                 <button
                   key={cat}
                   onClick={() => setSelectedGalleryCat(cat)}
@@ -1093,7 +1304,7 @@ export default function AdminPage() {
                     }
                   `}
                 >
-                  {cat === 'All Events' ? `All Events (${images.length})` : `${cat} (${images.filter(img => img.category === cat).length}/5)`}
+                  {cat === 'All Events' ? `All Events (${images.length})` : `${cat} (${images.filter(img => toGalleryCategory(img.category) === cat).length}/5)`}
                 </button>
               ))}
             </div>
@@ -1137,11 +1348,11 @@ export default function AdminPage() {
                       {editingImageId === image.id ? (
                         <div className="flex items-center gap-1 relative z-10">
                           <select
-                            value={image.category}
+                            value={toGalleryCategory(image.category)}
                             onChange={(e) => handleCategoryChange(image, e.target.value)}
                             className="h-10 px-2 rounded-xl border border-[#3A8FB8] bg-black text-[10px] font-bold text-white focus:outline-none cursor-pointer"
                           >
-                            {CATEGORIES.filter(c => c !== 'All Events').map(c => (
+                            {galleryCategories.filter(c => c !== 'All Events').map(c => (
                               <option key={c} value={c} className="bg-zinc-950 text-white">{c}</option>
                             ))}
                           </select>
@@ -1202,7 +1413,7 @@ export default function AdminPage() {
               {selectedGalleryCat === 'All Events' && (
                 <div className="rounded-3xl border border-dashed border-white/10 bg-zinc-950/5 flex flex-col items-center justify-center p-8 text-center min-h-[220px]">
                   <p className="text-xs text-zinc-500 leading-relaxed uppercase font-bold">
-                    You are viewing "All Events". <br/>
+                    You are viewing &quot;All Events&quot;. <br/>
                     Please switch to a specific category tab (e.g. Weddings) to upload a new image.
                   </p>
                 </div>
@@ -1345,10 +1556,65 @@ export default function AdminPage() {
             <div className="flex items-start gap-3 rounded-2xl border border-[#3A8FB8]/20 bg-[#3A8FB8]/5 p-4 text-xs text-zinc-300 leading-normal">
               <AlertCircle className="w-4 h-4 text-[#3A8FB8] mt-0.5 flex-shrink-0" />
               <span>
-                Replace cover images for each service on the Services page. Click <strong>Save Changes</strong> after
-                replacing so the live site updates.
+                Replace covers or <strong>add a new service</strong>. New services appear on the Services page,
+                Gallery categories (same image seeded), and Footer. Max 5 gallery images per category.
+                Click <strong>Save Changes</strong> to publish.
               </span>
             </div>
+
+            <div className="rounded-3xl border border-white/10 bg-zinc-950/40 p-5 md:p-6 space-y-4">
+              <h3 className="font-bold text-sm tracking-wide text-white uppercase">Add New Service</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">Service name</label>
+                  <input
+                    type="text"
+                    value={newServiceTitle}
+                    onChange={(e) => setNewServiceTitle(e.target.value)}
+                    placeholder="e.g. Birthday Parties"
+                    className="w-full h-11 px-4 rounded-xl border border-white/10 bg-black/40 text-sm text-white placeholder-zinc-600 focus:border-[#3A8FB8] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">Short description (optional)</label>
+                  <input
+                    type="text"
+                    value={newServiceSummary}
+                    onChange={(e) => setNewServiceSummary(e.target.value)}
+                    placeholder="One-line summary for the services page"
+                    className="w-full h-11 px-4 rounded-xl border border-white/10 bg-black/40 text-sm text-white placeholder-zinc-600 focus:border-[#3A8FB8] focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => newServiceInputRef.current?.click()}
+                  className="h-11 px-4 rounded-xl border border-white/10 hover:bg-white/5 text-xs font-bold uppercase tracking-wider cursor-pointer"
+                >
+                  {pendingNewServicePreview ? 'Change Cover Image' : 'Choose Cover Image'}
+                </button>
+                {pendingNewServicePreview && (
+                  <img src={pendingNewServicePreview} alt="New service preview" className="h-11 w-16 rounded-lg object-cover border border-white/10" />
+                )}
+                <button
+                  type="button"
+                  onClick={handleAddService}
+                  className="h-11 px-5 rounded-xl bg-[#3A8FB8]/20 border border-[#3A8FB8]/40 text-xs font-bold uppercase tracking-wider text-white hover:bg-[#3A8FB8]/30 cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Service
+                </button>
+              </div>
+              <input
+                type="file"
+                ref={newServiceInputRef}
+                onChange={handleNewServiceFile}
+                accept="image/*"
+                className="hidden"
+              />
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               {serviceImages.map((service) => (
                 <div 
@@ -1373,14 +1639,27 @@ export default function AdminPage() {
                       <h4 className="font-bold text-sm tracking-wide text-white uppercase mb-1">
                         {service.service_title}
                       </h4>
-                      <p className="text-[10px] text-zinc-550 uppercase tracking-widest font-bold font-space-grotesk">Service Cover image</p>
+                      <p className="text-[10px] text-zinc-550 uppercase tracking-widest font-bold font-space-grotesk">
+                        Gallery: {toGalleryCategory(service.service_title)}
+                      </p>
                     </div>
-                    <button
-                      onClick={() => triggerServiceImageChange(service.id)}
-                      className="mt-6 w-full h-11 rounded-xl border border-white/10 hover:bg-white/5 hover:border-white/20 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition"
-                    >
-                      Replace Image
-                    </button>
+                    <div className="mt-4 flex gap-2">
+                      <button
+                        onClick={() => triggerServiceImageChange(service.id)}
+                        className="flex-1 h-11 rounded-xl border border-white/10 hover:bg-white/5 hover:border-white/20 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition"
+                      >
+                        Replace Image
+                      </button>
+                      {!DEFAULT_SERVICES.some((d) => d.id === service.id) && (
+                        <button
+                          onClick={() => handleDeleteService(service)}
+                          className="w-11 h-11 rounded-xl border border-white/10 hover:border-red-500/30 hover:bg-red-500/10 text-zinc-400 hover:text-red-400 flex items-center justify-center cursor-pointer"
+                          title="Remove service"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1393,6 +1672,88 @@ export default function AdminPage() {
               accept="image/*"
               className="hidden"
             />
+          </div>
+        )}
+
+        {/* -------------------- ABOUT US TAB CONTENT -------------------- */}
+        {activeTab === 'about' && (
+          <div className="space-y-6 max-w-3xl">
+            <div className="flex items-start gap-3 rounded-2xl border border-[#3A8FB8]/20 bg-[#3A8FB8]/5 p-4 text-xs text-zinc-300 leading-normal">
+              <AlertCircle className="w-4 h-4 text-[#3A8FB8] mt-0.5 flex-shrink-0" />
+              <span>
+                Update the founder block on the About Us page — name, role, quote, description, and photo.
+                Click <strong>Save Changes</strong> when done.
+              </span>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-zinc-950/40 p-6 md:p-8 space-y-5">
+              <div className="flex flex-col sm:flex-row gap-5 items-start">
+                <div className="relative w-full sm:w-40 aspect-[4/5] rounded-2xl overflow-hidden border border-white/10 bg-black flex-shrink-0">
+                  <img src={about.image_url} alt={about.name} className="absolute inset-0 w-full h-full object-cover" />
+                  {about.isLocal && (
+                    <div className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[9px] font-bold text-amber-500">
+                      Staged
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 space-y-4 w-full">
+                  <button
+                    type="button"
+                    onClick={() => aboutInputRef.current?.click()}
+                    className="h-11 px-4 rounded-xl border border-white/10 hover:bg-white/5 text-xs font-bold uppercase tracking-wider cursor-pointer"
+                  >
+                    Replace Photo
+                  </button>
+                  <input type="file" ref={aboutInputRef} onChange={handleAboutImageChange} accept="image/*" className="hidden" />
+                  <div>
+                    <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">Name</label>
+                    <input
+                      type="text"
+                      value={about.name}
+                      onChange={(e) => setAbout({ ...about, name: e.target.value })}
+                      className="w-full h-11 px-4 rounded-xl border border-white/10 bg-black/40 text-sm text-white focus:border-[#3A8FB8] focus:outline-none"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">Badge</label>
+                      <input
+                        type="text"
+                        value={about.badge}
+                        onChange={(e) => setAbout({ ...about, badge: e.target.value })}
+                        className="w-full h-11 px-4 rounded-xl border border-white/10 bg-black/40 text-sm text-white focus:border-[#3A8FB8] focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">Role</label>
+                      <input
+                        type="text"
+                        value={about.role}
+                        onChange={(e) => setAbout({ ...about, role: e.target.value })}
+                        className="w-full h-11 px-4 rounded-xl border border-white/10 bg-black/40 text-sm text-white focus:border-[#3A8FB8] focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">Quote</label>
+                <textarea
+                  value={about.quote}
+                  onChange={(e) => setAbout({ ...about, quote: e.target.value })}
+                  rows={3}
+                  className="w-full px-4 py-3 rounded-xl border border-white/10 bg-black/40 text-sm text-white focus:border-[#3A8FB8] focus:outline-none resize-y"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">Description</label>
+                <textarea
+                  value={about.description}
+                  onChange={(e) => setAbout({ ...about, description: e.target.value })}
+                  rows={4}
+                  className="w-full px-4 py-3 rounded-xl border border-white/10 bg-black/40 text-sm text-white focus:border-[#3A8FB8] focus:outline-none resize-y"
+                />
+              </div>
+            </div>
           </div>
         )}
 

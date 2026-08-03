@@ -21,6 +21,12 @@ export {
   verifyResetToken,
 } from './password';
 
+export {
+  normalizeIdentity,
+  sanitizeCredentialText,
+  sanitizePassword,
+} from './credentialSanitize';
+
 const COOKIE_NAME = 'admin_token';
 const SESSION_HOURS = 24;
 
@@ -135,9 +141,4 @@ export function publicSettings<T extends Record<string, unknown>>(settings: T): 
 export function safeErrorMessage(err: unknown, fallback = 'Something went wrong.'): string {
   if (process.env.NODE_ENV !== 'production' && err instanceof Error) return err.message;
   return fallback;
-}
-
-/** Normalize identity for comparisons without leaking via case branches. */
-export function normalizeIdentity(value: string): string {
-  return value.trim().toLowerCase();
 }

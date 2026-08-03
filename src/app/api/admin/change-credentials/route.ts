@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server';
 import { vercelDb } from '@/utils/vercelDb';
 import {
   hashPassword,
+  normalizeIdentity,
   passwordMeetsPolicy,
   PASSWORD_POLICY_MSG,
   requireAdmin,
   safeErrorMessage,
+  sanitizePassword,
   verifyOtp,
 } from '@/utils/auth';
 import { enforceRateLimit, rateLimitResponse } from '@/utils/rateLimit';
@@ -37,10 +39,6 @@ export async function POST(request: Request) {
       return NextResponse.json(GENERIC_FAIL, { status: 400 });
     }
 
-    if (!passwordMeetsPolicy(newPassword)) {
-      return NextResponse.json({ error: PASSWORD_POLICY_MSG }, { status: 400 });
-    }
-
     const credentials = await vercelDb.getCredentials();
 
     if (!credentials.otpCode || !credentials.otpExpiry) {
@@ -68,11 +66,20 @@ export async function POST(request: Request) {
       return NextResponse.json(GENERIC_FAIL, { status: 401 });
     }
 
+    const cleanUsername = normalizeIdentity(newUsername);
+    const cleanPassword = sanitizePassword(newPassword);
+    if (!cleanUsername || !cleanPassword) {
+      return NextResponse.json(GENERIC_FAIL, { status: 400 });
+    }
+    if (!passwordMeetsPolicy(cleanPassword)) {
+      return NextResponse.json({ error: PASSWORD_POLICY_MSG }, { status: 400 });
+    }
+
     credentials.otpCode = null;
     credentials.otpExpiry = null;
     credentials.otpAttempts = 0;
-    credentials.username = newUsername.trim();
-    credentials.passwordHash = hashPassword(newPassword);
+    credentials.username = cleanUsername;
+    credentials.passwordHash = hashPassword(cleanPassword);
     credentials.resetCount = (credentials.resetCount || 0) + 1;
     credentials.credentialsVersion = (credentials.credentialsVersion || 0) + 1;
     credentials.emailVerifiedAt = Date.now();

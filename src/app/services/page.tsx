@@ -10,95 +10,20 @@ import MediaImage from '@/components/MediaImage';
 import CinematicPageHero from '@/components/CinematicPageHero';
 import { useAuth } from '@/context/AuthContext';
 import { STAGE_IMAGES, resolveGallerySrc } from '@/utils/media';
-
-type ServiceBlock = {
-  id: number;
-  title: string;
-  badge: string;
-  subtitle: string;
-  summary: string;
-  detail: string;
-  hero: string;
-  gallery: string[];
-  bookLabel: string;
-  highlights: string[];
-};
-
-const DEFAULT_SERVICES: ServiceBlock[] = [
-  {
-    id: 2,
-    title: 'Concerts',
-    badge: '01',
-    subtitle: 'Arena-Ready Systems',
-    summary: 'Line arrays, heavy truss, and light programming built for festival-scale energy.',
-    detail:
-      'Concert systems engineered for clarity under pressure — line arrays, digital consoles, heavy truss, and lighting looks programmed to the set.',
-    hero: STAGE_IMAGES[1].src,
-    gallery: [STAGE_IMAGES[7].src, STAGE_IMAGES[1].src, STAGE_IMAGES[6].src],
-    bookLabel: 'Concert',
-    highlights: ['Line arrays', 'Heavy truss', 'Cue-mapped lights', 'FOH mix'],
-  },
-  {
-    id: 1,
-    title: 'Weddings',
-    badge: '02',
-    subtitle: 'Ceremony to Reception',
-    summary: 'Bridal entries, varmala cues, and dance-floor lighting that stay cinematic and intimate.',
-    detail:
-      'Sound, light, and SFX timed to every wedding beat — from entry looks to open dance floor — so guests stay in the feeling.',
-    hero: STAGE_IMAGES[0].src,
-    gallery: [STAGE_IMAGES[0].src, STAGE_IMAGES[5].src, STAGE_IMAGES[6].src],
-    bookLabel: 'Wedding',
-    highlights: ['Entry looks', 'Dance floor', 'Cold sparklers', 'DJ flow'],
-  },
-  {
-    id: 3,
-    title: 'Festivals',
-    badge: '03',
-    subtitle: 'Garba to EDM',
-    summary: 'Wide coverage sound, laser skies, and generator-backed nights that never drop.',
-    detail:
-      'Outdoor festival systems built for coverage and stamina — wide-field audio, lasers, and power grids for long sets.',
-    hero: STAGE_IMAGES[2].src,
-    gallery: [STAGE_IMAGES[2].src, STAGE_IMAGES[6].src, STAGE_IMAGES[8].src],
-    bookLabel: 'Festival',
-    highlights: ['Wide coverage', 'Lasers', 'Power grid', 'Long-set stamina'],
-  },
-  {
-    id: 4,
-    title: 'Corporate',
-    badge: '04',
-    subtitle: 'Keynotes & Launches',
-    summary: 'Clean speech, LED canvases, and polished stages for launches and keynotes.',
-    detail:
-      'Corporate production with clarity first — wireless mics, LED walls, and silent power that keep the room focused.',
-    hero: STAGE_IMAGES[3].src,
-    gallery: [STAGE_IMAGES[3].src, STAGE_IMAGES[7].src, STAGE_IMAGES[4].src],
-    bookLabel: 'Corporate',
-    highlights: ['Speech clarity', 'LED walls', 'Silent power', 'Brand polish'],
-  },
-  {
-    id: 5,
-    title: 'Road Shows',
-    badge: '05',
-    subtitle: 'Mobile Spectacle',
-    summary: 'Mobile LED, touring audio, and quick-deploy rigs that travel with the campaign.',
-    detail:
-      'Road-ready spectacle — truck-mounted visuals, touring audio, and power fleets that survive day stages and night finales.',
-    hero: STAGE_IMAGES[4].src,
-    gallery: [STAGE_IMAGES[4].src, STAGE_IMAGES[8].src, STAGE_IMAGES[2].src],
-    bookLabel: 'Road Show',
-    highlights: ['Mobile LED', 'Tour audio', 'Quick deploy', 'Night finales'],
-  },
-];
+import {
+  DEFAULT_SERVICE_BLOCKS,
+  mergePublicServices,
+  serviceSlug,
+  type PublicServiceBlock,
+} from '@/utils/servicesCatalog';
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
 export default function ServicesPage() {
   const { siteSettings } = useAuth();
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
-  const [services, setServices] = useState(DEFAULT_SERVICES);
-  const [activeId, setActiveId] = useState(DEFAULT_SERVICES[0].id);
+  const [services, setServices] = useState<PublicServiceBlock[]>(DEFAULT_SERVICE_BLOCKS);
+  const [activeId, setActiveId] = useState(DEFAULT_SERVICE_BLOCKS[0].id);
 
   const { scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 28 });
@@ -110,22 +35,20 @@ export default function ServicesPage() {
         if (!res.ok) return;
         const data = await res.json();
         if (!data.services?.length) return;
-        setServices((prev) =>
-          prev.map((service) => {
-            const match = data.services.find(
-              (s: { id: number; image_url: string; service_title?: string }) =>
-                s.id === service.id
-            );
-            if (!match) return service;
-            const nextHero = resolveGallerySrc(match.image_url, service.hero);
-            return {
-              ...service,
-              hero: nextHero,
-              title: match.service_title || service.title,
-              gallery: [nextHero, service.gallery[1], service.gallery[2]],
-            };
-          })
-        );
+        const merged = mergePublicServices(data.services).map((service) => {
+          const match = data.services.find(
+            (s: { id: number; image_url: string }) => s.id === service.id
+          );
+          if (!match) return service;
+          const nextHero = resolveGallerySrc(match.image_url, service.hero);
+          return {
+            ...service,
+            hero: nextHero,
+            gallery: [nextHero, service.gallery[1], service.gallery[2]],
+          };
+        });
+        setServices(merged);
+        if (merged[0]) setActiveId(merged[0].id);
       } catch {
         // keep defaults
       }
@@ -135,7 +58,7 @@ export default function ServicesPage() {
 
   useEffect(() => {
     const nodes = services
-      .map((s) => document.getElementById(s.title.toLowerCase().replace(/\s+/g, '-')))
+      .map((s) => document.getElementById(serviceSlug(s.title)))
       .filter(Boolean) as HTMLElement[];
 
     if (!nodes.length) return;
@@ -146,9 +69,7 @@ export default function ServicesPage() {
           .filter((e) => e.isIntersecting)
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
         if (!visible?.target?.id) return;
-        const match = services.find(
-          (s) => s.title.toLowerCase().replace(/\s+/g, '-') === visible.target.id
-        );
+        const match = services.find((s) => serviceSlug(s.title) === visible.target.id);
         if (match) setActiveId(match.id);
       },
       { rootMargin: '-35% 0px -45% 0px', threshold: [0.15, 0.35, 0.55] }
@@ -172,15 +93,14 @@ export default function ServicesPage() {
           eyebrow="Production catalog"
           title="Services built"
           italicLine="for every stage."
-          description="Five production systems — concerts, weddings, festivals, corporate, and road shows — engineered as one crew from first cue to final hit."
+          description="Production systems engineered as one crew from first cue to final hit — concerts, weddings, festivals, corporate, road shows, and more."
           image={STAGE_IMAGES[7].src}
         />
 
         <div className="relative max-w-[1400px] mx-auto px-4 sm:px-6 md:px-10 py-12 md:py-16">
-          {/* Jump chips above services — not in hero */}
           <div className="mb-10 md:mb-12 flex flex-wrap justify-center gap-2">
             {services.map((s) => {
-              const slug = s.title.toLowerCase().replace(/\s+/g, '-');
+              const slug = serviceSlug(s.title);
               const active = s.id === activeId;
               return (
                 <a
@@ -204,7 +124,7 @@ export default function ServicesPage() {
                 `Hi Parth Production, I want to book a ${service.bookLabel} event`
               )}`;
               const reverse = index % 2 === 1;
-              const slug = service.title.toLowerCase().replace(/\s+/g, '-');
+              const slug = serviceSlug(service.title);
 
               return (
                 <motion.section
