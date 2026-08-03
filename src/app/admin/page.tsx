@@ -68,6 +68,8 @@ interface DBServiceImage {
   subtitle?: string;
   summary?: string;
   detail?: string;
+  /** Gallery order: 0–3 = spotlight, 4+ = Beyond the Spotlight */
+  order_index?: number;
   isLocal?: boolean;
   localFile?: File;
 }
@@ -123,11 +125,11 @@ type AdminCraftContent = Omit<CraftContent, 'cards'> & {
 };
 
 const DEFAULT_SERVICES: DBServiceImage[] = [
-  { id: 2, service_title: 'CONCERTS', image_url: STAGE_IMAGES[1].src, gallery_images: [STAGE_IMAGES[1].src, STAGE_IMAGES[7].src, STAGE_IMAGES[6].src] },
-  { id: 1, service_title: 'WEDDINGS', image_url: STAGE_IMAGES[0].src, gallery_images: [STAGE_IMAGES[0].src, STAGE_IMAGES[5].src, STAGE_IMAGES[6].src] },
-  { id: 3, service_title: 'FESTIVALS', image_url: STAGE_IMAGES[2].src, gallery_images: [STAGE_IMAGES[2].src, STAGE_IMAGES[8].src, STAGE_IMAGES[6].src] },
-  { id: 4, service_title: 'CORPORATE EVENTS', image_url: STAGE_IMAGES[3].src, gallery_images: [STAGE_IMAGES[3].src, STAGE_IMAGES[7].src, STAGE_IMAGES[4].src] },
-  { id: 5, service_title: 'ROAD SHOWS', image_url: STAGE_IMAGES[4].src, gallery_images: [STAGE_IMAGES[4].src, STAGE_IMAGES[8].src, STAGE_IMAGES[2].src] },
+  { id: 2, service_title: 'CONCERTS', image_url: STAGE_IMAGES[1].src, gallery_images: [STAGE_IMAGES[1].src, STAGE_IMAGES[7].src, STAGE_IMAGES[6].src], order_index: 0 },
+  { id: 1, service_title: 'WEDDINGS', image_url: STAGE_IMAGES[0].src, gallery_images: [STAGE_IMAGES[0].src, STAGE_IMAGES[5].src, STAGE_IMAGES[6].src], order_index: 1 },
+  { id: 3, service_title: 'FESTIVALS', image_url: STAGE_IMAGES[2].src, gallery_images: [STAGE_IMAGES[2].src, STAGE_IMAGES[8].src, STAGE_IMAGES[6].src], order_index: 2 },
+  { id: 4, service_title: 'CORPORATE EVENTS', image_url: STAGE_IMAGES[3].src, gallery_images: [STAGE_IMAGES[3].src, STAGE_IMAGES[7].src, STAGE_IMAGES[4].src], order_index: 3 },
+  { id: 5, service_title: 'ROAD SHOWS', image_url: STAGE_IMAGES[4].src, gallery_images: [STAGE_IMAGES[4].src, STAGE_IMAGES[8].src, STAGE_IMAGES[2].src], order_index: 4 },
 ];
 
 export default function AdminPage() {
@@ -317,6 +319,7 @@ export default function AdminPage() {
             subtitle: match.subtitle,
             summary: match.summary,
             detail: match.detail,
+            order_index: typeof match.order_index === 'number' ? match.order_index : undefined,
           };
         });
 
@@ -341,8 +344,17 @@ export default function AdminPage() {
             mergedServices.push(def);
           }
         }
+
+        // Stable gallery order: prefer saved order_index, else keep array position
+        mergedServices = mergedServices
+          .map((s, idx) => ({
+            ...s,
+            order_index: typeof s.order_index === 'number' ? s.order_index : idx,
+          }))
+          .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+          .map((s, idx) => ({ ...s, order_index: idx }));
       } else {
-        mergedServices = DEFAULT_SERVICES;
+        mergedServices = DEFAULT_SERVICES.map((s, idx) => ({ ...s, order_index: idx }));
       }
       setServiceImages(mergedServices);
       setInitialServiceImages(JSON.stringify(mergedServices));
@@ -496,6 +508,7 @@ export default function AdminPage() {
       subtitle: s.subtitle || '',
       summary: s.summary || '',
       detail: s.detail || '',
+      order_index: s.order_index ?? 0,
     })));
     const cleanInitialServiceImages = JSON.stringify(JSON.parse(initialServiceImages || '[]').map((s: any) => ({
       id: s.id,
@@ -505,6 +518,7 @@ export default function AdminPage() {
       subtitle: s.subtitle || '',
       summary: s.summary || '',
       detail: s.detail || '',
+      order_index: s.order_index ?? 0,
     })));
     if (currentServiceImagesSerialized !== cleanInitialServiceImages) return true;
 
@@ -606,6 +620,15 @@ export default function AdminPage() {
     reordered.splice(endIndex, 0, removed);
     const updated = reordered.map((v, idx) => ({ ...v, order_index: idx }));
     setVibrants(updated);
+  };
+
+  const reorderServices = (startIndex: number, endIndex: number) => {
+    if (endIndex < 0 || endIndex >= serviceImages.length) return;
+    const reordered = Array.from(serviceImages);
+    const [removed] = reordered.splice(startIndex, 1);
+    reordered.splice(endIndex, 0, removed);
+    const updated = reordered.map((s, idx) => ({ ...s, order_index: idx }));
+    setServiceImages(updated);
   };
 
   // Image category upload helpers
@@ -810,6 +833,7 @@ export default function AdminPage() {
       image_url: imageUrl,
       gallery_images: [imageUrl, imageUrl, imageUrl],
       summary: newServiceSummary || undefined,
+      order_index: serviceImages.length,
       isLocal: Boolean(pendingNewServiceFile),
       localFile: pendingNewServiceFile || undefined,
     };
@@ -854,7 +878,11 @@ export default function AdminPage() {
     if (oldGalleryUrls.length) {
       setDeletedUrls((prev) => [...prev, ...oldGalleryUrls]);
     }
-    setServiceImages(serviceImages.filter((s) => s.id !== service.id));
+    setServiceImages(
+      serviceImages
+        .filter((s) => s.id !== service.id)
+        .map((s, idx) => ({ ...s, order_index: idx }))
+    );
   };
 
   const handleAboutImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1068,6 +1096,7 @@ export default function AdminPage() {
           subtitle: s.subtitle,
           summary: s.summary,
           detail: s.detail,
+          order_index: typeof s.order_index === 'number' ? s.order_index : processedServices.length,
         });
       }
 
@@ -1080,7 +1109,12 @@ export default function AdminPage() {
         return true;
       });
       processedServices.length = 0;
-      processedServices.push(...dedupedServices);
+      processedServices.push(
+        ...dedupedServices
+          .slice()
+          .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+          .map((s, idx) => ({ ...s, order_index: idx }))
+      );
 
       // 3b. About image upload
       let processedAbout = {
@@ -1867,8 +1901,9 @@ export default function AdminPage() {
             <div className="flex items-start gap-3 rounded-2xl border border-[#3A8FB8]/20 bg-[#3A8FB8]/5 p-4 text-xs text-zinc-300 leading-normal">
               <AlertCircle className="w-4 h-4 text-[#3A8FB8] mt-0.5 flex-shrink-0" />
               <span>
-                Replace covers or <strong>add a new service</strong>. New services appear on the Services page,
-                Gallery categories (same image seeded), and Footer. Max 5 gallery images per category.
+                Replace covers or <strong>add a new service</strong>. Use the arrows to set gallery order:
+                positions <strong>1–4</strong> appear beside the Gallery cover; position <strong>5+</strong> appear in
+                Beyond the Spotlight. New services appear on Services, Gallery, and Footer.
                 Click <strong>Save Changes</strong> to publish.
               </span>
             </div>
@@ -1927,11 +1962,42 @@ export default function AdminPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              {serviceImages.map((service) => (
+              {serviceImages.map((service, idx) => (
                 <div 
                   key={service.id}
                   className="rounded-3xl border border-white/10 bg-zinc-950/40 p-4 flex flex-col hover:border-[#3A8FB8]/30 transition duration-300"
                 >
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <span
+                      className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${
+                        idx < 4
+                          ? 'bg-[#3A8FB8]/15 border-[#3A8FB8]/35 text-[#8ecae6]'
+                          : 'bg-white/5 border-white/15 text-zinc-300'
+                      }`}
+                    >
+                      #{idx + 1} · {idx < 4 ? 'Spotlight' : 'Beyond spotlight'}
+                    </span>
+                    <div className="flex gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => reorderServices(idx, idx - 1)}
+                        disabled={idx === 0}
+                        className="w-9 h-9 rounded-xl border border-white/10 hover:bg-white/5 flex items-center justify-center text-zinc-400 hover:text-white transition disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer"
+                        title="Move up (earlier in gallery)"
+                      >
+                        <ArrowUp className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => reorderServices(idx, idx + 1)}
+                        disabled={idx === serviceImages.length - 1}
+                        className="w-9 h-9 rounded-xl border border-white/10 hover:bg-white/5 flex items-center justify-center text-zinc-400 hover:text-white transition disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer"
+                        title="Move down (later in gallery)"
+                      >
+                        <ArrowDown className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
                   <div className="relative w-full aspect-[16/11] rounded-2xl overflow-hidden bg-black mb-4">
                     <img 
                       src={service.image_url} 
