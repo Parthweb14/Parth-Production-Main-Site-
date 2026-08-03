@@ -55,7 +55,7 @@ function uniqueCategories(list: string[]): string[] {
 export default function GalleryPage() {
   const [items, setItems] = useState<GalleryItem[]>(defaults);
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATS);
-  const [filter, setFilter] = useState<string>('All');
+  const [filter, setFilter] = useState<string>(DEFAULT_CATS[0]);
   const [active, setActive] = useState<number | null>(null);
   const [slideCategory, setSlideCategory] = useState<string | null>(null);
   const [featured, setFeatured] = useState(0);
@@ -76,7 +76,11 @@ export default function GalleryPage() {
             : DEFAULT_CATS;
 
         const finalCats = uniqueCategories(serviceCats);
-        setCategories(finalCats.length ? finalCats : DEFAULT_CATS);
+        const cats = finalCats.length ? finalCats : DEFAULT_CATS;
+        setCategories(cats);
+        setFilter((prev) =>
+          cats.some((c) => c.toLowerCase() === prev.toLowerCase()) ? prev : cats[0]
+        );
 
         let mapped: GalleryItem[] = [];
         if (data.images?.length) {
@@ -217,16 +221,13 @@ export default function GalleryPage() {
             </div>
 
             <div className="mb-8 flex flex-wrap gap-2">
-              {['All', ...categories].map((cat) => {
+              {categories.map((cat) => {
                 const activeChip = filter === cat;
-                const count =
-                  cat === 'All'
-                    ? items.length
-                    : items.filter(
-                        (i) =>
-                          canonicalizeCategory(i.category).toLowerCase() ===
-                          canonicalizeCategory(cat).toLowerCase()
-                      ).length;
+                const count = items.filter(
+                  (i) =>
+                    canonicalizeCategory(i.category).toLowerCase() ===
+                    canonicalizeCategory(cat).toLowerCase()
+                ).length;
                 return (
                   <button
                     key={cat}
@@ -248,9 +249,8 @@ export default function GalleryPage() {
               })}
             </div>
 
-            {/* Cover + 4 category cards (first four services) — All view or when browsing a featured cat */}
-            {filter === 'All' && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-6 mb-10">
+            {/* Cover + 4 category cards (first four services) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-6 mb-10">
                 <AnimatePresence mode="wait">
                   {spotlight && (
                     <motion.button
@@ -293,6 +293,7 @@ export default function GalleryPage() {
                       onClick={() => {
                         const idx = featuredPool.findIndex((f) => f.id === item.id);
                         if (idx >= 0) setFeatured(idx);
+                        setFilter(canonicalizeCategory(item.category));
                         openLightbox(item);
                       }}
                       className={`relative aspect-[16/10] lg:aspect-auto lg:min-h-[92px] overflow-hidden rounded-2xl border text-left transition-all ${
@@ -316,11 +317,9 @@ export default function GalleryPage() {
                   ))}
                 </div>
               </div>
-            )}
 
-            {/* Filtered category grid (any single category) */}
-            {filter !== 'All' && (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 mb-10">
+            {/* Selected category grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 mb-10">
                 {items
                   .filter(
                     (item) =>
@@ -349,11 +348,9 @@ export default function GalleryPage() {
                     </motion.button>
                   ))}
               </div>
-            )}
 
             {/* Overflow categories only (5th+) — never repeats the top-4 cards */}
-            {filter === 'All' && (
-              <div>
+            <div>
                 {overflowCats.length > 0 && (
                   <div className="mb-5">
                     <p className="text-[11px] uppercase tracking-[0.22em] text-[#3A8FB8] font-semibold mb-1">
@@ -373,7 +370,10 @@ export default function GalleryPage() {
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: Math.min(i * 0.03, 0.3) }}
-                      onClick={() => openLightbox(item)}
+                      onClick={() => {
+                        setFilter(canonicalizeCategory(item.category));
+                        openLightbox(item);
+                      }}
                       className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-white/10 text-left group"
                     >
                       <MediaImage
@@ -394,7 +394,6 @@ export default function GalleryPage() {
                   )}
                 </div>
               </div>
-            )}
           </div>
         </section>
 

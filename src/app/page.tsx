@@ -47,8 +47,9 @@ export default function HomePage() {
     if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('shot')) {
       return;
     }
-    const a = setTimeout(() => setMinTimeElapsed(true), 900);
-    const b = setTimeout(() => setVideoLoaded(true), 2800);
+    const a = setTimeout(() => setMinTimeElapsed(true), 700);
+    // Don't block the site on full hero video decode — poster is enough for first paint
+    const b = setTimeout(() => setVideoLoaded(true), 1100);
     return () => {
       clearTimeout(a);
       clearTimeout(b);
@@ -84,7 +85,7 @@ export default function HomePage() {
                 muted
                 loop
                 playsInline
-                preload="auto"
+                preload="metadata"
                 poster={HERO_POSTER}
                 onLoadedData={() => setVideoLoaded(true)}
                 onCanPlay={() => setVideoLoaded(true)}

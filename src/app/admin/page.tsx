@@ -37,7 +37,8 @@ import {
   Send,
   Eye,
   EyeOff,
-  User
+  User,
+  Play
 } from 'lucide-react';
 
 interface DBImage {
@@ -137,6 +138,11 @@ export default function AdminPage() {
   // Navigation tabs state
   const [activeTab, setActiveTab] = useState<'gallery' | 'videos' | 'services' | 'vibrants' | 'about' | 'bringing' | 'contact' | 'settings'>('gallery');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [previewVideoId, setPreviewVideoId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (activeTab !== 'videos') setPreviewVideoId(null);
+  }, [activeTab]);
 
   // Core Data States
   const [images, setImages] = useState<DBImage[]>([]);
@@ -1760,36 +1766,71 @@ export default function AdminPage() {
             <div className="flex items-start gap-3 rounded-2xl border border-[#3A8FB8]/20 bg-[#3A8FB8]/5 p-4 text-xs text-zinc-300 leading-normal">
               <AlertCircle className="w-4 h-4 text-[#3A8FB8] mt-0.5 flex-shrink-0" />
               <span>
-                <strong>How it works:</strong> Reorder with the arrows, then click <strong>Save Changes</strong>.
+                <strong>How it works:</strong> Cards stay light until you tap <strong>Preview</strong>.
+                Reorder with the arrows, then click <strong>Save Changes</strong>.
                 The homepage video section updates immediately after save. Use vertical MP4s under 25 seconds (9:16).
               </span>
             </div>
 
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              {videos.map((vid, idx) => (
+              {videos.map((vid, idx) => {
+                const resolvedUrl = vid.video_url.startsWith('/videos/')
+                  ? `https://assets.parthproduction.in${vid.video_url}`
+                  : vid.video_url;
+                const isPreviewing = previewVideoId === vid.id;
+
+                return (
                 <div 
                   key={vid.id}
                   className="relative group rounded-3xl overflow-hidden border border-white/10 bg-zinc-950/40 p-3 flex flex-col hover:border-[#3A8FB8]/30 transition duration-300"
                 >
-                  <div className="relative w-full aspect-[9/16] rounded-2xl overflow-hidden bg-black flex items-center justify-center">
-                    <video 
-                      src={vid.video_url.startsWith('/videos/') ? `https://assets.parthproduction.in${vid.video_url}` : vid.video_url} 
-                      muted 
-                      playsInline
-                      controls={false}
-                      preload="none"
-                      className="w-full h-full object-cover brightness-[0.7]" 
-                    />
-                    <div className="absolute top-3 left-3 px-3 py-1 rounded-xl bg-black/60 border border-white/10 text-[10px] font-bold text-zinc-400 tracking-wider">
+                  <div className="relative w-full aspect-[9/16] rounded-2xl overflow-hidden bg-zinc-900 flex items-center justify-center">
+                    {isPreviewing ? (
+                      <video
+                        key={`preview-${vid.id}`}
+                        src={resolvedUrl}
+                        muted
+                        playsInline
+                        controls
+                        autoPlay
+                        preload="metadata"
+                        className="w-full h-full object-cover"
+                        onEnded={() => setPreviewVideoId(null)}
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setPreviewVideoId(vid.id)}
+                        className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gradient-to-b from-zinc-900 via-zinc-950 to-black cursor-pointer"
+                        title="Preview video"
+                      >
+                        <span className="flex h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-white/10 backdrop-blur-sm">
+                          <Play className="h-6 w-6 text-white fill-white/90 ml-0.5" />
+                        </span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                          Tap to preview
+                        </span>
+                      </button>
+                    )}
+                    <div className="absolute top-3 left-3 px-3 py-1 rounded-xl bg-black/60 border border-white/10 text-[10px] font-bold text-zinc-400 tracking-wider pointer-events-none">
                       Index: {idx}
                     </div>
 
                     {vid.isLocal && (
-                      <div className="absolute top-3 right-3 px-3 py-1 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[10px] font-bold text-amber-500 tracking-wider flex items-center gap-1.5 backdrop-blur-md">
+                      <div className="absolute top-3 right-3 px-3 py-1 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[10px] font-bold text-amber-500 tracking-wider flex items-center gap-1.5 backdrop-blur-md pointer-events-none">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
                         Staged
                       </div>
+                    )}
+                    {isPreviewing && (
+                      <button
+                        type="button"
+                        onClick={() => setPreviewVideoId(null)}
+                        className="absolute bottom-3 right-3 px-3 py-1.5 rounded-xl bg-black/70 border border-white/15 text-[10px] font-bold uppercase tracking-wider text-white hover:bg-black/90 cursor-pointer"
+                      >
+                        Close preview
+                      </button>
                     )}
                   </div>
 
@@ -1822,7 +1863,8 @@ export default function AdminPage() {
                     </div>
                   </div>
                 </div>
-              ))}
+              );
+              })}
 
               {videos.length < 6 ? (
                 <div 

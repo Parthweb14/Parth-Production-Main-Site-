@@ -64,10 +64,13 @@ export default function VideoShowcaseCarousel() {
   const [progress, setProgress] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [inView, setInView] = useState(false);
   const [lightbox, setLightbox] = useState<LightboxMedia | null>(null);
+  const sectionRef = useRef<HTMLElement>(null);
   const progressRef = useRef(0);
   const targetRef = useRef<number | null>(null);
   const pausedRef = useRef(false);
+  const inViewRef = useRef(false);
   const rafRef = useRef<number | null>(null);
   const lastTs = useRef<number | null>(null);
   const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
@@ -127,8 +130,23 @@ export default function VideoShowcaseCarousel() {
   }, []);
 
   useEffect(() => {
-    pausedRef.current = paused || Boolean(lightbox);
-  }, [paused, lightbox]);
+    const node = sectionRef.current;
+    if (!node) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        const visible = Boolean(entry?.isIntersecting);
+        inViewRef.current = visible;
+        setInView(visible);
+      },
+      { rootMargin: '120px 0px', threshold: 0.08 }
+    );
+    io.observe(node);
+    return () => io.disconnect();
+  }, []);
+
+  useEffect(() => {
+    pausedRef.current = paused || Boolean(lightbox) || !inView;
+  }, [paused, lightbox, inView]);
 
   useEffect(() => {
     return () => clearResumeTimer();
@@ -142,7 +160,7 @@ export default function VideoShowcaseCarousel() {
       const dt = Math.min(0.05, (ts - lastTs.current) / 1000);
       lastTs.current = ts;
 
-      if (!document.hidden) {
+      if (!document.hidden && inViewRef.current) {
         if (targetRef.current != null) {
           const current = progressRef.current;
           const target = targetRef.current;
@@ -171,16 +189,19 @@ export default function VideoShowcaseCarousel() {
   }, [total, reduceMotion]);
 
   useEffect(() => {
-    if (total === 0) return;
+    if (total === 0 || !inView) {
+      videoRefs.current.forEach((video) => video.pause());
+      return;
+    }
     videoRefs.current.forEach((video, index) => {
       const offset = Math.abs(wrapOffset(index - progress, total));
-      if (offset < 0.9) {
+      if (offset < 0.9 && video.src) {
         void video.play().catch(() => undefined);
       } else {
         video.pause();
       }
     });
-  }, [progress, total, clips]);
+  }, [progress, total, clips, inView]);
 
   const activeIndex = ((Math.round(progress) % total) + total) % total;
 
@@ -271,7 +292,10 @@ export default function VideoShowcaseCarousel() {
   const cardW = isMobile ? 248 : 340;
 
   return (
-    <section className="relative isolate overflow-x-clip border-b border-white/10 bg-black py-14 sm:py-16 md:py-24">
+    <section
+      ref={sectionRef}
+      className="relative isolate overflow-x-clip border-b border-white/10 bg-black py-14 sm:py-16 md:py-24"
+    >
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-[48%] mx-auto h-[45%] max-w-5xl rounded-full bg-[#3A8FB8]/12 blur-[120px]"
@@ -389,12 +413,13 @@ export default function VideoShowcaseCarousel() {
                       if (el) videoRefs.current.set(i, el);
                       else videoRefs.current.delete(i);
                     }}
-                    src={clip.src}
+                    // Only attach src for near-center clips — far cards stay lightweight
+                    src={inView && Math.abs(offset) < 1.35 ? clip.src : undefined}
                     muted
                     loop
                     playsInline
-                    preload="metadata"
-                    className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+                    preload={isCenter ? 'metadata' : 'none'}
+                    className="pointer-events-none absolute inset-0 h-full w-full object-cover bg-zinc-950"
                     style={{ filter: `brightness(${t.brightness})` }}
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/25" />

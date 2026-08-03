@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
 import MediaImage from '@/components/MediaImage';
@@ -9,9 +9,12 @@ import { resolveGallerySrc } from '@/utils/media';
 import { DEFAULT_CRAFT, type CraftContent } from '@/utils/craftDefaults';
 
 const ease = [0.22, 1, 0.36, 1] as const;
+const IDLE_ADVANCE_MS = 5200;
+const RESUME_AFTER_MS = 2800;
 
 /**
  * Editorial craft strip — featured wide image + three tall panels.
+ * Mobile: native CSS scroll-snap only (no per-frame scrollLeft) so swipes stay smooth.
  * Admin tab: Bringing
  */
 export default function HomeServicesGrid() {
@@ -19,8 +22,13 @@ export default function HomeServicesGrid() {
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
   const reduceMotion = useReducedMotion();
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const pauseAutoRef = useRef(false);
+  const cardRefs = useRef<(HTMLElement | null)[]>([]);
+  const idleTimerRef = useRef<number | null>(null);
+  const resumeTimerRef = useRef<number | null>(null);
+  const userActiveRef = useRef(false);
+  const activeCardRef = useRef(0);
   const [craft, setCraft] = useState<CraftContent>(DEFAULT_CRAFT);
+  const [activeCard, setActiveCard] = useState(0);
 
   useEffect(() => {
     async function load() {
@@ -62,41 +70,95 @@ export default function HomeServicesGrid() {
     load();
   }, []);
 
+  const cards = [...craft.cards].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
+
+  const clearTimers = useCallback(() => {
+    if (idleTimerRef.current != null) {
+      window.clearInterval(idleTimerRef.current);
+      idleTimerRef.current = null;
+    }
+    if (resumeTimerRef.current != null) {
+      window.clearTimeout(resumeTimerRef.current);
+      resumeTimerRef.current = null;
+    }
+  }, []);
+
+  const scrollToCard = useCallback((index: number, behavior: ScrollBehavior = 'smooth') => {
+    const el = scrollerRef.current;
+    const card = cardRefs.current[index];
+    if (!el || !card) return;
+    const left = card.offsetLeft - (el.clientWidth - card.clientWidth) / 2;
+    el.scrollTo({ left: Math.max(0, left), behavior });
+    activeCardRef.current = index;
+    setActiveCard(index);
+  }, []);
+
+  const markUserActive = useCallback(() => {
+    userActiveRef.current = true;
+    if (resumeTimerRef.current != null) window.clearTimeout(resumeTimerRef.current);
+    resumeTimerRef.current = window.setTimeout(() => {
+      userActiveRef.current = false;
+      resumeTimerRef.current = null;
+    }, RESUME_AFTER_MS);
+  }, []);
+
+  // Idle auto-advance: snap to next card with scrollTo — never write scrollLeft per frame
   useEffect(() => {
     if (reduceMotion) return;
     const el = scrollerRef.current;
     if (!el) return;
 
-    let frame = 0;
-    let last = 0;
-    const SPEED = 38;
-
-    const tick = (ts: number) => {
-      if (!last) last = ts;
-      const dt = Math.min(0.05, (ts - last) / 1000);
-      last = ts;
-
-      const isMobile = window.innerWidth < 768;
-      if (isMobile && !pauseAutoRef.current && !document.hidden) {
-        const max = el.scrollWidth - el.clientWidth;
-        if (max > 8) {
-          let next = el.scrollLeft + SPEED * dt;
-          if (next >= max - 1) next = 0;
-          el.scrollLeft = next;
-        }
-      }
-
-      frame = requestAnimationFrame(tick);
+    const advance = () => {
+      if (userActiveRef.current || document.hidden) return;
+      if (window.innerWidth >= 768) return;
+      const count = Math.max(cardRefs.current.filter(Boolean).length, 1);
+      const next = (activeCardRef.current + 1) % count;
+      scrollToCard(next, 'smooth');
     };
 
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [reduceMotion]);
+    idleTimerRef.current = window.setInterval(advance, IDLE_ADVANCE_MS);
+    return () => clearTimers();
+  }, [reduceMotion, cards.length, scrollToCard, clearTimers]);
 
-  const cards = [...craft.cards].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
+  // Track nearest card while user scrolls (no forced scrollLeft)
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+
+    let settleTimer: number | null = null;
+
+    const syncActive = () => {
+      const mid = el.scrollLeft + el.clientWidth / 2;
+      let best = 0;
+      let bestDist = Infinity;
+      cardRefs.current.forEach((card, i) => {
+        if (!card) return;
+        const center = card.offsetLeft + card.clientWidth / 2;
+        const dist = Math.abs(center - mid);
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = i;
+        }
+      });
+      activeCardRef.current = best;
+      setActiveCard(best);
+    };
+
+    const onScroll = () => {
+      markUserActive();
+      if (settleTimer != null) window.clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(syncActive, 80);
+    };
+
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      if (settleTimer != null) window.clearTimeout(settleTimer);
+    };
+  }, [markUserActive, cards.length]);
 
   return (
-    <section className="relative w-full overflow-hidden bg-black py-14 sm:py-16 md:py-24">
+    <section className="relative w-full overflow-x-clip bg-black py-14 sm:py-16 md:py-24">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#3A8FB8]/35 to-transparent"
@@ -188,35 +250,30 @@ export default function HomeServicesGrid() {
 
         <div
           ref={scrollerRef}
-          onPointerDown={() => {
-            pauseAutoRef.current = true;
+          onPointerDown={markUserActive}
+          onTouchStart={markUserActive}
+          className="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain px-1 pb-2 scrollbar-none md:mx-0 md:grid md:grid-cols-3 md:gap-5 md:overflow-visible md:overscroll-auto md:px-0 md:pb-0 lg:gap-6"
+          style={{
+            touchAction: 'pan-x',
+            WebkitOverflowScrolling: 'touch',
           }}
-          onPointerUp={() => {
-            window.setTimeout(() => {
-              pauseAutoRef.current = false;
-            }, 2200);
-          }}
-          onPointerCancel={() => {
-            pauseAutoRef.current = false;
-          }}
-          className="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-2 scrollbar-none md:mx-0 md:grid md:grid-cols-3 md:gap-5 md:overflow-visible md:px-0 md:pb-0 lg:gap-6"
         >
           {cards.map((service, i) => (
-            <motion.article
+            <article
               key={service.id}
-              initial={{ opacity: 0, y: 28 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ delay: i * 0.1, duration: 0.55, ease }}
+              ref={(node) => {
+                cardRefs.current[i] = node;
+              }}
               className="group relative h-[420px] w-[82vw] max-w-[340px] flex-shrink-0 snap-center overflow-hidden rounded-[24px] border border-white/10 bg-black sm:h-[460px] sm:w-[70vw] md:h-[520px] md:w-auto md:max-w-none lg:h-[560px]"
+              style={{ scrollSnapStop: 'always' }}
             >
               <MediaImage
                 src={service.image_url}
                 alt={service.title}
-                className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
+                className="absolute inset-0 h-full w-full object-cover md:transition-transform md:duration-700 md:ease-out md:group-hover:scale-[1.05]"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/10" />
-              <div className="absolute inset-0 bg-gradient-to-br from-[#3A8FB8]/10 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+              <div className="absolute inset-0 bg-gradient-to-br from-[#3A8FB8]/10 via-transparent to-transparent opacity-0 transition-opacity duration-500 md:group-hover:opacity-100" />
 
               <div className="absolute inset-x-0 top-0 flex items-center justify-between p-5 md:p-6">
                 <p className="font-display text-sm font-semibold tabular-nums tracking-[0.2em] text-white/35">
@@ -233,7 +290,24 @@ export default function HomeServicesGrid() {
                   {service.copy}
                 </p>
               </div>
-            </motion.article>
+            </article>
+          ))}
+        </div>
+
+        <div className="mt-4 flex items-center justify-center gap-2 md:hidden">
+          {cards.map((service, i) => (
+            <button
+              key={`dot-${service.id}`}
+              type="button"
+              aria-label={`Show ${service.title}`}
+              onClick={() => {
+                markUserActive();
+                scrollToCard(i, 'smooth');
+              }}
+              className={`h-2 rounded-full transition-all ${
+                i === activeCard ? 'w-7 bg-[#3A8FB8]' : 'w-2 bg-white/25'
+              }`}
+            />
           ))}
         </div>
       </div>
