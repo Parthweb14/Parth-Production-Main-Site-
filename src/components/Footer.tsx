@@ -1,18 +1,52 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { LOGO_PNG } from '@/utils/media';
+import { serviceSlug, toGalleryCategory } from '@/utils/servicesCatalog';
+
+type FooterService = { id: number; service_title: string };
+
+const DEFAULT_FOOTER_SERVICES: FooterService[] = [
+  { id: 2, service_title: 'Concerts' },
+  { id: 1, service_title: 'Weddings' },
+  { id: 3, service_title: 'Festivals' },
+  { id: 4, service_title: 'Corporate' },
+  { id: 5, service_title: 'Road Shows' },
+];
 
 export default function Footer() {
   const year = new Date().getFullYear();
   const { siteSettings } = useAuth();
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
+  const [services, setServices] = useState<FooterService[]>(DEFAULT_FOOTER_SERVICES);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch('/api/public/data');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.services?.length) {
+          setServices(
+            data.services.map((s: FooterService) => ({
+              id: s.id,
+              service_title: toGalleryCategory(s.service_title),
+            }))
+          );
+        }
+      } catch {
+        // keep defaults
+      }
+    }
+    load();
+  }, []);
 
   return (
     <footer className="relative z-20 border-t border-white/10 bg-black pt-16 pb-10 px-6 md:px-10">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10 mb-12 relative">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10 mb-12 relative">
         <div>
           <Link href="/" className="inline-flex items-center gap-3">
             <img src={LOGO_PNG} alt="Parth Production" className="h-11 object-contain" />
@@ -26,8 +60,20 @@ export default function Footer() {
           <h4 className="font-display text-base text-white">Explore</h4>
           <Link href="/services" className="hover:text-accent transition-colors">Services</Link>
           <Link href="/gallery" className="hover:text-accent transition-colors">Gallery</Link>
-          <Link href="/about" className="hover:text-accent transition-colors">About</Link>
-          <Link href="/contact" className="hover:text-accent transition-colors">Contact</Link>
+          <Link href="/about" className="hover:text-accent transition-colors">About us</Link>
+          <Link href="/contact" className="hover:text-accent transition-colors">Contact us</Link>
+        </div>
+        <div className="flex flex-col gap-3 text-sm text-white/55">
+          <h4 className="font-display text-base text-white">Services</h4>
+          {services.map((s) => (
+            <Link
+              key={s.id}
+              href={`/services#${serviceSlug(s.service_title)}`}
+              className="hover:text-accent transition-colors"
+            >
+              {toGalleryCategory(s.service_title)}
+            </Link>
+          ))}
         </div>
         <div className="flex flex-col gap-3 text-sm text-white/55">
           <h4 className="font-display text-base text-white">Connect</h4>

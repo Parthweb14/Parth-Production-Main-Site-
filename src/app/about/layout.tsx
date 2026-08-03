@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'About',
+  title: 'About us',
   description:
     'Meet Parth Production — Surat-based event producers crafting sound, light, and stage experiences for weddings, festivals, and corporate nights across Gujarat.',
   alternates: { canonical: '/about' },

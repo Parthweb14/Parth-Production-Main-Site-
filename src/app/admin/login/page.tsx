@@ -5,6 +5,13 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Lock, Mail, AlertTriangle, ArrowRight, CheckCircle, X } from 'lucide-react';
 import TurnstileWidget, { captchaUiEnabled } from '@/components/TurnstileWidget';
+import { normalizeIdentity, sanitizePassword } from '@/utils/credentialSanitize';
+
+function pasteClean(e: React.ClipboardEvent<HTMLInputElement>, apply: (v: string) => void) {
+  e.preventDefault();
+  const raw = e.clipboardData.getData('text') || '';
+  apply(raw);
+}
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -45,14 +52,17 @@ export default function AdminLoginPage() {
     setLoading(true);
     setErrorMsg(null);
 
+    const cleanEmail = normalizeIdentity(email);
+    const cleanPassword = sanitizePassword(password);
+
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          email,
-          password,
+          email: cleanEmail,
+          password: cleanPassword,
           captchaToken: captchaToken || undefined,
         }),
       });
@@ -77,11 +87,13 @@ export default function AdminLoginPage() {
 
   const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPassword !== confirmPassword) {
+    const cleanNew = sanitizePassword(newPassword);
+    const cleanConfirm = sanitizePassword(confirmPassword);
+    if (cleanNew !== cleanConfirm) {
       setForgotError('Passwords do not match.');
       return;
     }
-    if (!newPassword) {
+    if (!cleanNew) {
       setForgotError('Password cannot be empty.');
       return;
     }
@@ -94,8 +106,8 @@ export default function AdminLoginPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          recoveryKey,
-          newPassword,
+          recoveryKey: sanitizePassword(recoveryKey) || recoveryKey.trim(),
+          newPassword: cleanNew,
           captchaToken: forgotCaptchaToken || undefined,
         }),
       });
@@ -156,6 +168,10 @@ export default function AdminLoginPage() {
                 placeholder="admin@parthproduction.in"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onPaste={(e) => pasteClean(e, (raw) => setEmail(normalizeIdentity(raw)))}
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck={false}
                 className="w-full h-12 pl-11 pr-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-600 focus:border-[#3A8FB8] focus:outline-none transition-colors duration-200"
               />
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
@@ -190,6 +206,8 @@ export default function AdminLoginPage() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onPaste={(e) => pasteClean(e, (raw) => setPassword(sanitizePassword(raw)))}
+                spellCheck={false}
                 className="w-full h-12 pl-11 pr-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-600 focus:border-[#3A8FB8] focus:outline-none transition-colors duration-200"
               />
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
@@ -261,7 +279,8 @@ export default function AdminLoginPage() {
                       required 
                       autoComplete="off"
                       value={recoveryKey} 
-                      onChange={(e) => setRecoveryKey(e.target.value)} 
+                      onChange={(e) => setRecoveryKey(e.target.value)}
+                      onPaste={(e) => pasteClean(e, (raw) => setRecoveryKey(sanitizePassword(raw)))}
                       className="w-full h-12 pl-11 pr-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white focus:border-[#3A8FB8] focus:outline-none transition"
                     />
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
@@ -277,7 +296,8 @@ export default function AdminLoginPage() {
                       autoComplete="new-password"
                       placeholder="••••••••••••" 
                       value={newPassword} 
-                      onChange={(e) => setNewPassword(e.target.value)} 
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      onPaste={(e) => pasteClean(e, (raw) => setNewPassword(sanitizePassword(raw)))}
                       className="w-full h-12 pl-11 pr-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-600 focus:border-[#3A8FB8] focus:outline-none transition"
                     />
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
@@ -293,7 +313,8 @@ export default function AdminLoginPage() {
                       autoComplete="new-password"
                       placeholder="••••••••••••" 
                       value={confirmPassword} 
-                      onChange={(e) => setConfirmPassword(e.target.value)} 
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      onPaste={(e) => pasteClean(e, (raw) => setConfirmPassword(sanitizePassword(raw)))}
                       className="w-full h-12 pl-11 pr-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-600 focus:border-[#3A8FB8] focus:outline-none transition"
                     />
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />

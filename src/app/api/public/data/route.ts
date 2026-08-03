@@ -4,12 +4,13 @@ import { publicSettings, safeErrorMessage } from '@/utils/auth';
 
 export async function GET() {
   try {
-    const [settings, images, videos, services, vibrants] = await Promise.all([
+    const [settings, images, videos, services, vibrants, about] = await Promise.all([
       vercelDb.getSettings(),
       vercelDb.getImages(),
       vercelDb.getVideos(),
       vercelDb.getServices(),
       vercelDb.getVibrants(),
+      vercelDb.getAbout(),
     ]);
 
     const sortedImages = [...images].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
@@ -21,6 +22,7 @@ export async function GET() {
       images: sortedImages,
       videos: sortedVideos,
       services,
+      about,
       vibrants: sortedVibrants,
       stage_gallery: sortedVibrants,
     });
