@@ -9,12 +9,17 @@ import CinematicPageHero from '@/components/CinematicPageHero';
 import { useAuth } from '@/context/AuthContext';
 import { STAGE_IMAGES } from '@/utils/media';
 
+/** Official studio pin — used for Studio card + Open directions */
+const STUDIO_MAPS_URL = 'https://maps.app.goo.gl/fdsz2LFykZyFjEYC9';
+/** Embed pin for Parth Production (from the maps short link) */
+const STUDIO_MAP_EMBED =
+  'https://maps.google.com/maps?q=21.204991,72.7701228&z=17&hl=en&output=embed';
+
 export default function ContactPage() {
   const { siteSettings } = useAuth();
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
   const address = siteSettings.address || 'Gaurav Path Road, Palanpur, Surat, Gujarat';
-  const mapQuery = siteSettings.map_query || address;
-  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
+  const mapsUrl = STUDIO_MAPS_URL;
 
   const { scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 28 });
@@ -186,7 +191,7 @@ export default function ContactPage() {
             >
               <div className="relative overflow-hidden rounded-[22px] border border-white/10 min-h-[360px] md:min-h-[480px]">
                 <iframe
-                  src={`https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&t=&z=16&ie=UTF8&iwloc=&output=embed`}
+                  src={STUDIO_MAP_EMBED}
                   width="100%"
                   height="100%"
                   style={{ border: 0, minHeight: 360 }}

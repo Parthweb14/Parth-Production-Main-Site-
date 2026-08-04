@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
 import MediaImage from '@/components/MediaImage';
@@ -9,26 +9,40 @@ import { resolveGallerySrc } from '@/utils/media';
 import { DEFAULT_CRAFT, type CraftContent } from '@/utils/craftDefaults';
 
 const ease = [0.22, 1, 0.36, 1] as const;
-const IDLE_ADVANCE_MS = 5200;
-const RESUME_AFTER_MS = 2800;
+const IDLE_ADVANCE_MS = 5600;
+const RESUME_AFTER_MS = 3200;
+const LOCK_PX = 10;
 
 /**
  * Editorial craft strip — featured wide image + three tall panels.
- * Mobile: swipe images left/right between cards; drag up/down scrolls the page.
+ * Mobile: transform carousel (not overflow-x) so page scroll on images stays native-smooth.
+ * Horizontal swipe still changes Sound / Lighting / DJ. Dots remain as backup.
  * Admin tab: Bringing
  */
 export default function HomeServicesGrid() {
   const { siteSettings } = useAuth();
   const whatsappUrl = `https://wa.me/91${siteSettings.phone_1}`;
   const reduceMotion = useReducedMotion();
-  const scrollerRef = useRef<HTMLDivElement>(null);
-  const cardRefs = useRef<(HTMLElement | null)[]>([]);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const idleTimerRef = useRef<number | null>(null);
   const resumeTimerRef = useRef<number | null>(null);
   const userActiveRef = useRef(false);
   const activeCardRef = useRef(0);
+  const stepRef = useRef(300);
+  const dragRef = useRef({
+    active: false,
+    mode: 'undecided' as 'undecided' | 'h' | 'v',
+    startX: 0,
+    startY: 0,
+    deltaX: 0,
+    pointerId: -1,
+  });
   const [craft, setCraft] = useState<CraftContent>(DEFAULT_CRAFT);
   const [activeCard, setActiveCard] = useState(0);
+  const [dragX, setDragX] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [step, setStep] = useState(300);
 
   useEffect(() => {
     async function load() {
@@ -48,7 +62,13 @@ export default function HomeServicesGrid() {
             Array.isArray(data.craft.cards) && data.craft.cards.length
               ? data.craft.cards.map(
                   (
-                    c: { id: string; title: string; copy: string; image_url: string; order_index: number },
+                    c: {
+                      id: string;
+                      title: string;
+                      copy: string;
+                      image_url: string;
+                      order_index: number;
+                    },
                     i: number
                   ) => ({
                     id: c.id || `craft-${i + 1}`,
@@ -72,6 +92,29 @@ export default function HomeServicesGrid() {
 
   const cards = [...craft.cards].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
 
+  const measureStep = useCallback(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const first = viewport.querySelector<HTMLElement>('[data-craft-card]');
+    if (!first) return;
+    const track = viewport.querySelector<HTMLElement>('[data-craft-track]');
+    const gapRaw = track ? window.getComputedStyle(track).gap || '16px' : '16px';
+    const gap = parseFloat(gapRaw) || 16;
+    const next = first.offsetWidth + gap;
+    stepRef.current = next;
+    setStep(next);
+  }, []);
+
+  useLayoutEffect(() => {
+    const update = () => {
+      setIsMobile(window.innerWidth < 768);
+      measureStep();
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, [measureStep, cards.length]);
+
   const clearTimers = useCallback(() => {
     if (idleTimerRef.current != null) {
       window.clearInterval(idleTimerRef.current);
@@ -83,16 +126,6 @@ export default function HomeServicesGrid() {
     }
   }, []);
 
-  const scrollToCard = useCallback((index: number, behavior: ScrollBehavior = 'smooth') => {
-    const el = scrollerRef.current;
-    const card = cardRefs.current[index];
-    if (!el || !card) return;
-    const left = card.offsetLeft - (el.clientWidth - card.clientWidth) / 2;
-    el.scrollTo({ left: Math.max(0, left), behavior });
-    activeCardRef.current = index;
-    setActiveCard(index);
-  }, []);
-
   const markUserActive = useCallback(() => {
     userActiveRef.current = true;
     if (resumeTimerRef.current != null) window.clearTimeout(resumeTimerRef.current);
@@ -102,138 +135,139 @@ export default function HomeServicesGrid() {
     }, RESUME_AFTER_MS);
   }, []);
 
-  // Idle auto-advance: snap to next card with scrollTo — never write scrollLeft per frame
+  const goToCard = useCallback(
+    (index: number) => {
+      const next = Math.max(0, Math.min(cards.length - 1, index));
+      activeCardRef.current = next;
+      setActiveCard(next);
+      setDragX(0);
+      setDragging(false);
+    },
+    [cards.length]
+  );
+
   useEffect(() => {
     if (reduceMotion) return;
 
     const advance = () => {
-      if (userActiveRef.current || document.hidden) return;
+      if (userActiveRef.current || document.hidden || dragRef.current.active) return;
       if (window.innerWidth >= 768) return;
-      const count = Math.max(cardRefs.current.filter(Boolean).length, 1);
-      const next = (activeCardRef.current + 1) % count;
-      scrollToCard(next, 'smooth');
+      const count = Math.max(cards.length, 1);
+      goToCard((activeCardRef.current + 1) % count);
     };
 
     idleTimerRef.current = window.setInterval(advance, IDLE_ADVANCE_MS);
     return () => clearTimers();
-  }, [reduceMotion, cards.length, scrollToCard, clearTimers]);
+  }, [reduceMotion, cards.length, goToCard, clearTimers]);
 
   /**
-   * Mobile gesture lock on the card strip:
-   * touch-action:none — we own the gesture, then:
-   * - horizontal → swipe Sound / Lighting / DJ
-   * - vertical → scroll the page (so images never trap up/down)
+   * Mobile gestures:
+   * - Vertical → release immediately so native page scroll stays smooth (touch-action: pan-y)
+   * - Horizontal → translate the card track (no overflow-x, no window.scrollBy)
    */
   useEffect(() => {
-    const el = scrollerRef.current;
-    if (!el) return;
+    const viewport = viewportRef.current;
+    if (!viewport) return;
 
-    let startX = 0;
-    let startY = 0;
-    let lastY = 0;
-    let startScroll = 0;
-    let mode: 'undecided' | 'h' | 'v' = 'undecided';
-    let settleTimer: number | null = null;
+    const onPointerDown = (e: PointerEvent) => {
+      if (window.innerWidth >= 768) return;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      dragRef.current = {
+        active: true,
+        mode: 'undecided',
+        startX: e.clientX,
+        startY: e.clientY,
+        deltaX: 0,
+        pointerId: e.pointerId,
+      };
+      markUserActive();
+    };
 
-    const nearestIndex = () => {
-      const mid = el.scrollLeft + el.clientWidth / 2;
-      let best = 0;
-      let bestDist = Infinity;
-      cardRefs.current.forEach((card, i) => {
-        if (!card) return;
-        const center = card.offsetLeft + card.clientWidth / 2;
-        const dist = Math.abs(center - mid);
-        if (dist < bestDist) {
-          bestDist = dist;
-          best = i;
+    const onPointerMove = (e: PointerEvent) => {
+      const d = dragRef.current;
+      if (!d.active || d.pointerId !== e.pointerId) return;
+      if (window.innerWidth >= 768) return;
+
+      const dx = e.clientX - d.startX;
+      const dy = e.clientY - d.startY;
+
+      if (d.mode === 'undecided') {
+        if (Math.abs(dx) < LOCK_PX && Math.abs(dy) < LOCK_PX) return;
+        // Prefer vertical when close — page scroll must stay smooth
+        d.mode = Math.abs(dx) > Math.abs(dy) * 1.25 ? 'h' : 'v';
+        if (d.mode === 'h') {
+          try {
+            viewport.setPointerCapture(e.pointerId);
+          } catch {
+            /* ignore */
+          }
+          setDragging(true);
+        } else {
+          // Hand vertical back to the browser — do not preventDefault
+          d.active = false;
+          setDragging(false);
+          setDragX(0);
+          return;
         }
-      });
-      return best;
-    };
-
-    const syncActive = () => {
-      const best = nearestIndex();
-      activeCardRef.current = best;
-      setActiveCard(best);
-    };
-
-    const onScroll = () => {
-      markUserActive();
-      if (settleTimer != null) window.clearTimeout(settleTimer);
-      settleTimer = window.setTimeout(syncActive, 80);
-    };
-
-    const onTouchStart = (e: TouchEvent) => {
-      if (window.innerWidth >= 768) return;
-      const t = e.touches[0];
-      if (!t) return;
-      startX = t.clientX;
-      startY = t.clientY;
-      lastY = t.clientY;
-      startScroll = el.scrollLeft;
-      mode = 'undecided';
-      markUserActive();
-    };
-
-    const onTouchMove = (e: TouchEvent) => {
-      if (window.innerWidth >= 768) return;
-      const t = e.touches[0];
-      if (!t) return;
-      const dx = t.clientX - startX;
-      const dy = t.clientY - startY;
-
-      if (mode === 'undecided') {
-        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
-        // Slight bias to horizontal so image swipes feel responsive
-        mode = Math.abs(dx) >= Math.abs(dy) * 0.85 ? 'h' : 'v';
       }
 
-      if (mode === 'h') {
+      if (d.mode === 'h') {
         e.preventDefault();
-        const max = Math.max(0, el.scrollWidth - el.clientWidth);
-        el.scrollLeft = Math.min(max, Math.max(0, startScroll - dx));
+        d.deltaX = dx;
+        const atStart = activeCardRef.current === 0 && dx > 0;
+        const atEnd = activeCardRef.current >= cards.length - 1 && dx < 0;
+        setDragX(atStart || atEnd ? dx * 0.35 : dx);
+      }
+    };
+
+    const endDrag = (e: PointerEvent) => {
+      const d = dragRef.current;
+      if (d.pointerId !== e.pointerId) return;
+      if (!d.active && d.mode !== 'h') {
+        dragRef.current.active = false;
+        dragRef.current.mode = 'undecided';
         return;
       }
 
-      // Vertical: manually scroll the page so the card images never trap the gesture
-      e.preventDefault();
-      const frameDy = t.clientY - lastY;
-      lastY = t.clientY;
-      window.scrollBy({ top: -frameDy, left: 0, behavior: 'auto' });
-    };
-
-    const onTouchEnd = (e: TouchEvent) => {
-      if (window.innerWidth >= 768) return;
-      if (mode === 'h') {
-        const t = e.changedTouches[0];
-        const dx = t ? t.clientX - startX : 0;
-        let target = nearestIndex();
-        // Flick: jump a card when swipe was decisive
-        if (Math.abs(dx) > 48) {
-          target = dx < 0
-            ? Math.min(cardRefs.current.filter(Boolean).length - 1, activeCardRef.current + 1)
-            : Math.max(0, activeCardRef.current - 1);
+      if (d.mode === 'h') {
+        const width = stepRef.current || 300;
+        const threshold = Math.min(72, width * 0.22);
+        let next = activeCardRef.current;
+        if (d.deltaX <= -threshold) next += 1;
+        else if (d.deltaX >= threshold) next -= 1;
+        goToCard(next);
+        try {
+          viewport.releasePointerCapture(e.pointerId);
+        } catch {
+          /* ignore */
         }
-        scrollToCard(target, 'smooth');
+      } else {
+        setDragX(0);
+        setDragging(false);
       }
-      mode = 'undecided';
+      dragRef.current.active = false;
+      dragRef.current.mode = 'undecided';
     };
 
-    el.addEventListener('scroll', onScroll, { passive: true });
-    el.addEventListener('touchstart', onTouchStart, { passive: true });
-    el.addEventListener('touchmove', onTouchMove, { passive: false });
-    el.addEventListener('touchend', onTouchEnd, { passive: true });
-    el.addEventListener('touchcancel', onTouchEnd, { passive: true });
+    viewport.addEventListener('pointerdown', onPointerDown, { passive: true });
+    viewport.addEventListener('pointermove', onPointerMove, { passive: false });
+    viewport.addEventListener('pointerup', endDrag, { passive: true });
+    viewport.addEventListener('pointercancel', endDrag, { passive: true });
 
     return () => {
-      el.removeEventListener('scroll', onScroll);
-      el.removeEventListener('touchstart', onTouchStart);
-      el.removeEventListener('touchmove', onTouchMove);
-      el.removeEventListener('touchend', onTouchEnd);
-      el.removeEventListener('touchcancel', onTouchEnd);
-      if (settleTimer != null) window.clearTimeout(settleTimer);
+      viewport.removeEventListener('pointerdown', onPointerDown);
+      viewport.removeEventListener('pointermove', onPointerMove);
+      viewport.removeEventListener('pointerup', endDrag);
+      viewport.removeEventListener('pointercancel', endDrag);
     };
-  }, [markUserActive, scrollToCard, cards.length]);
+  }, [cards.length, goToCard, markUserActive]);
+
+  const trackStyle = isMobile
+    ? {
+        transform: `translate3d(${-activeCard * step + dragX}px, 0, 0)`,
+        transition: dragging ? 'none' : 'transform 420ms cubic-bezier(0.22, 1, 0.36, 1)',
+      }
+    : undefined;
 
   return (
     <section className="relative w-full overflow-x-clip bg-black py-14 sm:py-16 md:py-24">
@@ -327,44 +361,47 @@ export default function HomeServicesGrid() {
         </motion.div>
 
         <div
-          ref={scrollerRef}
-          className="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain px-1 pb-2 scrollbar-none [touch-action:none] md:mx-0 md:grid md:grid-cols-3 md:gap-5 md:overflow-visible md:overscroll-auto md:px-0 md:pb-0 md:[touch-action:auto] lg:gap-6"
-          style={{ WebkitOverflowScrolling: 'touch' }}
+          ref={viewportRef}
+          className="relative -mx-1 overflow-hidden px-1 md:mx-0 md:overflow-visible md:px-0"
+          style={{ touchAction: 'pan-y' }}
         >
-          {cards.map((service, i) => (
-            <article
-              key={service.id}
-              ref={(node) => {
-                cardRefs.current[i] = node;
-              }}
-              className="group relative h-[420px] w-[82vw] max-w-[340px] flex-shrink-0 snap-center overflow-hidden rounded-[24px] border border-white/10 bg-black sm:h-[460px] sm:w-[70vw] md:h-[520px] md:w-auto md:max-w-none lg:h-[560px]"
-              style={{ scrollSnapStop: 'always' }}
-            >
-              <MediaImage
-                src={service.image_url}
-                alt={service.title}
-                className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover [-webkit-user-drag:none] md:transition-transform md:duration-700 md:ease-out md:group-hover:scale-[1.05]"
-              />
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/10" />
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#3A8FB8]/10 via-transparent to-transparent opacity-0 transition-opacity duration-500 md:group-hover:opacity-100" />
+          <div
+            data-craft-track
+            className="flex gap-4 will-change-transform md:grid md:grid-cols-3 md:gap-5 md:!transform-none lg:gap-6"
+            style={trackStyle}
+          >
+            {cards.map((service, i) => (
+              <article
+                key={service.id}
+                data-craft-card
+                className="group relative h-[420px] w-[82vw] max-w-[340px] flex-shrink-0 overflow-hidden rounded-[24px] border border-white/10 bg-black sm:h-[460px] sm:w-[70vw] md:h-[520px] md:w-auto md:max-w-none lg:h-[560px]"
+              >
+                <MediaImage
+                  src={service.image_url}
+                  alt={service.title}
+                  className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover [-webkit-user-drag:none] md:transition-transform md:duration-700 md:ease-out md:group-hover:scale-[1.05]"
+                />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/10" />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#3A8FB8]/10 via-transparent to-transparent opacity-0 transition-opacity duration-500 md:group-hover:opacity-100" />
 
-              <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between p-5 md:p-6">
-                <p className="font-display text-sm font-semibold tabular-nums tracking-[0.2em] text-white/35">
-                  0{i + 1}
-                </p>
-                <span className="h-px w-10 bg-[#3A8FB8]/60" aria-hidden />
-              </div>
+                <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between p-5 md:p-6">
+                  <p className="font-display text-sm font-semibold tabular-nums tracking-[0.2em] text-white/35">
+                    0{i + 1}
+                  </p>
+                  <span className="h-px w-10 bg-[#3A8FB8]/60" aria-hidden />
+                </div>
 
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 p-5 md:p-6">
-                <h3 className="font-display text-2xl font-bold uppercase tracking-tight text-white md:text-[1.65rem]">
-                  {service.title}
-                </h3>
-                <p className="mt-3 max-w-sm text-[13px] leading-relaxed text-white/72 md:text-sm">
-                  {service.copy}
-                </p>
-              </div>
-            </article>
-          ))}
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 p-5 md:p-6">
+                  <h3 className="font-display text-2xl font-bold uppercase tracking-tight text-white md:text-[1.65rem]">
+                    {service.title}
+                  </h3>
+                  <p className="mt-3 max-w-sm text-[13px] leading-relaxed text-white/72 md:text-sm">
+                    {service.copy}
+                  </p>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
 
         <div className="mt-4 flex items-center justify-center gap-2 md:hidden">
@@ -375,7 +412,7 @@ export default function HomeServicesGrid() {
               aria-label={`Show ${service.title}`}
               onClick={() => {
                 markUserActive();
-                scrollToCard(i, 'smooth');
+                goToCard(i);
               }}
               className={`h-2 rounded-full transition-all ${
                 i === activeCard ? 'w-7 bg-[#3A8FB8]' : 'w-2 bg-white/25'
