@@ -139,7 +139,7 @@ export default function AdminLoginPage() {
           <div className="mb-5 text-center">
             <div className="mx-auto flex items-center justify-center leading-none">
               <img
-                src={LOGO_PNG}
+                src="/parth-logo.png"
                 alt="Parth Production"
                 width={1921}
                 height={562}
