@@ -136,9 +136,9 @@ export default function AdminLoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-zinc-950 via-[#050a12] to-black p-4 text-white selection:bg-[#3A8FB8]/25">
       <div className="w-full max-w-md">
-        <div className="rounded-2xl border border-white/10 bg-[#0a0c10]/85 px-6 pb-7 pt-4 shadow-2xl backdrop-blur-xl sm:px-8 sm:pt-5">
-          <div className="mb-3 text-center sm:mb-4">
-            <div className="mx-auto flex h-11 items-center justify-center leading-none sm:h-12">
+        <div className="rounded-2xl border border-white/10 bg-[#0a0c10]/85 px-6 pb-7 pt-5 shadow-2xl backdrop-blur-xl sm:px-8 sm:pt-6">
+          <div className="mb-4 text-center sm:mb-5">
+            <div className="mx-auto flex items-center justify-center leading-none">
               <img
                 src={LOGO_LOGIN_PNG}
                 alt="Parth Production"
@@ -146,7 +146,7 @@ export default function AdminLoginPage() {
                 height={152}
                 decoding="async"
                 fetchPriority="high"
-                className="h-full w-auto max-w-[min(100%,240px)] object-contain object-center sm:max-w-[280px]"
+                className="h-auto w-[min(100%,300px)] object-contain object-center sm:w-[340px]"
               />
             </div>
           </div>
