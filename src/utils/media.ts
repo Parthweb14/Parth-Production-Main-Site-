@@ -53,7 +53,8 @@ export const HERO_POSTER = '/videos/optimized/hero-poster.jpg';
 export const LOGO_JSON = '/Parth Logo .json';
 export const LOGO_PNG = '/Parth logo .png';
 /** Tighter wordmark for login (Cloudflare R2) — less top/bottom padding */
-export const LOGO_LOGIN_PNG = `${ASSET_BASE}/Parth%20logo%20bg%20.png`;
+/** Tight crop of the square CDN wordmark (no empty vertical padding). */
+export const LOGO_LOGIN_PNG = '/parth-logo-login.png';
 export const OWNER_IMAGE = `${ASSET_BASE}/Owner.png`;
 
 export const SHOW_VIDEOS = [
