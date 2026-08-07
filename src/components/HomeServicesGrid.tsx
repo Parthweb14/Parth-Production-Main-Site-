@@ -6,6 +6,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import MediaImage from '@/components/MediaImage';
 import { useAuth } from '@/context/AuthContext';
 import { resolveGallerySrc } from '@/utils/media';
+import { fetchPublicData } from '@/utils/publicDataCache';
 import { DEFAULT_CRAFT, type CraftContent } from '@/utils/craftDefaults';
 
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -47,20 +48,19 @@ export default function HomeServicesGrid() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch('/api/public/data');
-        if (!res.ok) return;
-        const data = await res.json();
+        const data = await fetchPublicData();
         if (!data.craft) return;
+        const craftData = data.craft as CraftContent;
         setCraft({
           ...DEFAULT_CRAFT,
-          ...data.craft,
+          ...craftData,
           featured_image_url: resolveGallerySrc(
-            data.craft.featured_image_url || '',
+            craftData.featured_image_url || '',
             DEFAULT_CRAFT.featured_image_url
           ),
           cards:
-            Array.isArray(data.craft.cards) && data.craft.cards.length
-              ? data.craft.cards.map(
+            Array.isArray(craftData.cards) && craftData.cards.length
+              ? craftData.cards.map(
                   (
                     c: {
                       id: string;

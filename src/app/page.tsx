@@ -1,17 +1,29 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import PageLoader from '@/components/PageLoader';
 import SpotlightNavbar from '@/components/SpotlightNavbar';
-import Footer from '@/components/Footer';
-import CoverflowCarousel from '@/components/CoverflowCarousel';
-import VideoShowcaseCarousel from '@/components/VideoShowcaseCarousel';
-import HomeServicesGrid from '@/components/HomeServicesGrid';
-import QuoteCta from '@/components/QuoteCta';
 import { useAuth } from '@/context/AuthContext';
 import { HERO_VIDEO, HERO_POSTER } from '@/utils/media';
+
+const VideoShowcaseCarousel = dynamic(() => import('@/components/VideoShowcaseCarousel'), {
+  loading: () => <div className="min-h-[560px] bg-black" aria-hidden />,
+});
+const HomeServicesGrid = dynamic(() => import('@/components/HomeServicesGrid'), {
+  loading: () => <div className="min-h-[720px] bg-black" aria-hidden />,
+});
+const CoverflowCarousel = dynamic(() => import('@/components/CoverflowCarousel'), {
+  loading: () => <div className="min-h-[560px] bg-black" aria-hidden />,
+});
+const QuoteCta = dynamic(() => import('@/components/QuoteCta'), {
+  loading: () => <div className="min-h-[280px] bg-black" aria-hidden />,
+});
+const Footer = dynamic(() => import('@/components/Footer'), {
+  loading: () => <div className="min-h-[200px] bg-black" aria-hidden />,
+});
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -29,15 +41,16 @@ export default function HomePage() {
     if (typeof window === 'undefined') return false;
     return new URLSearchParams(window.location.search).has('shot');
   });
-  const [videoLoaded, setVideoLoaded] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return new URLSearchParams(window.location.search).has('shot');
-  });
   const [minTimeElapsed, setMinTimeElapsed] = useState(() => {
     if (typeof window === 'undefined') return false;
     return new URLSearchParams(window.location.search).has('shot');
   });
+  const [posterReady, setPosterReady] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).has('shot');
+  });
   const heroRef = useRef<HTMLElement>(null);
+  const heroVideoRef = useRef<HTMLVideoElement>(null);
 
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
   const y = useTransform(scrollYProgress, [0, 1], ['0%', '10%']);
@@ -47,51 +60,51 @@ export default function HomePage() {
     if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('shot')) {
       return;
     }
-    const a = setTimeout(() => setMinTimeElapsed(true), 700);
-    // Don't block the site on full hero video decode — poster is enough for first paint
-    const b = setTimeout(() => setVideoLoaded(true), 1100);
+    // Fast gate: don't wait on full hero MP4 decode
+    const a = setTimeout(() => setMinTimeElapsed(true), 380);
+    const b = setTimeout(() => setPosterReady(true), 520);
     return () => {
       clearTimeout(a);
       clearTimeout(b);
     };
   }, []);
 
-  const isReady = videoLoaded && minTimeElapsed;
+  // Start hero video only after the loader is gone — keeps first paint light
+  useEffect(() => {
+    if (!loadingComplete) return;
+    const video = heroVideoRef.current;
+    if (!video) return;
+    void video.play().catch(() => undefined);
+  }, [loadingComplete]);
+
+  const isReady = posterReady && minTimeElapsed;
 
   return (
     <>
       {!loadingComplete && (
         <PageLoader onComplete={() => setLoadingComplete(true)} isReady={isReady} />
       )}
-      <div className="film-grain" />
+      <div className="film-grain max-md:hidden motion-reduce:hidden" />
       <SpotlightNavbar />
 
       <main className="relative overflow-x-hidden bg-black">
-        {/*
-          Hero redesign:
-          - Video clipped in its own layer (headings never cut by overflow-hidden)
-          - Safer type scale + leading so italic line stays fully visible
-          - All original copy + CTAs kept
-        */}
         <section
           ref={heroRef}
           className="relative flex h-[85svh] min-h-[560px] items-end bg-black md:h-[100svh] md:min-h-[680px]"
         >
-          {/* VIDEO LAYER — isolated clip */}
           <div className="absolute inset-0 overflow-hidden">
             <motion.div style={{ y, scale: videoScale }} className="absolute inset-0 origin-center">
               <video
-                autoPlay
+                ref={heroVideoRef}
                 muted
                 loop
                 playsInline
-                preload="metadata"
+                preload="none"
                 poster={HERO_POSTER}
-                onLoadedData={() => setVideoLoaded(true)}
-                onCanPlay={() => setVideoLoaded(true)}
+                onLoadedData={() => setPosterReady(true)}
                 className="h-full w-full object-cover"
               >
-                <source src={HERO_VIDEO} type="video/mp4" />
+                {loadingComplete ? <source src={HERO_VIDEO} type="video/mp4" /> : null}
               </video>
             </motion.div>
             <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-black/25" />
@@ -100,15 +113,12 @@ export default function HomePage() {
               aria-hidden
               className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black to-transparent"
             />
-            <motion.div
+            <div
               aria-hidden
               className="pointer-events-none absolute left-[-10%] top-[30%] h-[45%] w-[55%] rounded-full bg-[#3A8FB8]/10 blur-[100px]"
-              animate={{ opacity: [0.3, 0.5, 0.3] }}
-              transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
             />
           </div>
 
-          {/* CONTENT — outside video overflow clip */}
           <div className="relative z-10 w-full px-5 pb-12 pt-[9.5rem] sm:px-8 sm:pb-14 md:px-10 md:pb-20 md:pt-36 lg:px-14">
             <div className="mx-auto w-full max-w-7xl">
               <div className="max-w-[40rem] md:max-w-[46rem]">
@@ -174,9 +184,9 @@ export default function HomePage() {
         </section>
 
         <div className="overflow-hidden border-y border-white/10 bg-black py-4">
-          <div className="marquee-track flex w-max gap-16 md:gap-24 whitespace-nowrap text-sm md:text-base uppercase tracking-[0.22em] text-white/65">
+          <div className="marquee-track flex w-max gap-16 whitespace-nowrap px-8 text-sm uppercase tracking-[0.22em] text-white/65 md:gap-24 md:text-base">
             {[...Array(2)].map((_, loop) => (
-              <div key={loop} className="flex gap-16 md:gap-24 px-8">
+              <div key={loop} className="flex gap-16 md:gap-24">
                 {[
                   'Sound Systems',
                   'Stage Lighting',

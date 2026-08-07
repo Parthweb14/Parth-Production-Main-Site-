@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { fetchPublicData } from '@/utils/publicDataCache';
 
 interface SiteSettings {
   email: string;
@@ -66,29 +67,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function checkSession() {
       try {
-        const res = await fetch('/api/public/data');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.settings) setSiteSettings({ ...DEFAULT_SETTINGS, ...data.settings });
+        const data = await fetchPublicData();
+        if (data.settings) {
+          setSiteSettings({
+            ...DEFAULT_SETTINGS,
+            ...(data.settings as SiteSettings),
+          });
         }
       } catch (err) {
         console.error('Failed to load site settings:', err);
       }
 
-      try {
-        const sessionRes = await fetch('/api/auth/session', { credentials: 'include' });
-        if (sessionRes.ok) {
-          const session = await sessionRes.json();
-          if (session.authenticated && session.user) {
-            setUser(session.user);
-            setToken('cookie-session');
+      // Session check only matters for admin — skip blocking the marketing homepage
+      const onAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
+      if (onAdmin) {
+        try {
+          const sessionRes = await fetch('/api/auth/session', { credentials: 'include' });
+          if (sessionRes.ok) {
+            const session = await sessionRes.json();
+            if (session.authenticated && session.user) {
+              setUser(session.user);
+              setToken('cookie-session');
+            }
           }
+        } catch (err) {
+          console.error('Session verify error:', err);
         }
-      } catch (err) {
-        console.error('Session verify error:', err);
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
     }
     checkSession();
   }, []);

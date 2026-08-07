@@ -17,7 +17,7 @@ const inter = Inter({
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '500', '700'],
   style: ['normal', 'italic'],
   variable: '--font-playfair',
   display: 'swap',
@@ -169,9 +169,8 @@ export default function RootLayout({
       className={`${spaceGrotesk.variable} ${inter.variable} ${playfair.variable} dark h-full antialiased`}
     >
       <head>
-        <link rel="preload" href="/Parth logo .png" as="image" />
         <link rel="preload" href="/videos/optimized/hero-poster.jpg" as="image" />
-        {/* Hero MP4 is fetched on demand with poster-first LCP — avoid preloading the full video */}
+        {/* Skip preloading the large logo PNG — navbar loads it on demand */}
         <link rel="icon" href="/favicon.ico?v=8" sizes="any" />
         <link rel="icon" href="/favicon-96x96.png?v=8" type="image/png" sizes="96x96" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=8" />

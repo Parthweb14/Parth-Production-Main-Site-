@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { SHOW_VIDEOS, resolveVideoSrc, resolveWebmSrc } from '@/utils/media';
+import { fetchPublicData } from '@/utils/publicDataCache';
 import MediaLightbox, { type LightboxMedia } from '@/components/MediaLightbox';
 
 type Clip = { title: string; src: string; webmSrc?: string };
@@ -101,26 +102,22 @@ export default function VideoShowcaseCarousel() {
     let cancelled = false;
     async function load() {
       try {
-        const res = await fetch(`/api/public/data?t=${Date.now()}`, { cache: 'no-store' });
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!data.videos?.length) return;
-        const mapped: Clip[] = data.videos
-          .map(
-            (
-              v: { title?: string; video_url?: string; webm_url?: string },
-              i: number
-            ) => {
-              const fallback = SHOW_VIDEOS[i % SHOW_VIDEOS.length]?.src || '';
-              const src = resolveVideoSrc(v.video_url || '', fallback);
-              const webmSrc = resolveWebmSrc(v.video_url || src, v.webm_url) || undefined;
-              return {
-                title: v.title || SHOW_VIDEOS[i % SHOW_VIDEOS.length]?.title || 'Show',
-                src,
-                webmSrc,
-              };
-            }
-          )
+        const data = await fetchPublicData();
+        const videos = data.videos as
+          | { title?: string; video_url?: string; webm_url?: string }[]
+          | undefined;
+        if (!videos?.length) return;
+        const mapped: Clip[] = videos
+          .map((v, i) => {
+            const fallback = SHOW_VIDEOS[i % SHOW_VIDEOS.length]?.src || '';
+            const src = resolveVideoSrc(v.video_url || '', fallback);
+            const webmSrc = resolveWebmSrc(v.video_url || src, v.webm_url) || undefined;
+            return {
+              title: v.title || SHOW_VIDEOS[i % SHOW_VIDEOS.length]?.title || 'Show',
+              src,
+              webmSrc,
+            };
+          })
           .filter((c: Clip) => Boolean(c.src));
         if (!cancelled && mapped.length) setClips(mapped);
       } catch {
