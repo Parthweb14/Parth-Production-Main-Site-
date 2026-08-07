@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { AlertTriangle, CheckCircle, X, Eye, EyeOff, Lock } from 'lucide-react';
 import TurnstileWidget, { captchaUiEnabled } from '@/components/TurnstileWidget';
 import { normalizeIdentity, sanitizePassword } from '@/utils/credentialSanitize';
+import { LOGO_LOGIN_PNG } from '@/utils/media';
 
 function pasteClean(e: React.ClipboardEvent<HTMLInputElement>, apply: (v: string) => void) {
   e.preventDefault();
@@ -139,13 +140,13 @@ export default function AdminLoginPage() {
           <div className="mb-5 text-center">
             <div className="mx-auto flex items-center justify-center leading-none">
               <img
-                src="/parth-logo.png"
+                src={LOGO_LOGIN_PNG}
                 alt="Parth Production"
                 width={1921}
                 height={562}
                 decoding="async"
                 fetchPriority="high"
-                className="h-auto w-[min(100%,300px)] object-contain sm:w-[340px]"
+                className="h-auto w-[min(100%,280px)] object-contain object-center sm:w-[320px]"
               />
             </div>
           </div>
