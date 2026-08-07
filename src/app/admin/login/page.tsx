@@ -142,8 +142,8 @@ export default function AdminLoginPage() {
               <img
                 src={LOGO_LOGIN_PNG}
                 alt="Parth Production"
-                width={1862}
-                height={504}
+                width={560}
+                height={152}
                 decoding="async"
                 fetchPriority="high"
                 className="h-full w-auto max-w-[min(100%,240px)] object-contain object-center sm:max-w-[280px]"
