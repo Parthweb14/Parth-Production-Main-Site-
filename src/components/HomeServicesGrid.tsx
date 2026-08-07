@@ -338,6 +338,7 @@ export default function HomeServicesGrid() {
               src={craft.featured_image_url}
               alt={craft.featured_title}
               className="absolute inset-0 h-full w-full object-cover"
+              priority
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
             <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
@@ -380,6 +381,7 @@ export default function HomeServicesGrid() {
                   src={service.image_url}
                   alt={service.title}
                   className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover [-webkit-user-drag:none] md:transition-transform md:duration-700 md:ease-out md:group-hover:scale-[1.05]"
+                  priority={i < 2}
                 />
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/10" />
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#3A8FB8]/10 via-transparent to-transparent opacity-0 transition-opacity duration-500 md:group-hover:opacity-100" />

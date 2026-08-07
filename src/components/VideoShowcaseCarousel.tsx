@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { SHOW_VIDEOS, resolveVideoSrc, resolveWebmSrc } from '@/utils/media';
 import { fetchPublicData } from '@/utils/publicDataCache';
+import { warmVideoUrl } from '@/utils/videoPriority';
 import MediaLightbox, { type LightboxMedia } from '@/components/MediaLightbox';
 
 type Clip = { title: string; src: string; webmSrc?: string };
@@ -119,7 +120,21 @@ export default function VideoShowcaseCarousel() {
             };
           })
           .filter((c: Clip) => Boolean(c.src));
-        if (!cancelled && mapped.length) setClips(mapped);
+        // Keep network warm even if React skips a state update.
+        mapped.slice(0, 3).forEach((c, idx) => warmVideoUrl(c.src, idx === 0 ? 'high' : 'auto'));
+        if (!cancelled && mapped.length) {
+          setClips((prev) => {
+            const same =
+              prev.length === mapped.length &&
+              prev.every(
+                (c, idx) =>
+                  c.src === mapped[idx].src &&
+                  c.webmSrc === mapped[idx].webmSrc &&
+                  c.title === mapped[idx].title
+              );
+            return same ? prev : mapped;
+          });
+        }
       } catch {
         /* keep static fallback */
       }
@@ -146,7 +161,7 @@ export default function VideoShowcaseCarousel() {
         inViewRef.current = visible;
         setInView(visible);
       },
-      { rootMargin: '120px 0px', threshold: 0.08 }
+      { rootMargin: '900px 0px', threshold: 0.01 }
     );
     io.observe(node);
     return () => io.disconnect();
@@ -394,13 +409,15 @@ export default function VideoShowcaseCarousel() {
 
               const t = laneTransform(offset, isMobile, progress);
               const isCenter = i === activeIndex;
-              // Mount active ± 1 only (integer) — avoids src thrash / stop-resume flicker
+              // Video-first: mount center ±1 always, plus first two clips before scroll
+              // so Beyond Events buffers while the hero is still on screen.
               const distFromActive = Math.abs(wrapOffset(i - activeIndex, total));
-              const shouldMount = inView && distFromActive <= 1;
+              const shouldMount = distFromActive <= 1 || i === 0 || i === 1;
+              const eagerBuffer = isCenter || i === 0 || (!inView && i <= 1);
 
               return (
                 <article
-                  key={`${clip.src}-${i}`}
+                  key={`clip-${i}`}
                   role="button"
                   tabIndex={0}
                   aria-label={`Open ${clip.title} video`}
@@ -440,14 +457,15 @@ export default function VideoShowcaseCarousel() {
                       muted
                       loop
                       playsInline
-                      preload={isCenter ? 'auto' : 'metadata'}
+                      preload={eagerBuffer ? 'auto' : 'metadata'}
                       className="pointer-events-none absolute inset-0 h-full w-full object-cover bg-zinc-950"
                       style={{ filter: `brightness(${t.brightness})` }}
                     >
+                      {/* MP4 first — reliable first frame; WebM as progressive enhancement */}
+                      <source src={clip.src} type="video/mp4" />
                       {clip.webmSrc ? (
                         <source src={clip.webmSrc} type="video/webm" />
                       ) : null}
-                      <source src={clip.src} type="video/mp4" />
                     </video>
                   ) : (
                     <div className="absolute inset-0 bg-zinc-950" />

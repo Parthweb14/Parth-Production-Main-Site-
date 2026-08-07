@@ -6,15 +6,13 @@ import Link from 'next/link';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import PageLoader from '@/components/PageLoader';
 import SpotlightNavbar from '@/components/SpotlightNavbar';
+import VideoShowcaseCarousel from '@/components/VideoShowcaseCarousel';
+import HomeServicesGrid from '@/components/HomeServicesGrid';
 import { useAuth } from '@/context/AuthContext';
 import { HERO_VIDEO, HERO_POSTER } from '@/utils/media';
+import { prioritizeHomepageVideos } from '@/utils/videoPriority';
 
-const VideoShowcaseCarousel = dynamic(() => import('@/components/VideoShowcaseCarousel'), {
-  loading: () => <div className="min-h-[560px] bg-black" aria-hidden />,
-});
-const HomeServicesGrid = dynamic(() => import('@/components/HomeServicesGrid'), {
-  loading: () => <div className="min-h-[720px] bg-black" aria-hidden />,
-});
+// Below-fold / non-video sections stay code-split; videos load first.
 const CoverflowCarousel = dynamic(() => import('@/components/CoverflowCarousel'), {
   loading: () => <div className="min-h-[560px] bg-black" aria-hidden />,
 });
@@ -57,6 +55,11 @@ export default function HomePage() {
   const videoScale = useTransform(scrollYProgress, [0, 1], [1, 1.06]);
 
   useEffect(() => {
+    // Highest priority: start buffering hero + Beyond Events clips immediately.
+    prioritizeHomepageVideos();
+  }, []);
+
+  useEffect(() => {
     if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('shot')) {
       return;
     }
@@ -69,7 +72,7 @@ export default function HomePage() {
     };
   }, []);
 
-  // Start hero video only after the loader is gone — keeps first paint light
+  // Play after loader; source is attached immediately so download starts during loader.
   useEffect(() => {
     if (!loadingComplete) return;
     const video = heroVideoRef.current;
@@ -99,12 +102,12 @@ export default function HomePage() {
                 muted
                 loop
                 playsInline
-                preload="none"
+                preload="auto"
                 poster={HERO_POSTER}
                 onLoadedData={() => setPosterReady(true)}
                 className="h-full w-full object-cover"
               >
-                {loadingComplete ? <source src={HERO_VIDEO} type="video/mp4" /> : null}
+                <source src={HERO_VIDEO} type="video/mp4" />
               </video>
             </motion.div>
             <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-black/25" />

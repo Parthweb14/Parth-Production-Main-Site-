@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { fetchPublicData } from '@/utils/publicDataCache';
+import { warmVideosFromPublicData } from '@/utils/videoPriority';
 
 interface SiteSettings {
   email: string;
@@ -68,6 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async function checkSession() {
       try {
         const data = await fetchPublicData();
+        warmVideosFromPublicData(data);
         if (data.settings) {
           setSiteSettings({
             ...DEFAULT_SETTINGS,
