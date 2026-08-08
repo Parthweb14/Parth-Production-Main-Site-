@@ -194,12 +194,18 @@ export default function ContactPage() {
                   src={STUDIO_MAP_EMBED}
                   width="100%"
                   height="100%"
-                  style={{ border: 0, minHeight: 360 }}
+                  style={{
+                    border: 0,
+                    minHeight: 360,
+                    // Dark map shell with light roads/labels for readability
+                    filter:
+                      'invert(1) hue-rotate(180deg) brightness(1.2) contrast(1.08) saturate(0.75)',
+                  }}
                   allowFullScreen
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
                   title="Parth Production location"
-                  className="absolute inset-0 w-full h-full grayscale invert opacity-55 contrast-125 hover:opacity-80 transition-opacity duration-500"
+                  className="absolute inset-0 h-full w-full opacity-100 transition-opacity duration-500"
                 />
                 <div className="absolute top-4 left-4 right-4 flex items-center justify-between gap-3 pointer-events-none">
                   <span className="inline-flex items-center gap-2 rounded-full border border-[#3A8FB8]/35 bg-black/70 backdrop-blur px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-[#3A8FB8] font-semibold">
