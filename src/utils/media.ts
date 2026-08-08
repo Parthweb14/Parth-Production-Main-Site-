@@ -57,14 +57,29 @@ export const LOGO_PNG = '/Parth logo .png';
 export const LOGO_LOGIN_PNG = '/parth-logo-login.png';
 export const OWNER_IMAGE = `${ASSET_BASE}/Owner.png`;
 
+/** Keep order aligned with live admin/homepage slots (Festivals before Concerts). */
 export const SHOW_VIDEOS = [
   { title: 'Weddings', src: `${ASSET_BASE}/Video%201%20.mp4` },
-  { title: 'Concerts', src: `${ASSET_BASE}/Video%202%20.mp4` },
   { title: 'Festivals', src: `${ASSET_BASE}/Video%203.mp4` },
+  { title: 'Concerts', src: `${ASSET_BASE}/Video%202%20.mp4` },
   { title: 'Corporate', src: `${ASSET_BASE}/Video%204.mp4` },
   { title: 'Road Shows', src: `${ASSET_BASE}/Video%205.mp4` },
-  { title: 'SFX Nights', src: `${ASSET_BASE}/Video%206.mp4` },
+  { title: 'SFX', src: `${ASSET_BASE}/Video%206.mp4` },
 ];
+
+/** Match a showcase title to its default clip (avoids Festivals/Concerts index swaps). */
+export function showcaseFallbackForTitle(title: string | undefined, index = 0) {
+  const needle = (title || '').trim().toLowerCase();
+  if (needle) {
+    const exact = SHOW_VIDEOS.find((v) => v.title.toLowerCase() === needle);
+    if (exact) return exact;
+    const partial = SHOW_VIDEOS.find(
+      (v) => needle.includes(v.title.toLowerCase()) || v.title.toLowerCase().includes(needle)
+    );
+    if (partial) return partial;
+  }
+  return SHOW_VIDEOS[index % SHOW_VIDEOS.length]!;
+}
 
 export const STAGE_IMAGES = [
   { title: 'Weddings', src: `${ASSET_BASE}/Image%206%20Weddings.png`, tag: 'Sound & Light' },

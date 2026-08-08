@@ -3,12 +3,36 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { SHOW_VIDEOS, resolveVideoSrc, resolveWebmSrc } from '@/utils/media';
+import {
+  SHOW_VIDEOS,
+  resolveVideoSrc,
+  resolveWebmSrc,
+  showcaseFallbackForTitle,
+} from '@/utils/media';
 import { fetchPublicData } from '@/utils/publicDataCache';
 import { warmVideoUrl } from '@/utils/videoPriority';
 import MediaLightbox, { type LightboxMedia } from '@/components/MediaLightbox';
 
-type Clip = { title: string; src: string; webmSrc?: string };
+type Clip = { id: string; title: string; src: string; webmSrc?: string };
+
+function toClips(
+  videos: { id?: string; title?: string; video_url?: string; webm_url?: string }[]
+): Clip[] {
+  return videos
+    .map((v, i) => {
+      const fallback = showcaseFallbackForTitle(v.title, i);
+      const src = resolveVideoSrc(v.video_url || '', fallback.src);
+      const webmSrc = resolveWebmSrc(v.video_url || src, v.webm_url) || undefined;
+      const title = (v.title || fallback.title || 'Show').trim();
+      return {
+        id: v.id || `${title}-${src}-${i}`,
+        title,
+        src,
+        webmSrc,
+      };
+    })
+    .filter((c) => Boolean(c.src));
+}
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -62,7 +86,9 @@ function laneTransform(offset: number, isMobile: boolean, progress: number) {
 
 export default function VideoShowcaseCarousel() {
   const reduceMotion = useReducedMotion();
-  const [clips, setClips] = useState<Clip[]>(SHOW_VIDEOS);
+  const [clips, setClips] = useState<Clip[]>(() =>
+    toClips(SHOW_VIDEOS.map((v, i) => ({ id: `show-${i}`, title: v.title, video_url: v.src })))
+  );
   const [progress, setProgress] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -105,21 +131,10 @@ export default function VideoShowcaseCarousel() {
       try {
         const data = await fetchPublicData();
         const videos = data.videos as
-          | { title?: string; video_url?: string; webm_url?: string }[]
+          | { id?: string; title?: string; video_url?: string; webm_url?: string }[]
           | undefined;
         if (!videos?.length) return;
-        const mapped: Clip[] = videos
-          .map((v, i) => {
-            const fallback = SHOW_VIDEOS[i % SHOW_VIDEOS.length]?.src || '';
-            const src = resolveVideoSrc(v.video_url || '', fallback);
-            const webmSrc = resolveWebmSrc(v.video_url || src, v.webm_url) || undefined;
-            return {
-              title: v.title || SHOW_VIDEOS[i % SHOW_VIDEOS.length]?.title || 'Show',
-              src,
-              webmSrc,
-            };
-          })
-          .filter((c: Clip) => Boolean(c.src));
+        const mapped = toClips(videos);
         // Keep network warm even if React skips a state update.
         mapped.slice(0, 3).forEach((c, idx) => warmVideoUrl(c.src, idx === 0 ? 'high' : 'auto'));
         if (!cancelled && mapped.length) {
@@ -417,7 +432,7 @@ export default function VideoShowcaseCarousel() {
 
               return (
                 <article
-                  key={`clip-${i}`}
+                  key={clip.id}
                   role="button"
                   tabIndex={0}
                   aria-label={`Open ${clip.title} video`}
@@ -450,6 +465,7 @@ export default function VideoShowcaseCarousel() {
                 >
                   {shouldMount ? (
                     <video
+                      key={clip.src}
                       ref={(el) => {
                         if (el) videoRefs.current.set(i, el);
                         else videoRefs.current.delete(i);
@@ -461,7 +477,7 @@ export default function VideoShowcaseCarousel() {
                       className="pointer-events-none absolute inset-0 h-full w-full object-cover bg-zinc-950"
                       style={{ filter: `brightness(${t.brightness})` }}
                     >
-                      {/* MP4 first — reliable first frame; WebM as progressive enhancement */}
+                      {/* Remount on src change so Festivals/Concerts never keep a stale file */}
                       <source src={clip.src} type="video/mp4" />
                       {clip.webmSrc ? (
                         <source src={clip.webmSrc} type="video/webm" />
@@ -516,7 +532,7 @@ export default function VideoShowcaseCarousel() {
       <div className="relative z-20 mt-4 flex flex-wrap justify-center gap-2 px-4 sm:mt-5">
         {clips.map((clip, i) => (
           <button
-            key={`dot-${clip.src}-${i}`}
+            key={`dot-${clip.id}`}
             type="button"
             aria-label={`Show ${clip.title}`}
             onClick={() => goTo(i)}

@@ -1,4 +1,10 @@
-import { SHOW_VIDEOS, resolveVideoSrc, resolveWebmSrc, HERO_VIDEO } from '@/utils/media';
+import {
+  SHOW_VIDEOS,
+  resolveVideoSrc,
+  resolveWebmSrc,
+  showcaseFallbackForTitle,
+  HERO_VIDEO,
+} from '@/utils/media';
 import { fetchPublicData } from '@/utils/publicDataCache';
 
 const warmed = new Set<string>();
@@ -58,11 +64,11 @@ export async function resolvePriorityVideoUrls(limit = MAX_WARM): Promise<string
   try {
     const data = await fetchPublicData();
     const videos = data.videos as
-      | { video_url?: string; webm_url?: string }[]
+      | { title?: string; video_url?: string; webm_url?: string }[]
       | undefined;
     if (videos?.length) {
-      for (const v of videos) {
-        const fallback = SHOW_VIDEOS[urls.length % SHOW_VIDEOS.length]?.src || '';
+      for (const [i, v] of videos.entries()) {
+        const fallback = showcaseFallbackForTitle(v.title, i).src;
         // MP4 first — more reliable first-frame than waiting on WebM.
         push(resolveVideoSrc(v.video_url || '', fallback));
         if (urls.length >= limit) break;
@@ -97,12 +103,12 @@ export function prioritizeHomepageVideos() {
 /** After public data lands (AuthContext), warm any DB video URLs. */
 export function warmVideosFromPublicData(data: Record<string, unknown>) {
   const videos = data.videos as
-    | { video_url?: string; webm_url?: string }[]
+    | { title?: string; video_url?: string; webm_url?: string }[]
     | undefined;
   if (!videos?.length) return;
 
   videos.slice(0, MAX_WARM).forEach((v, i) => {
-    const fallback = SHOW_VIDEOS[i % SHOW_VIDEOS.length]?.src || '';
+    const fallback = showcaseFallbackForTitle(v.title, i).src;
     const mp4 = resolveVideoSrc(v.video_url || '', fallback);
     warmVideoUrl(mp4, i === 0 ? 'high' : 'auto');
     // Optional WebM — do not block MP4 priority; only warm sibling lightly.
