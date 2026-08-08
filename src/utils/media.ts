@@ -35,21 +35,51 @@ export function resolveVideoSrc(pathOrUrl: string, fallback = ''): string {
   return abs.includes(' ') ? abs.replace(/ /g, '%20') : abs;
 }
 
+/** Prefer explicit webm_url; auto-pair only for compressed /uploads/*.mp4 siblings. */
+export function resolveWebmSrc(mp4OrAny: string, webmUrl?: string | null): string {
+  if (webmUrl) return resolveVideoSrc(webmUrl, '');
+  const src = resolveVideoSrc(mp4OrAny, '');
+  if (!src) return '';
+  if (/\.webm($|\?)/i.test(src)) return src;
+  if (/\/uploads\/.+\.mp4($|\?)/i.test(src)) {
+    return src.replace(/\.mp4(?=$|\?)/i, '.webm');
+  }
+  return '';
+}
+
 export const HERO_VIDEO = '/videos/optimized/hero.mp4';
 export const HERO_VIDEO_FALLBACK = `${ASSET_BASE}/Hero%20Background%20video%20-%20Trim.mp4`;
 export const HERO_POSTER = '/videos/optimized/hero-poster.jpg';
 export const LOGO_JSON = '/Parth Logo .json';
 export const LOGO_PNG = '/Parth logo .png';
+/** Tighter wordmark for login (Cloudflare R2) — less top/bottom padding */
+/** Tight crop of the square CDN wordmark (no empty vertical padding). */
+export const LOGO_LOGIN_PNG = '/parth-logo-login.png';
 export const OWNER_IMAGE = `${ASSET_BASE}/Owner.png`;
 
+/** Keep order aligned with live admin/homepage slots (Festivals before Concerts). */
 export const SHOW_VIDEOS = [
   { title: 'Weddings', src: `${ASSET_BASE}/Video%201%20.mp4` },
-  { title: 'Concerts', src: `${ASSET_BASE}/Video%202%20.mp4` },
   { title: 'Festivals', src: `${ASSET_BASE}/Video%203.mp4` },
+  { title: 'Concerts', src: `${ASSET_BASE}/Video%202%20.mp4` },
   { title: 'Corporate', src: `${ASSET_BASE}/Video%204.mp4` },
   { title: 'Road Shows', src: `${ASSET_BASE}/Video%205.mp4` },
-  { title: 'SFX Nights', src: `${ASSET_BASE}/Video%206.mp4` },
+  { title: 'SFX', src: `${ASSET_BASE}/Video%206.mp4` },
 ];
+
+/** Match a showcase title to its default clip (avoids Festivals/Concerts index swaps). */
+export function showcaseFallbackForTitle(title: string | undefined, index = 0) {
+  const needle = (title || '').trim().toLowerCase();
+  if (needle) {
+    const exact = SHOW_VIDEOS.find((v) => v.title.toLowerCase() === needle);
+    if (exact) return exact;
+    const partial = SHOW_VIDEOS.find(
+      (v) => needle.includes(v.title.toLowerCase()) || v.title.toLowerCase().includes(needle)
+    );
+    if (partial) return partial;
+  }
+  return SHOW_VIDEOS[index % SHOW_VIDEOS.length]!;
+}
 
 export const STAGE_IMAGES = [
   { title: 'Weddings', src: `${ASSET_BASE}/Image%206%20Weddings.png`, tag: 'Sound & Light' },

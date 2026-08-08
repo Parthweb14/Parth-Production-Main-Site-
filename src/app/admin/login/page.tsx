@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Lock, Mail, AlertTriangle, ArrowRight, CheckCircle, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle, X, Eye, EyeOff, Lock } from 'lucide-react';
 import TurnstileWidget, { captchaUiEnabled } from '@/components/TurnstileWidget';
 import { normalizeIdentity, sanitizePassword } from '@/utils/credentialSanitize';
+import { LOGO_LOGIN_PNG } from '@/utils/media';
 
 function pasteClean(e: React.ClipboardEvent<HTMLInputElement>, apply: (v: string) => void) {
   e.preventDefault();
@@ -13,12 +14,16 @@ function pasteClean(e: React.ClipboardEvent<HTMLInputElement>, apply: (v: string
   apply(raw);
 }
 
+const inputClass =
+  'h-11 w-full rounded-lg border border-white/10 bg-black/40 px-3 text-base text-white outline-none transition-all placeholder:text-zinc-500 focus:border-[#3A8FB8] focus:ring-2 focus:ring-[#3A8FB8]/15 md:text-sm';
+
 export default function AdminLoginPage() {
   const router = useRouter();
   const { user, login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  
+  const [showPassword, setShowPassword] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [captchaRequired, setCaptchaRequired] = useState(false);
@@ -32,6 +37,8 @@ export default function AdminLoginPage() {
   const [forgotSuccess, setForgotSuccess] = useState(false);
   const [forgotError, setForgotError] = useState<string | null>(null);
   const [forgotCaptchaToken, setForgotCaptchaToken] = useState<string | null>(null);
+
+  const year = new Date().getFullYear();
 
   useEffect(() => {
     if (user) {
@@ -67,7 +74,7 @@ export default function AdminLoginPage() {
         }),
       });
       const data = await res.json();
-      
+
       if (!res.ok) {
         if (data.captchaRequired || res.status === 429) {
           setCaptchaRequired(true);
@@ -127,64 +134,96 @@ export default function AdminLoginPage() {
   const showCaptcha = captchaUiEnabled() && captchaRequired;
 
   return (
-    <div className="relative min-h-screen bg-zinc-950 text-zinc-100 font-outfit flex items-center justify-center p-4 selection:bg-[#3A8FB8]/25 overflow-hidden">
-      
-      <div className="absolute top-1/4 left-1/4 w-[350px] h-[350px] bg-[#3A8FB8]/10 rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-[350px] h-[350px] bg-[#3A8FB8]/8 rounded-full blur-[100px] pointer-events-none" />
-
-      <div className="relative w-full max-w-[450px] rounded-3xl border border-white/10 bg-[#121214]/60 p-8 shadow-2xl backdrop-blur-xl md:p-10 z-10 transition-all duration-300">
-        
-        <div className="flex flex-col items-center text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#0a1524] to-[#3A8FB8] p-0.5 shadow-lg shadow-[#3A8FB8]/20 mb-4 flex items-center justify-center overflow-hidden">
-            <div className="w-full h-full bg-[#09090b] rounded-2xl flex items-center justify-center overflow-hidden">
-              <img src="/logo.png" alt="Parth Production Logo" className="w-12 h-12 object-contain" />
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-zinc-950 via-[#050a12] to-black p-4 text-white selection:bg-[#3A8FB8]/25">
+      <div className="w-full max-w-md">
+        <div className="rounded-2xl border border-white/10 bg-[#0a0c10]/85 px-6 pb-7 pt-5 shadow-2xl backdrop-blur-xl sm:px-8 sm:pt-6">
+          <div className="mb-4 text-center sm:mb-5">
+            <div className="mx-auto flex items-center justify-center leading-none">
+              <img
+                src={LOGO_LOGIN_PNG}
+                alt="Parth Production"
+                width={560}
+                height={152}
+                decoding="async"
+                fetchPriority="high"
+                className="h-auto w-[min(100%,300px)] object-contain object-center sm:w-[340px]"
+              />
             </div>
           </div>
-          <h1 className="text-2xl font-bold tracking-wider text-white uppercase" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
-            PARTH PRODUCTION
-          </h1>
-          <p className="text-xs text-zinc-500 tracking-widest mt-1 uppercase font-semibold">
-            Admin Console Portal
-          </p>
-        </div>
 
-        {errorMsg && (
-          <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">
-            <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-            <p className="leading-relaxed">{errorMsg}</p>
-          </div>
-        )}
+          {errorMsg && (
+            <div className="mb-4 rounded-lg border border-red-500/20 bg-red-950/50 px-4 py-2.5 text-sm font-medium text-red-400">
+              {errorMsg}
+            </div>
+          )}
 
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div>
-            <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">
-              Username or Email
-            </label>
-            <div className="relative">
-              <input 
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-zinc-300">Email</label>
+              <input
                 type="text"
                 required
+                autoFocus
                 autoComplete="username"
-                placeholder="admin@parthproduction.in"
+                placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onPaste={(e) => pasteClean(e, (raw) => setEmail(normalizeIdentity(raw)))}
                 autoCapitalize="off"
                 autoCorrect="off"
                 spellCheck={false}
-                className="w-full h-12 pl-11 pr-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-600 focus:border-[#3A8FB8] focus:outline-none transition-colors duration-200"
+                className={inputClass}
               />
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
             </div>
-          </div>
 
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase">
-                Password
-              </label>
-              <button 
-                type="button" 
+            <div>
+              <label className="mb-1 block text-sm font-medium text-zinc-300">Password</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onPaste={(e) => pasteClean(e, (raw) => setPassword(sanitizePassword(raw)))}
+                  spellCheck={false}
+                  className={`${inputClass} pr-11`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-zinc-400 transition-colors hover:text-zinc-200"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-pressed={showPassword}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            {(showCaptcha || captchaUiEnabled()) && (
+              <TurnstileWidget onToken={onCaptcha} className="flex justify-center" />
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="h-11 w-full rounded-lg bg-[#3A8FB8] text-sm font-semibold uppercase tracking-wide text-white shadow-sm transition-all hover:bg-[#2f7aa0] disabled:opacity-50"
+            >
+              {loading ? (
+                <span className="inline-flex items-center justify-center gap-2">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  Signing in…
+                </span>
+              ) : (
+                'LOGIN'
+              )}
+            </button>
+
+            <div className="text-center text-xs">
+              <button
+                type="button"
                 onClick={() => {
                   setShowForgotModal(true);
                   setForgotSuccess(false);
@@ -193,151 +232,131 @@ export default function AdminLoginPage() {
                   setNewPassword('');
                   setConfirmPassword('');
                 }}
-                className="text-[10px] font-bold text-zinc-400 hover:text-white transition duration-200 cursor-pointer uppercase tracking-widest"
+                className="text-zinc-400 transition-colors hover:text-zinc-200"
               >
-                Forgot Password?
+                Forgot password?
               </button>
             </div>
-            <div className="relative">
-              <input 
-                type="password"
-                required
-                autoComplete="current-password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onPaste={(e) => pasteClean(e, (raw) => setPassword(sanitizePassword(raw)))}
-                spellCheck={false}
-                className="w-full h-12 pl-11 pr-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-600 focus:border-[#3A8FB8] focus:outline-none transition-colors duration-200"
-              />
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-            </div>
-          </div>
+          </form>
+        </div>
 
-          {(showCaptcha || captchaUiEnabled()) && (
-            <TurnstileWidget onToken={onCaptcha} className="flex justify-center" />
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full h-12 rounded-xl bg-gradient-to-r from-[#0a1524] to-[#3A8FB8] text-sm font-bold text-white flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(58,143,184,0.28)] transition-all duration-250 cursor-pointer disabled:opacity-40"
+        <p className="mt-4 text-center text-xs text-white/50">
+          © {year} Parth Production / Powered by{' '}
+          <a
+            href="https://trishulhub.in"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-white/70 underline hover:text-white"
           >
-            {loading ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <>
-                Sign In to Console
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </button>
-        </form>
+            Trishulhub
+          </a>
+        </p>
       </div>
 
       {showForgotModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="relative w-full max-w-[420px] rounded-3xl border border-white/10 bg-zinc-950 p-6 md:p-8 shadow-2xl space-y-6">
-            <button 
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-md space-y-6 rounded-2xl border border-white/10 bg-zinc-950 p-6 shadow-2xl sm:p-8">
+            <button
+              type="button"
               onClick={() => setShowForgotModal(false)}
-              className="absolute right-6 top-6 w-8 h-8 rounded-full border border-white/5 hover:border-white/20 bg-black/20 flex items-center justify-center hover:bg-zinc-900 transition-colors"
+              className="absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-zinc-400 transition hover:bg-white/5 hover:text-white"
+              aria-label="Close"
             >
-              <X className="w-4 h-4 text-zinc-400 hover:text-white" />
+              <X className="h-4 w-4" />
             </button>
 
             <div className="space-y-2 pr-8">
-              <h3 className="text-lg font-bold text-white uppercase tracking-wider">Reset Console Password</h3>
-              <p className="text-xs text-zinc-400">Enter your Master Recovery Key to configure a new password for the console.</p>
+              <h3 className="text-lg font-semibold tracking-tight text-white">Reset password</h3>
+              <p className="text-sm text-zinc-400">
+                Enter your master recovery key to set a new admin password.
+              </p>
             </div>
 
             {forgotError && (
-              <div className="flex items-start gap-2.5 rounded-xl border border-red-500/20 bg-red-500/10 p-3.5 text-xs text-red-400">
-                <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <div className="flex items-start gap-2.5 rounded-lg border border-red-500/20 bg-red-950/50 p-3.5 text-sm text-red-400">
+                <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
                 <p className="leading-relaxed">{forgotError}</p>
               </div>
             )}
 
             {forgotSuccess ? (
-              <div className="rounded-xl border border-green-500/20 bg-green-500/10 p-6 text-center space-y-3">
-                <CheckCircle className="w-10 h-10 text-green-500 mx-auto" />
-                <h4 className="font-bold text-sm text-white">Password Reset Successful</h4>
-                <p className="text-xs text-zinc-400 leading-relaxed">Your admin password has been updated. Close this modal and log in with your new password.</p>
-                <button 
+              <div className="space-y-3 rounded-lg border border-green-500/20 bg-green-500/10 p-6 text-center">
+                <CheckCircle className="mx-auto h-10 w-10 text-green-500" />
+                <h4 className="text-sm font-semibold text-white">Password reset successful</h4>
+                <p className="text-xs leading-relaxed text-zinc-400">
+                  Your admin password has been updated. Close this and log in with your new
+                  password.
+                </p>
+                <button
+                  type="button"
                   onClick={() => setShowForgotModal(false)}
-                  className="mt-4 w-full h-10 rounded-xl bg-zinc-800 text-xs font-bold text-white hover:bg-zinc-700 transition"
+                  className="mt-2 h-10 w-full rounded-lg bg-[#3A8FB8] text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-[#2f7aa0]"
                 >
-                  Close Modal
+                  Close
                 </button>
               </div>
             ) : (
               <form onSubmit={handleForgotPasswordSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">Master Recovery Key</label>
+                  <label className="mb-1 block text-sm font-medium text-zinc-300">
+                    Master recovery key
+                  </label>
                   <div className="relative">
-                    <input 
-                      type="password" 
-                      required 
+                    <input
+                      type="password"
+                      required
                       autoComplete="off"
-                      value={recoveryKey} 
+                      value={recoveryKey}
                       onChange={(e) => setRecoveryKey(e.target.value)}
                       onPaste={(e) => pasteClean(e, (raw) => setRecoveryKey(sanitizePassword(raw)))}
-                      className="w-full h-12 pl-11 pr-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white focus:border-[#3A8FB8] focus:outline-none transition"
+                      className={`${inputClass} pl-10`}
                     />
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">New Password</label>
-                  <div className="relative">
-                    <input 
-                      type="password" 
-                      required 
-                      autoComplete="new-password"
-                      placeholder="••••••••••••" 
-                      value={newPassword} 
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      onPaste={(e) => pasteClean(e, (raw) => setNewPassword(sanitizePassword(raw)))}
-                      className="w-full h-12 pl-11 pr-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-600 focus:border-[#3A8FB8] focus:outline-none transition"
-                    />
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                  </div>
+                  <label className="mb-1 block text-sm font-medium text-zinc-300">New password</label>
+                  <input
+                    type="password"
+                    required
+                    autoComplete="new-password"
+                    placeholder="••••••••••••"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    onPaste={(e) => pasteClean(e, (raw) => setNewPassword(sanitizePassword(raw)))}
+                    className={inputClass}
+                  />
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-2">Confirm Password</label>
-                  <div className="relative">
-                    <input 
-                      type="password" 
-                      required 
-                      autoComplete="new-password"
-                      placeholder="••••••••••••" 
-                      value={confirmPassword} 
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      onPaste={(e) => pasteClean(e, (raw) => setConfirmPassword(sanitizePassword(raw)))}
-                      className="w-full h-12 pl-11 pr-4 rounded-xl border border-white/10 bg-black/40 text-base md:text-sm text-white placeholder-zinc-600 focus:border-[#3A8FB8] focus:outline-none transition"
-                    />
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                  </div>
+                  <label className="mb-1 block text-sm font-medium text-zinc-300">
+                    Confirm password
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    autoComplete="new-password"
+                    placeholder="••••••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onPaste={(e) =>
+                      pasteClean(e, (raw) => setConfirmPassword(sanitizePassword(raw)))
+                    }
+                    className={inputClass}
+                  />
                 </div>
 
                 {captchaUiEnabled() && (
                   <TurnstileWidget onToken={onForgotCaptcha} className="flex justify-center" />
                 )}
 
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={forgotLoading}
-                  className="w-full h-12 rounded-xl bg-gradient-to-r from-[#0a1524] to-[#3A8FB8] text-xs font-bold text-white flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(58,143,184,0.28)] transition disabled:opacity-40"
+                  className="h-11 w-full rounded-lg bg-[#3A8FB8] text-sm font-semibold uppercase tracking-wide text-white shadow-sm transition-all hover:bg-[#2f7aa0] disabled:opacity-50"
                 >
-                  {forgotLoading ? (
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      Reset Password Now
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
+                  {forgotLoading ? 'Resetting…' : 'Reset password'}
                 </button>
               </form>
             )}

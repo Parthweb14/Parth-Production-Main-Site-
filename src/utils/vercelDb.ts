@@ -37,6 +37,8 @@ export interface DBVideo {
   id: string;
   title: string;
   video_url: string;
+  /** Optimized VP9 companion from admin upload (preferred on homepage) */
+  webm_url?: string;
   order_index: number;
 }
 
@@ -92,7 +94,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   phone_1: '9537330003',
   phone_2: '8866655651',
   address: 'Gaurav Path Road, Palanpur, Surat, Gujarat',
-  map_query: 'Gaurav Path Road, Palanpur, Surat, Gujarat',
+  map_query: 'Parth Production, Surat',
   hours_label: 'Hours',
   hours_text: 'Open for bookings',
   base_city: 'Surat, Gujarat',

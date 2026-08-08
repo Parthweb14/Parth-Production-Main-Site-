@@ -17,11 +17,11 @@ export default function PageLoader({ onComplete, isReady }: PageLoaderProps) {
 
   useEffect(() => {
     if (!isReady) return;
-    const hideContent = setTimeout(() => setShowContent(false), 180);
+    const hideContent = setTimeout(() => setShowContent(false), 120);
     const exitTimer = setTimeout(() => {
       setIsActive(false);
       onComplete();
-    }, 980);
+    }, 620);
     return () => {
       clearTimeout(hideContent);
       clearTimeout(exitTimer);

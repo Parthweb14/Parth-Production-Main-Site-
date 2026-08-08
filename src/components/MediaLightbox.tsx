@@ -9,6 +9,7 @@ import Image from 'next/image';
 type VideoLightbox = {
   type: 'video';
   src: string;
+  webmSrc?: string;
   title?: string;
 };
 
@@ -187,9 +188,8 @@ export default function MediaLightbox({ media, onClose }: Props) {
               {media.type === 'video' ? (
                 <div className="relative bg-black">
                   <video
-                    key={media.src}
+                    key={media.src + (media.webmSrc || '')}
                     ref={videoRef}
-                    src={media.src}
                     controls={false}
                     controlsList="nodownload noplaybackrate noremoteplayback"
                     disablePictureInPicture
@@ -207,7 +207,12 @@ export default function MediaLightbox({ media, onClose }: Props) {
                     onPause={() => setPaused(true)}
                     onError={() => setVideoError(true)}
                     onContextMenu={(e) => e.preventDefault()}
-                  />
+                  >
+                    {media.webmSrc ? (
+                      <source src={media.webmSrc} type="video/webm" />
+                    ) : null}
+                    <source src={media.src} type="video/mp4" />
+                  </video>
 
                   {!videoError && paused && (
                     <button

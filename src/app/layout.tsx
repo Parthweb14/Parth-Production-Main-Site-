@@ -17,7 +17,7 @@ const inter = Inter({
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '500', '700'],
   style: ['normal', 'italic'],
   variable: '--font-playfair',
   display: 'swap',
@@ -169,9 +169,17 @@ export default function RootLayout({
       className={`${spaceGrotesk.variable} ${inter.variable} ${playfair.variable} dark h-full antialiased`}
     >
       <head>
-        <link rel="preload" href="/Parth logo .png" as="image" />
+        <link rel="preconnect" href="https://assets.parthproduction.in" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://assets.parthproduction.in" />
         <link rel="preload" href="/videos/optimized/hero-poster.jpg" as="image" />
+        {/* Video-first: start hero + first Beyond Events clip as early as possible */}
         <link rel="preload" href="/videos/optimized/hero.mp4" as="video" type="video/mp4" />
+        <link
+          rel="preload"
+          href="https://assets.parthproduction.in/Video%201%20.mp4"
+          as="video"
+          type="video/mp4"
+        />
         <link rel="icon" href="/favicon.ico?v=8" sizes="any" />
         <link rel="icon" href="/favicon-96x96.png?v=8" type="image/png" sizes="96x96" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=8" />

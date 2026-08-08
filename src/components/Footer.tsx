@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { LOGO_PNG } from '@/utils/media';
+import { fetchPublicData } from '@/utils/publicDataCache';
 import { serviceSlug, canonicalizeCategory } from '@/utils/servicesCatalog';
 
 type FooterService = { id: number; service_title: string };
@@ -37,15 +38,18 @@ export default function Footer() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch('/api/public/data');
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data.services?.length) {
+        const data = await fetchPublicData();
+        const rows = data.services as
+          | (FooterService & { order_index?: number })[]
+          | undefined;
+        if (rows?.length) {
           setServices(
-            data.services.map((s: FooterService) => ({
-              id: s.id,
-              service_title: canonicalizeCategory(s.service_title),
-            }))
+            [...rows]
+              .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+              .map((s) => ({
+                id: s.id,
+                service_title: canonicalizeCategory(s.service_title),
+              }))
           );
         }
       } catch {

@@ -3,10 +3,36 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { SHOW_VIDEOS, resolveVideoSrc } from '@/utils/media';
+import {
+  SHOW_VIDEOS,
+  resolveVideoSrc,
+  resolveWebmSrc,
+  showcaseFallbackForTitle,
+} from '@/utils/media';
+import { fetchPublicData } from '@/utils/publicDataCache';
+import { warmVideoUrl } from '@/utils/videoPriority';
 import MediaLightbox, { type LightboxMedia } from '@/components/MediaLightbox';
 
-type Clip = { title: string; src: string };
+type Clip = { id: string; title: string; src: string; webmSrc?: string };
+
+function toClips(
+  videos: { id?: string; title?: string; video_url?: string; webm_url?: string }[]
+): Clip[] {
+  return videos
+    .map((v, i) => {
+      const fallback = showcaseFallbackForTitle(v.title, i);
+      const src = resolveVideoSrc(v.video_url || '', fallback.src);
+      const webmSrc = resolveWebmSrc(v.video_url || src, v.webm_url) || undefined;
+      const title = (v.title || fallback.title || 'Show').trim();
+      return {
+        id: v.id || `${title}-${src}-${i}`,
+        title,
+        src,
+        webmSrc,
+      };
+    })
+    .filter((c) => Boolean(c.src));
+}
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -60,17 +86,23 @@ function laneTransform(offset: number, isMobile: boolean, progress: number) {
 
 export default function VideoShowcaseCarousel() {
   const reduceMotion = useReducedMotion();
-  const [clips, setClips] = useState<Clip[]>(SHOW_VIDEOS);
+  const [clips, setClips] = useState<Clip[]>(() =>
+    toClips(SHOW_VIDEOS.map((v, i) => ({ id: `show-${i}`, title: v.title, video_url: v.src })))
+  );
   const [progress, setProgress] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [inView, setInView] = useState(false);
   const [lightbox, setLightbox] = useState<LightboxMedia | null>(null);
+  const sectionRef = useRef<HTMLElement>(null);
   const progressRef = useRef(0);
   const targetRef = useRef<number | null>(null);
   const pausedRef = useRef(false);
+  const inViewRef = useRef(false);
   const rafRef = useRef<number | null>(null);
   const lastTs = useRef<number | null>(null);
   const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
+  const lastPlayedIndex = useRef<number | null>(null);
   const pointerStart = useRef<{ x: number; y: number; id: number } | null>(null);
   const resumeTimer = useRef<number | null>(null);
   const total = clips.length;
@@ -97,18 +129,27 @@ export default function VideoShowcaseCarousel() {
     let cancelled = false;
     async function load() {
       try {
-        const res = await fetch(`/api/public/data?t=${Date.now()}`, { cache: 'no-store' });
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!data.videos?.length) return;
-        const mapped: Clip[] = data.videos
-          .map((v: { title?: string; video_url?: string }, i: number) => {
-            const fallback = SHOW_VIDEOS[i % SHOW_VIDEOS.length]?.src || '';
-            const src = resolveVideoSrc(v.video_url || '', fallback);
-            return { title: v.title || SHOW_VIDEOS[i % SHOW_VIDEOS.length]?.title || 'Show', src };
-          })
-          .filter((c: Clip) => Boolean(c.src));
-        if (!cancelled && mapped.length) setClips(mapped);
+        const data = await fetchPublicData();
+        const videos = data.videos as
+          | { id?: string; title?: string; video_url?: string; webm_url?: string }[]
+          | undefined;
+        if (!videos?.length) return;
+        const mapped = toClips(videos);
+        // Keep network warm even if React skips a state update.
+        mapped.slice(0, 3).forEach((c, idx) => warmVideoUrl(c.src, idx === 0 ? 'high' : 'auto'));
+        if (!cancelled && mapped.length) {
+          setClips((prev) => {
+            const same =
+              prev.length === mapped.length &&
+              prev.every(
+                (c, idx) =>
+                  c.src === mapped[idx].src &&
+                  c.webmSrc === mapped[idx].webmSrc &&
+                  c.title === mapped[idx].title
+              );
+            return same ? prev : mapped;
+          });
+        }
       } catch {
         /* keep static fallback */
       }
@@ -127,8 +168,23 @@ export default function VideoShowcaseCarousel() {
   }, []);
 
   useEffect(() => {
-    pausedRef.current = paused || Boolean(lightbox);
-  }, [paused, lightbox]);
+    const node = sectionRef.current;
+    if (!node) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        const visible = Boolean(entry?.isIntersecting);
+        inViewRef.current = visible;
+        setInView(visible);
+      },
+      { rootMargin: '900px 0px', threshold: 0.01 }
+    );
+    io.observe(node);
+    return () => io.disconnect();
+  }, []);
+
+  useEffect(() => {
+    pausedRef.current = paused || Boolean(lightbox) || !inView;
+  }, [paused, lightbox, inView]);
 
   useEffect(() => {
     return () => clearResumeTimer();
@@ -142,7 +198,7 @@ export default function VideoShowcaseCarousel() {
       const dt = Math.min(0.05, (ts - lastTs.current) / 1000);
       lastTs.current = ts;
 
-      if (!document.hidden) {
+      if (!document.hidden && inViewRef.current) {
         if (targetRef.current != null) {
           const current = progressRef.current;
           const target = targetRef.current;
@@ -170,19 +226,33 @@ export default function VideoShowcaseCarousel() {
     };
   }, [total, reduceMotion]);
 
+  const activeIndex = ((Math.round(progress) % total) + total) % total;
+
+  // Play ONLY the active clip — never pause/resume the same clip every animation frame
   useEffect(() => {
-    if (total === 0) return;
+    if (total === 0 || !inView) {
+      videoRefs.current.forEach((video) => video.pause());
+      lastPlayedIndex.current = null;
+      return;
+    }
+
+    if (lastPlayedIndex.current === activeIndex) {
+      const current = videoRefs.current.get(activeIndex);
+      if (current && current.paused) {
+        void current.play().catch(() => undefined);
+      }
+      return;
+    }
+
     videoRefs.current.forEach((video, index) => {
-      const offset = Math.abs(wrapOffset(index - progress, total));
-      if (offset < 0.9) {
+      if (index === activeIndex) {
         void video.play().catch(() => undefined);
       } else {
         video.pause();
       }
     });
-  }, [progress, total, clips]);
-
-  const activeIndex = ((Math.round(progress) % total) + total) % total;
+    lastPlayedIndex.current = activeIndex;
+  }, [activeIndex, total, clips, inView]);
 
   const goTo = useCallback(
     (index: number) => {
@@ -206,16 +276,19 @@ export default function VideoShowcaseCarousel() {
       const src = resolveVideoSrc(clip.src, clip.src);
       if (!src) return;
       goTo(index);
-      setLightbox({ type: 'video', src, title: clip.title });
+      setLightbox({
+        type: 'video',
+        src,
+        webmSrc: clip.webmSrc,
+        title: clip.title,
+      });
     },
     [goTo]
   );
 
   const closeLightbox = useCallback(() => setLightbox(null), []);
 
-  // Pointer-based tap detection — reliable on iOS/Android (click often fails on 3D transforms)
   const onStagePointerDown = (e: React.PointerEvent) => {
-    // Keep autoplay running on hover / mouse down — only track pointer for tap/swipe.
     pointerStart.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
   };
 
@@ -231,7 +304,6 @@ export default function VideoShowcaseCarousel() {
     const dist = Math.hypot(dx, dy);
 
     if (dist > 36) {
-      // Horizontal swipe → nudge; vertical scroll → ignore (page scroll)
       if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 36) {
         setPaused(true);
         nudge(dx < 0 ? 1 : -1);
@@ -271,7 +343,10 @@ export default function VideoShowcaseCarousel() {
   const cardW = isMobile ? 248 : 340;
 
   return (
-    <section className="relative isolate overflow-x-clip border-b border-white/10 bg-black py-14 sm:py-16 md:py-24">
+    <section
+      ref={sectionRef}
+      className="relative isolate overflow-x-clip border-b border-white/10 bg-black py-14 sm:py-16 md:py-24"
+    >
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-[48%] mx-auto h-[45%] max-w-5xl rounded-full bg-[#3A8FB8]/12 blur-[120px]"
@@ -317,7 +392,6 @@ export default function VideoShowcaseCarousel() {
         }}
         style={{ touchAction: 'pan-y' }}
       >
-        {/* Film-frame marks */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-x-4 top-3 z-20 hidden h-3 items-center justify-between sm:flex md:inset-x-10"
@@ -350,10 +424,15 @@ export default function VideoShowcaseCarousel() {
 
               const t = laneTransform(offset, isMobile, progress);
               const isCenter = i === activeIndex;
+              // Video-first: mount center ±1 always, plus first two clips before scroll
+              // so Beyond Events buffers while the hero is still on screen.
+              const distFromActive = Math.abs(wrapOffset(i - activeIndex, total));
+              const shouldMount = distFromActive <= 1 || i === 0 || i === 1;
+              const eagerBuffer = isCenter || i === 0 || (!inView && i <= 1);
 
               return (
                 <article
-                  key={`${clip.src}-${i}`}
+                  key={clip.id}
                   role="button"
                   tabIndex={0}
                   aria-label={`Open ${clip.title} video`}
@@ -384,19 +463,29 @@ export default function VideoShowcaseCarousel() {
                   }}
                   aria-current={isCenter ? 'true' : undefined}
                 >
-                  <video
-                    ref={(el) => {
-                      if (el) videoRefs.current.set(i, el);
-                      else videoRefs.current.delete(i);
-                    }}
-                    src={clip.src}
-                    muted
-                    loop
-                    playsInline
-                    preload="metadata"
-                    className="pointer-events-none absolute inset-0 h-full w-full object-cover"
-                    style={{ filter: `brightness(${t.brightness})` }}
-                  />
+                  {shouldMount ? (
+                    <video
+                      key={clip.src}
+                      ref={(el) => {
+                        if (el) videoRefs.current.set(i, el);
+                        else videoRefs.current.delete(i);
+                      }}
+                      muted
+                      loop
+                      playsInline
+                      preload={eagerBuffer ? 'auto' : 'metadata'}
+                      className="pointer-events-none absolute inset-0 h-full w-full object-cover bg-zinc-950"
+                      style={{ filter: `brightness(${t.brightness})` }}
+                    >
+                      {/* Remount on src change so Festivals/Concerts never keep a stale file */}
+                      <source src={clip.src} type="video/mp4" />
+                      {clip.webmSrc ? (
+                        <source src={clip.webmSrc} type="video/webm" />
+                      ) : null}
+                    </video>
+                  ) : (
+                    <div className="absolute inset-0 bg-zinc-950" />
+                  )}
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/25" />
 
                   {isCenter && (
@@ -443,7 +532,7 @@ export default function VideoShowcaseCarousel() {
       <div className="relative z-20 mt-4 flex flex-wrap justify-center gap-2 px-4 sm:mt-5">
         {clips.map((clip, i) => (
           <button
-            key={`dot-${clip.src}-${i}`}
+            key={`dot-${clip.id}`}
             type="button"
             aria-label={`Show ${clip.title}`}
             onClick={() => goTo(i)}
