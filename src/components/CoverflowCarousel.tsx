@@ -26,10 +26,10 @@ const DEFAULT_CARDS: StageCard[] = [
 /** Soft fade at far left/right edges only */
 const FADE_START = 3.1;
 const FADE_END = 4.2;
-/** Cards per second — continuous circular motion */
-const SPEED = 0.4;
-const EASE_TO_TARGET = 4.2;
-const SWIPE_PX = 140;
+/** Cards per second — slightly slower for smoother perceived motion */
+const SPEED = 0.32;
+const EASE_TO_TARGET = 3.4;
+const SWIPE_PX = 150;
 const RESUME_MS = 1800;
 
 function wrapOffset(offset: number, total: number) {
@@ -52,7 +52,7 @@ function edgeFade(abs: number) {
   return 1 - t * t * (3 - 2 * t);
 }
 
-/** Equal-size cards on a circular arc — no center scale-up */
+/** Equal-size cards on a circular arc — z kept local so navbar stays above */
 function cardTransform(offset: number, isMobile: boolean) {
   const abs = Math.abs(offset);
   const cardW = isMobile ? 148 : 208;
@@ -64,27 +64,34 @@ function cardTransform(offset: number, isMobile: boolean) {
   const x = radius * Math.sin(angle);
   const y = radius * (1 - Math.cos(angle)) * 0.9;
   const rotateZ = ((angle * 180) / Math.PI) * 0.32;
-  const scale = 1;
   const opacity = 0.92 * edgeFade(abs);
-  const zIndex = Math.round(50 - abs * 8);
+  const zIndex = Math.round(20 - abs * 4);
 
-  return { x, y, rotateZ, scale, opacity, zIndex };
+  return { x, y, rotateZ, opacity, zIndex };
 }
 
 export default function CoverflowCarousel() {
   const [cards, setCards] = useState<StageCard[]>(DEFAULT_CARDS);
-  const [progress, setProgress] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [lightbox, setLightbox] = useState<LightboxMedia | null>(null);
   const [inView, setInView] = useState(false);
+  const [nearest, setNearest] = useState(0);
+
   const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const cardElsRef = useRef<Map<number, HTMLDivElement>>(new Map());
+  const frameElsRef = useRef<Map<number, HTMLDivElement>>(new Map());
+  const labelElsRef = useRef<Map<number, HTMLSpanElement>>(new Map());
   const progressRef = useRef(0);
   const targetRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
   const lastTs = useRef<number | null>(null);
   const pausedRef = useRef(false);
   const inViewRef = useRef(false);
+  const isMobileRef = useRef(false);
+  const totalRef = useRef(DEFAULT_CARDS.length);
+  const nearestRef = useRef(0);
+  const lightboxOpenRef = useRef(false);
   const resumeTimer = useRef<number | null>(null);
   const dragRef = useRef<{
     pointerId: number;
@@ -96,6 +103,9 @@ export default function CoverflowCarousel() {
   } | null>(null);
   const suppressClickRef = useRef(false);
   const total = cards.length;
+  totalRef.current = total;
+  isMobileRef.current = isMobile;
+  lightboxOpenRef.current = Boolean(lightbox);
 
   useEffect(() => {
     let cancelled = false;
@@ -167,28 +177,82 @@ export default function CoverflowCarousel() {
 
   useEffect(() => () => clearResume(), [clearResume]);
 
+  /** Imperative layout — avoids React re-render every animation frame (main jitter source). */
+  const paint = useCallback((progress: number) => {
+    const nTotal = totalRef.current;
+    if (nTotal < 1) return;
+    const mobile = isMobileRef.current;
+
+    for (let index = 0; index < nTotal; index += 1) {
+      const el = cardElsRef.current.get(index);
+      if (!el) continue;
+
+      const offset = wrapOffset(index - progress, nTotal);
+      const abs = Math.abs(offset);
+      if (abs > FADE_END) {
+        el.style.visibility = 'hidden';
+        el.style.pointerEvents = 'none';
+        el.style.opacity = '0';
+        continue;
+      }
+
+      const t = cardTransform(offset, mobile);
+      el.style.visibility = 'visible';
+      el.style.pointerEvents = 'auto';
+      el.style.opacity = String(t.opacity);
+      el.style.zIndex = String(t.zIndex);
+      el.style.transform = `translate3d(${t.x}px, ${t.y}px, 0) rotate(${t.rotateZ}deg)`;
+
+      const isNearest = index === ((Math.round(progress) % nTotal) + nTotal) % nTotal;
+      const frame = frameElsRef.current.get(index);
+      const label = labelElsRef.current.get(index);
+      if (frame) {
+        frame.className = isNearest
+          ? 'relative h-full w-full overflow-hidden rounded-2xl border border-white/20 shadow-[0_16px_40px_rgba(0,0,0,0.5)]'
+          : 'relative h-full w-full overflow-hidden rounded-2xl border border-white/10 shadow-[0_16px_40px_rgba(0,0,0,0.5)]';
+      }
+      if (label) {
+        label.className = isNearest
+          ? 'pointer-events-none absolute bottom-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/20 bg-black/60 px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-white backdrop-blur'
+          : 'pointer-events-none absolute bottom-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/10 bg-black/40 px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-white/70 backdrop-blur';
+      }
+    }
+
+    const nextNearest = ((Math.round(progress) % nTotal) + nTotal) % nTotal;
+    if (nextNearest !== nearestRef.current) {
+      nearestRef.current = nextNearest;
+      setNearest(nextNearest);
+    }
+  }, []);
+
+  useEffect(() => {
+    paint(progressRef.current);
+  }, [cards, isMobile, paint]);
+
   useEffect(() => {
     const tick = (ts: number) => {
       if (lastTs.current == null) lastTs.current = ts;
-      const dt = Math.min(0.05, (ts - lastTs.current) / 1000);
+      const dt = Math.min(0.032, (ts - lastTs.current) / 1000);
       lastTs.current = ts;
+      const nTotal = totalRef.current;
 
-      if (!document.hidden && !lightbox && inViewRef.current) {
+      if (!document.hidden && !lightboxOpenRef.current && inViewRef.current && nTotal > 0) {
         if (targetRef.current != null) {
           const current = progressRef.current;
           const target = targetRef.current;
-          const diff = shortestDiff(current, target, total);
-          if (Math.abs(diff) < 0.008) {
-            progressRef.current = ((target % total) + total) % total;
+          const diff = shortestDiff(current, target, nTotal);
+          if (Math.abs(diff) < 0.006) {
+            progressRef.current = ((target % nTotal) + nTotal) % nTotal;
             targetRef.current = null;
           } else {
-            const step = diff * Math.min(1, EASE_TO_TARGET * dt);
-            progressRef.current = (current + step + total) % total;
+            // Critically-damped ease — smoother settle than linear dt step
+            const step = diff * (1 - Math.exp(-EASE_TO_TARGET * dt * 1.35));
+            progressRef.current = (current + step + nTotal) % nTotal;
           }
-          setProgress(progressRef.current);
+          paint(progressRef.current);
         } else if (!pausedRef.current) {
-          progressRef.current = (progressRef.current + SPEED * dt) % total;
-          setProgress(progressRef.current);
+          progressRef.current = (progressRef.current + SPEED * dt) % nTotal;
+          paint(progressRef.current);
         }
       }
 
@@ -200,19 +264,18 @@ export default function CoverflowCarousel() {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       lastTs.current = null;
     };
-  }, [total, lightbox]);
+  }, [paint]);
 
-  const goTo = useCallback(
-    (index: number) => {
-      targetRef.current = ((index % total) + total) % total;
-    },
-    [total]
-  );
+  const goTo = useCallback((index: number) => {
+    const nTotal = totalRef.current;
+    if (nTotal < 1) return;
+    targetRef.current = ((index % nTotal) + nTotal) % nTotal;
+  }, []);
 
   const nudge = useCallback(
     (dir: -1 | 1) => {
-      const nearest = Math.round(progressRef.current);
-      goTo(nearest + dir);
+      const nearestIdx = Math.round(progressRef.current);
+      goTo(nearestIdx + dir);
     },
     [goTo]
   );
@@ -252,6 +315,7 @@ export default function CoverflowCarousel() {
       if (!d || d.pointerId !== e.pointerId) return;
       const dx = e.clientX - d.startX;
       const dy = e.clientY - d.startY;
+      const nTotal = totalRef.current;
 
       if (d.mode === 'undecided') {
         if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
@@ -263,7 +327,6 @@ export default function CoverflowCarousel() {
             /* ignore */
           }
         } else {
-          // Vertical page scroll — release carousel control
           dragRef.current = null;
           scheduleResume(400);
           return;
@@ -273,9 +336,9 @@ export default function CoverflowCarousel() {
       if (d.mode === 'h') {
         e.preventDefault();
         d.moved = true;
-        const next = (d.startProgress - dx / SWIPE_PX + total * 10) % total;
+        const next = (d.startProgress - dx / SWIPE_PX + nTotal * 10) % nTotal;
         progressRef.current = next;
-        setProgress(next);
+        paint(next);
       }
     };
 
@@ -314,20 +377,15 @@ export default function CoverflowCarousel() {
       el.removeEventListener('pointerup', endDrag);
       el.removeEventListener('pointercancel', endDrag);
     };
-  }, [total, goTo, scheduleResume, clearResume]);
+  }, [goTo, scheduleResume, clearResume, paint]);
 
   const cardW = isMobile ? 148 : 208;
   const cardH = isMobile ? 216 : 304;
-  const nearest = ((Math.round(progress) % total) + total) % total;
 
   return (
-    <motion.section
+    <section
       ref={sectionRef}
-      initial={{ opacity: 0, y: 28 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-80px' }}
-      transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-      className="relative w-full overflow-hidden bg-black pt-14 pb-16 md:pt-20 md:pb-24"
+      className="relative z-0 isolate w-full overflow-hidden bg-black pt-14 pb-16 md:pt-20 md:pb-24"
     >
       <motion.div
         aria-hidden
@@ -364,73 +422,69 @@ export default function CoverflowCarousel() {
 
         <div
           ref={stageRef}
-          className="relative mx-auto mb-8 flex h-[380px] touch-pan-y items-start justify-center md:h-[500px] lg:h-[540px]"
-          style={{ touchAction: 'pan-y' }}
+          className="relative z-0 mx-auto mb-8 flex h-[380px] touch-pan-y items-start justify-center md:h-[500px] lg:h-[540px]"
+          style={{ touchAction: 'pan-y', contain: 'layout paint' }}
         >
-          <div className="relative h-full w-full max-w-6xl select-none">
-            {cards.map((card, index) => {
-              const offset = wrapOffset(index - progress, total);
-              const abs = Math.abs(offset);
-              if (abs > FADE_END) return null;
-
-              const t = cardTransform(offset, isMobile);
-              const isNearest = index === nearest;
-
-              return (
-                <div
-                  key={card.id}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`Open ${card.label}`}
-                  onClick={() => {
-                    if (suppressClickRef.current) return;
+          <div className="relative h-full w-full max-w-6xl select-none [transform:translateZ(0)]">
+            {cards.map((card, index) => (
+              <div
+                key={card.id}
+                ref={(node) => {
+                  if (node) cardElsRef.current.set(index, node);
+                  else cardElsRef.current.delete(index);
+                }}
+                role="button"
+                tabIndex={0}
+                aria-label={`Open ${card.label}`}
+                onClick={() => {
+                  if (suppressClickRef.current) return;
+                  openCard(card, index);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
                     openCard(card, index);
+                  }
+                }}
+                className="absolute left-1/2 top-0 cursor-grab active:cursor-grabbing"
+                style={{
+                  width: cardW,
+                  height: cardH,
+                  marginLeft: -cardW / 2,
+                  willChange: 'transform, opacity',
+                  backfaceVisibility: 'hidden',
+                }}
+              >
+                <div
+                  ref={(node) => {
+                    if (node) frameElsRef.current.set(index, node);
+                    else frameElsRef.current.delete(index);
                   }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      openCard(card, index);
-                    }
-                  }}
-                  className="absolute left-1/2 top-0 cursor-grab will-change-transform active:cursor-grabbing"
-                  style={{
-                    width: cardW,
-                    height: cardH,
-                    marginLeft: -cardW / 2,
-                    zIndex: t.zIndex,
-                    opacity: t.opacity,
-                    transform: `translate3d(${t.x}px, ${t.y}px, 0) rotate(${t.rotateZ}deg) scale(${t.scale})`,
-                  }}
+                  className="relative h-full w-full overflow-hidden rounded-2xl border border-white/10 shadow-[0_16px_40px_rgba(0,0,0,0.5)]"
                 >
-                  <div
-                    className={`relative h-full w-full overflow-hidden rounded-2xl border shadow-[0_16px_40px_rgba(0,0,0,0.5)] transition-colors duration-300 ${
-                      isNearest ? 'border-white/20' : 'border-white/10'
-                    }`}
+                  <Image
+                    src={card.src}
+                    alt={card.label}
+                    fill
+                    sizes="208px"
+                    className="pointer-events-none object-cover"
+                    draggable={false}
+                    loading={index < 4 ? 'eager' : 'lazy'}
+                    priority={index < 2}
+                  />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                  <span
+                    ref={(node) => {
+                      if (node) labelElsRef.current.set(index, node);
+                      else labelElsRef.current.delete(index);
+                    }}
+                    className="pointer-events-none absolute bottom-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/10 bg-black/40 px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-white/70 backdrop-blur"
                   >
-                    <Image
-                      src={card.src}
-                      alt={card.label}
-                      fill
-                      sizes="208px"
-                      className="pointer-events-none object-cover"
-                      draggable={false}
-                      loading={isNearest || abs < 1.2 ? 'eager' : 'lazy'}
-                      priority={isNearest}
-                    />
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-                    <span
-                      className={`pointer-events-none absolute bottom-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] backdrop-blur transition-all duration-300 ${
-                        isNearest
-                          ? 'border-white/20 bg-black/60 text-white'
-                          : 'border-white/10 bg-black/40 text-white/70'
-                      }`}
-                    >
-                      {card.label}
-                    </span>
-                  </div>
+                    {card.label}
+                  </span>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </div>
 
@@ -489,6 +543,6 @@ export default function CoverflowCarousel() {
       </div>
 
       <MediaLightbox media={lightbox} onClose={closeLightbox} />
-    </motion.section>
+    </section>
   );
 }

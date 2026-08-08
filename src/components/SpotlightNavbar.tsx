@@ -31,26 +31,30 @@ export default function SpotlightNavbar() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 sm:px-5 md:px-10 bg-black border-b border-white/10 h-[68px] md:h-[104px]">
-        <Link href="/" className="relative z-10 flex items-center min-w-0 group py-1" onClick={() => setMenuOpen(false)}>
-          <span className="relative block h-[48px] sm:h-[56px] md:h-[84px] w-[130px] sm:w-[170px] md:w-[260px] overflow-hidden">
+      <header className="fixed top-0 left-0 right-0 z-[210] flex h-[68px] items-center justify-between border-b border-white/10 bg-black px-4 sm:px-5 md:h-[104px] md:px-10">
+        <Link
+          href="/"
+          className="relative z-10 flex min-w-0 items-center py-1 group"
+          onClick={() => setMenuOpen(false)}
+        >
+          <span className="relative block h-[48px] w-[130px] overflow-hidden sm:h-[56px] sm:w-[170px] md:h-[84px] md:w-[260px]">
             <img
               src={LOGO_PNG}
               alt="Parth Production"
-              className="absolute left-0 top-1/2 -translate-y-1/2 h-[150%] w-auto max-w-none object-cover object-left transition-transform duration-500 group-hover:scale-[1.03]"
+              className="absolute left-0 top-1/2 h-[150%] w-auto max-w-none -translate-y-1/2 object-cover object-left transition-transform duration-500 group-hover:scale-[1.03]"
             />
           </span>
         </Link>
 
         {/* Centered desktop nav */}
-        <nav className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-8 lg:gap-10">
+        <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-8 md:flex lg:gap-10">
           {navItems.map((item) => {
             const active = pathname === item.href;
             return (
               <Link
                 key={item.label}
                 href={item.href}
-                className={`relative text-xs tracking-[0.18em] uppercase transition-colors ${
+                className={`relative text-xs uppercase tracking-[0.18em] transition-colors ${
                   active ? 'text-white' : 'text-white/55 hover:text-white'
                 }`}
               >
@@ -71,54 +75,60 @@ export default function SpotlightNavbar() {
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn-primary !py-2.5 !px-4 text-[11px] !hidden md:!inline-flex"
+            className="btn-primary !hidden !px-4 !py-2.5 text-[11px] md:!inline-flex"
           >
             Book now
           </a>
 
           {/* Hamburger — mobile only */}
           <button
+            type="button"
             onClick={() => setMenuOpen((v) => !v)}
-            className="md:hidden p-2 text-white min-w-[44px] min-h-[44px] flex items-center justify-center"
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center p-2 text-white md:hidden"
             aria-label={menuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={menuOpen}
           >
-            {menuOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
+            {menuOpen ? <X className="h-7 w-7" /> : <Menu className="h-7 w-7" />}
           </button>
         </div>
       </header>
 
       <AnimatePresence>
         {menuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            className="fixed inset-0 bg-black z-40 md:hidden flex flex-col pt-20 px-6 pb-10"
-          >
-            <nav className="flex flex-col gap-5 text-3xl font-display">
-              {navItems.map((item, i) => (
-                <motion.div
-                  key={item.label}
-                  initial={{ opacity: 0, x: -12 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.05 * i }}
-                >
-                  <Link
-                    href={item.href}
-                    onClick={() => setMenuOpen(false)}
-                    className={
-                      pathname === item.href
-                        ? 'text-accent'
-                        : 'text-white hover:text-accent transition-colors'
-                    }
+          <div className="fixed inset-0 z-[200] md:hidden">
+            {/* Opaque shell — never fade the backdrop (avoids Stage Gallery showing through) */}
+            <div className="absolute inset-0 bg-black" aria-hidden />
+            <motion.div
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+              className="relative flex h-full flex-col bg-black px-6 pb-10 pt-24"
+            >
+              <nav className="flex flex-col gap-5 font-display text-3xl">
+                {navItems.map((item, i) => (
+                  <motion.div
+                    key={item.label}
+                    initial={{ opacity: 0, x: -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.05 * i }}
                   >
-                    {item.label}
-                  </Link>
-                </motion.div>
-              ))}
-            </nav>
-          </motion.div>
+                    <Link
+                      href={item.href}
+                      onClick={() => setMenuOpen(false)}
+                      className={
+                        pathname === item.href
+                          ? 'text-accent'
+                          : 'text-white transition-colors hover:text-accent'
+                      }
+                    >
+                      {item.label}
+                    </Link>
+                  </motion.div>
+                ))}
+              </nav>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </>
